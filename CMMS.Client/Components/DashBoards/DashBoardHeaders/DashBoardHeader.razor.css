@@ -1,0 +1,76 @@
+﻿.dashboard-card {
+    height: 110px; /* ✅ tăng chiều cao card */
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+}
+
+.card-content {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* ✅ tăng khoảng cách icon - text */
+}
+
+.icon-box {
+    width: 56px; /* ✅ icon to hơn */
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+    /* Colors giữ nguyên */
+    .icon-box.blue {
+        background-color: #e6f0ff;
+        color: #1677ff;
+    }
+
+    .icon-box.green {
+        background-color: #e9fbe7;
+        color: #00a854;
+    }
+
+    .icon-box.orange {
+        background-color: #fff3d9;
+        color: #fa8c16;
+    }
+
+    .icon-box.red {
+        background-color: #ffe7e6;
+        color: #f5222d;
+    }
+
+.chil-content {
+    display: flex;
+    flex-direction: column; /* ✅ xếp title + value dọc rõ ràng */
+    line-height: 1.2;
+}
+
+.card-title {
+    font-size: 14px;
+    color: #707070;
+    margin-bottom: 2px;
+}
+
+.card-value {
+    font-size: 32px; /* ✅ số to hơn giống mẫu */
+    font-weight: 600;
+    color: #000;
+}
+
+/* text màu */
+.green-text {
+    color: #00a854;
+}
+
+.orange-text {
+    color: #fa8c16;
+}
+
+.red-text {
+    color: #f5222d;
+}
+

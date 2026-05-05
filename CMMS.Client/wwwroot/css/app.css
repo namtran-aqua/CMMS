@@ -206,15 +206,7 @@ a, .btn-link {
     flex-direction: column;
 }
 
-.topbar {
-    height: 48px;
-    background: #fff;
-    border-bottom: 1px solid #eee;
-}
 
-.content {
-    padding: 24px;
-}
 
 span {
     font-size: 18px;
