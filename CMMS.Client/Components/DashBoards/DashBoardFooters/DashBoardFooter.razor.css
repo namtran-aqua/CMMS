@@ -1,0 +1,73 @@
+﻿/* Card lớn */
+.maintenance-card {
+    border-radius: 20px;
+    padding: 16px;
+}
+
+/* Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.header-left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.card-header .title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.card-header .desc {
+    font-size: 13px;
+    color: #888;
+}
+
+/* Body */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Item */
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 14px;
+}
+
+.item-title {
+    font-weight: 600;
+}
+
+.item-sub {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Overdue */
+.maintenance-card.overdue {
+    border: 1px solid #ffccc7;
+    background: #fff;
+}
+
+.overdue-item {
+    background-color: #fff1f0;
+}
+
+/* Due soon */
+.maintenance-card.due-soon {
+    border: 1px solid #ffe58f;
+}
+
+.due-item {
+    background-color: #fffbe6;
+}

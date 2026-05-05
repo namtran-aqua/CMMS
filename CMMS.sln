@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.4.11626.88 stable
+VisualStudioVersion = 18.4.11626.88
 MinimumVisualStudioVersion = 16.0.0.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CMMS.Client", "CMMS.Client\CMMS.Client.csproj", "{69A16719-0423-5612-BE35-403A4C5DDA53}"
 EndProject

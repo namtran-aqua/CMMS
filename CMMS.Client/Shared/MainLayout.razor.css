@@ -1,0 +1,11 @@
+﻿.topbar {
+    height: 0 !important;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+.content {
+    padding: 24px;
+    overflow: auto;
+    height: 77%
+}

@@ -1,0 +1,19 @@
+﻿@using AntDesign
+@using AntDesign.Charts
+
+<Row Gutter="18">
+    <!-- Total Equipment -->
+    <Col Span="12">
+        <Card Style="border-radius:15px" Class="dashboard-card">
+              <Pie Data="data1" Config="config1" />
+        </Card>
+    </Col>
+
+    <!-- Running -->
+    <Col Span="12">
+        <Card Style="border-radius:15px" Class="dashboard-card">
+            <AntDesign.Charts.Column Data="data2" Config="config2" />
+        </Card>
+    </Col>
+
+</Row>
