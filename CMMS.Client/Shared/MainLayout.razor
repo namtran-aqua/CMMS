@@ -21,14 +21,14 @@
               Class="custom-menu">
 
             <MenuItem>
-                <NavLink href="/dash-board" class="menu-link" Match="NavLinkMatch.All">
+                <NavLink href="@GetLink("/dash-board")" class="menu-link" Match="NavLinkMatch.All">
                     <i class="fa-solid fa-table-cells menu-icon"></i>
                     <span>Dashboard</span>
                 </NavLink>
             </MenuItem>
 
             <MenuItem>
-                <NavLink href="/equipment" class="menu-link">
+                <NavLink href="@GetLink("/dash-board")" class="menu-link">
                     <i class="fa-solid fa-sliders menu-icon"></i>
                     <span>Equipment</span>
                 </NavLink>
