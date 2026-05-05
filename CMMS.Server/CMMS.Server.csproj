@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="DeepCloner" Version="0.10.4" />
+    <PackageReference Include="Hangfire" Version="1.8.22" />
+    <PackageReference Include="Hangfire.SqlServer" Version="1.8.22" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.20" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.1.0" />
+	  <PackageReference Include="MySql.Data" Version="8.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+
+    <ProjectReference Include="..\CMMS.Client\CMMS.Client.csproj" />
+
+    <ProjectReference Include="..\CMMS.Data\CMMS.Data.csproj" />
+
+    <ProjectReference Include="..\CMMS.Shared\CMMS.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+    <Folder Include="Services\" />
+    <Folder Include="wwwroot\uploads\avatars\" />
+    <Folder Include="wwwroot\uploads\support-data\" />
+  </ItemGroup>
+
+
+</Project>

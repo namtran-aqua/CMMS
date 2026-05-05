@@ -1,0 +1,20 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@inject NavigationManager NavigationManager
+@inject IWebAssemblyHostEnvironment webHostEnvironment
+@attribute [Authorize]
+<PageTitle>Home</PageTitle>
+<div class="container-index">
+    <h1>Greetings from Aqua</h1>
+</div>
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            NavigationManager.NavigateTo("/dash-board", replace: true);
+        }
+    }
+}

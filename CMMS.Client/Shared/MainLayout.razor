@@ -1,0 +1,62 @@
+﻿@inherits LayoutComponentBase
+@using AntDesign
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div style="font-size: 20px; font-weight: 600;" class="sidebar-header">
+            <div class="logo-box">
+                <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div class="sidebar-title">
+                <div class="title">Equipment Manager</div>
+                <div class="subtitle">EMS v1.0</div>
+            </div>
+        </div>
+
+        <Menu Mode="MenuMode.Inline"
+              Theme="MenuTheme.Light"
+              Class="custom-menu">
+
+            <MenuItem>
+                <NavLink href="/dash-board" class="menu-link" Match="NavLinkMatch.All">
+                    <i class="fa-solid fa-table-cells menu-icon"></i>
+                    <span>Dashboard</span>
+                </NavLink>
+            </MenuItem>
+
+            <MenuItem>
+                <NavLink href="/equipment" class="menu-link">
+                    <i class="fa-solid fa-sliders menu-icon"></i>
+                    <span>Equipment</span>
+                </NavLink>
+            </MenuItem>
+
+            <MenuItem>
+                <NavLink href="/maintenance" class="menu-link">
+                    <i class="fa-solid fa-wrench menu-icon"></i>
+                    <span>Maintenance</span>
+                </NavLink>
+            </MenuItem>
+
+            <MenuItem>
+                <NavLink href="/spare-parts" class="menu-link">
+                    <i class="fa-solid fa-box menu-icon"></i>
+                    <span>Spare Parts</span>
+                </NavLink>
+            </MenuItem>
+
+        </Menu>
+    </aside>
+
+    <!-- MAIN -->
+    <section class="main">
+        <header class="topbar"></header>
+        <main class="content">
+            @Body
+        </main>
+    </section>
+
+</div>

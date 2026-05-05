@@ -1,0 +1,67 @@
+﻿
+using Hangfire;
+using Hangfire.SqlServer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "ITSM API",
+        Version = "v1"
+    });
+});
+
+var app = builder.Build();
+
+app.UseSwagger();
+
+app.UseSwaggerUI(c =>
+{
+    c.RoutePrefix = "swagger";         
+    c.SwaggerEndpoint(
+        "v1/swagger.json",
+        "ITSM API v1"
+    );
+});
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseWebAssemblyDebugging();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseCors("AllowAll");
+app.MapRazorPages();
+app.MapControllers();
+
+app.MapFallbackToFile("index.html");
+app.Run();
+
