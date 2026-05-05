@@ -14,7 +14,7 @@
     {
         if (firstRender)
         {
-            NavigationManager.NavigateTo("/dash-board", replace: true);
+            NavigationManager.NavigateTo($"{webHostEnvironment.BaseAddress}dash-board", replace: true);
         }
     }
 }

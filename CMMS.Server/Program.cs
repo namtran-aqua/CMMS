@@ -1,12 +1,4 @@
-﻿
-using Hangfire;
-using Hangfire.SqlServer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-
-using System.Text;
+﻿using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -21,7 +13,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ITSM API",
+        Title = "CMMS API",
         Version = "v1"
     });
 });
@@ -35,7 +27,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";         
     c.SwaggerEndpoint(
         "v1/swagger.json",
-        "ITSM API v1"
+        "CMMS API v1"
     );
 });
 
