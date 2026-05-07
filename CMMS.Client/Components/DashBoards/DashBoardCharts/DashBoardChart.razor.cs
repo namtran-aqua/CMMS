@@ -1,4 +1,4 @@
-﻿using AntDesign.Charts;
+using AntDesign.Charts;
 
 namespace CMMS.Client.Components.DashBoards.DashBoardCharts
 {
@@ -30,7 +30,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
         },
         new
         {
-            type = "分类五",
+            type = "Category Five",
             value = 10
         },
         new
@@ -148,10 +148,5 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
         };
 
         #endregion Example 2
-        protected override async Task OnInitializedAsync()
-        {
-
-
-        }
     }
 }
