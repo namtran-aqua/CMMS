@@ -1,0 +1,208 @@
+﻿@using AntDesign
+@using CMMS.Shared.EquipmentDto
+@using CMMS.Shared.Equipment
+@inject HttpClient httpClient
+@inject IMessageService Message
+
+<style>
+    .ant-select-selector {
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        height: 38px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .ant-select-selection-item {
+        font-size: 14px !important;
+        font-weight: 400 !important;
+    }
+
+    .ant-select-arrow {
+        font-size: 12px;
+    }
+
+    .ant-input {
+        font-size: 14px;
+        height: 38px;
+    }
+
+    .ant-select-selection-placeholder {
+        color: #bfbfbf !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+    }
+</style>
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary">
+            Add
+        </Button>
+
+        <Button OnClick="@Close">Cancel</Button>
+    </Template>;
+}
+
+<Modal @bind-Visible="IsModalVisible"
+       Title="Add New Equipment"
+       Style="z-index:9999;width:700px"
+       Footer="@footer">
+
+    <p style="color:gray;margin-bottom:16px">
+        Enter the equipment information
+    </p>
+
+    <Form @ref="@formRef"
+          Model="@EquipmentDto"
+          Layout="FormLayout.Vertical"
+          OnFinish="SaveAsync">
+
+        <!-- Equipment Name -->
+        <Row Gutter="16">
+            <Col Span="24">
+                <FormItem Label="Equipment Name" Name="EquipmentName" Required>
+                    <Input @bind-Value="EquipmentDto.EquipmentName"
+                           Placeholder="e.g., CNC Lathe CNC-1" />
+                </FormItem>
+            </Col>
+        </Row>
+        <!-- Code + Barcode -->
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="Equipment Code" Name="EquipmentCode">
+                <Input @bind-Value="EquipmentDto.EquipmentCode"
+                       Placeholder="e.g., FANUC α-D21MiB5" />
+            </FormItem>
+            </Col>
+
+            <Col Span="12">
+            <FormItem Label="Equipment Barcode" Name="EquipmentBarcode">
+                <Input @bind-Value="EquipmentDto.EquipmentBarcode"
+                       Placeholder="e.g., FNC-2023-001" />
+            </FormItem>
+            </Col>
+        </Row>
+        <!-- Model + Serial -->
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="Equipment Model" Name="EquipmentModel">
+                    <Input @bind-Value="EquipmentDto.EquipmentModel"
+                           Placeholder="e.g., FANUC α-D21MiB5" />
+                </FormItem>
+            </Col>
+
+            <Col Span="12">
+            <FormItem Label="Equipment Serial" Name="EquipmentSerial">
+                    <Input @bind-Value="EquipmentDto.EquipmentSerial"
+                           Placeholder="e.g., FNC-2023-001" />
+                </FormItem>
+            </Col>
+        </Row>
+        <!-- Description + Note -->
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="Equipment Description" Name="EquipmentDescription">
+                <Input @bind-Value="EquipmentDto.EquipmentDescription"
+                       Placeholder="e.g., FANUC α-D21MiB5" />
+            </FormItem>
+            </Col>
+
+            <Col Span="12">
+            <FormItem Label="Equipment Note" Name="EquipmentNote">
+                <Input @bind-Value="EquipmentDto.EquipmentNote"
+                       Placeholder="e.g., FNC-2023-001" />
+            </FormItem>
+            </Col>
+        </Row>
+        <!-- Location + Purchase Date -->
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Purchase Date" Name="BuyDate">
+                    <DatePicker @bind-Value="EquipmentDto.BuyDate"
+                                Style="width:100%" />
+                </FormItem>
+            </Col>
+
+            <Col Span="12">
+                <FormItem Label="Purchase Price" Name="BuyPrice">
+                    <Input @bind-Value="EquipmentDto.BuyPrice"
+                           Placeholder="e.g., Workshop A - Bay 01" />   
+                </FormItem>
+            </Col>
+        </Row>
+        <!-- Location + Department + Factory -->
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Location" Name="Location">
+                    <Input @bind-Value="EquipmentDto.Location"
+                           Placeholder="e.g., Workshop A - Bay 01" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+            <FormItem Label="Department" Name="DeptId">
+
+                <Select TValue="int?"
+                        @bind-Value="EquipmentDto.DeptId"
+                        DataSource="Departments"
+                        ValueName="ID"
+                        LabelName="DeptName"
+                        Placeholder="Select department"
+                        ShowSearch
+                        AllowClear>
+                </Select>
+
+            </FormItem>
+
+
+            </Col>
+        </Row>
+        <!-- Status + Sts Maintenance -->
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Status" Name="Status">
+                    <Input @bind-Value="EquipmentDto.StatusUsing"
+                    />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+            <FormItem Label="Maintenance Circle Time" Name="MaintenanceCircleTime">
+                <Input @bind-Value="EquipmentDto.MaintenanceCircleTime"
+                            Style="width:100%" />
+            </FormItem>
+            </Col>
+        </Row>
+        <!-- Vendor + ContactNo -->
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Vendor" Name="Vendor">
+                    <Input @bind-Value="EquipmentDto.Vendor"
+                           Placeholder="e.g., FANUC α-D21MiB5" />
+                </FormItem>
+            </Col>
+
+            <Col Span="12">
+                <FormItem Label="Contact No" Name="ContactNo">
+                    <Input @bind-Value="EquipmentDto.ContactNo"
+                           Placeholder="e.g., FNC-2023-001" />
+                </FormItem>
+            </Col>
+        </Row>
+
+        <!-- SAPCode + PIC -->
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="SAP Code" Name="SAPCode">
+                <Input @bind-Value="EquipmentDto.SAPCode"
+                       Placeholder="e.g., FANUC α-D21MiB5" />
+            </FormItem>
+            </Col>
+
+            <Col Span="12">
+            <FormItem Label="PIC" Name="PIC">
+                <Input @bind-Value="EquipmentDto.PIC"
+                       Placeholder="e.g., FNC-2023-001" />
+            </FormItem>
+            </Col>
+        </Row>
+    </Form>
+</Modal>

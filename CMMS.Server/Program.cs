@@ -1,4 +1,7 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using CMMS.Server;
+using CMMS.Server.Services.DepartmentService;
+using CMMS.Server.Services.EquipmentService;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -9,6 +12,7 @@ builder.Services.AddControllers()
     {
         opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
+builder.Services.AddAppServices();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
