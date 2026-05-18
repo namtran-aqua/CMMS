@@ -26,8 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Services\" />
     <Folder Include="wwwroot\uploads\avatars\" />
     <Folder Include="wwwroot\uploads\support-data\" />
   </ItemGroup>

@@ -1,0 +1,117 @@
+﻿@page "/Equipment"
+@using AntDesign
+@using CMMS.Client.Components.Equipments
+@inject IMessageService Message
+@inject IJSRuntime JS
+<PageTitle>Equipment</PageTitle>
+
+<div>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3>Equipment</h3>
+            <p class="text-muted">Manage all equipment information</p>
+        </div>
+
+        <button @onclick="CreatedAsync" class="btn btn-dark">
+            <Icon Type="plus" /> Add Equipment
+        </button>
+    </div>
+
+    <!-- Search -->
+    <div class="card p-3 mb-4 search-card">
+        <div class="search-container" style="display:flex">
+
+            <!-- Search Input -->
+            <input class="form-control search-input" style="border-radius:10px"
+                   placeholder="Search by name, model, serial number, or location..." />
+
+            <!-- Status Dropdown -->
+            <select class="form-select status-filter" style="margin-left:10px;width:15%;border-radius:10px">
+                <option>All Status</option>
+                <option>Running</option>
+                <option>Stopped</option>
+                <option>Maintenance</option>
+                <option>Fault</option>
+            </select>
+
+        </div>
+    </div>
+    <div class="card p-3 mb-4" style="border-radius:15px">
+        <div> 
+            <div><h6>Equipment List</h6></div>
+            <div>@_equipments.Count equipment total</div>
+        </div>
+        <!-- Equipment Table -->
+        <table class="table" >
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Model</th>
+                    <th>Serial Number</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Next Maintanance</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_equipments != null && _equipments.Any())
+                {
+                    foreach (var item in _equipments)
+                    {
+                        <tr>
+                            <td>
+                                <div>@item.EquipmentName</div>
+                                <div class="text-muted">@item.EquipmentCode</div>
+                            </td>
+                            <td>@item.EquipmentModel</td>
+                            <td>@item.EquipmentSerial</td>
+                            <td>@item.Location</td>
+                            <td>
+                                <span class="@GetStatusClass(item.Status)">
+                                    @item.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div>@item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</div>
+                                @{
+                                    var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
+                                }
+                                <div style="color:@maintenance.color">
+                                    @maintenance.text
+                                </div>
+                            </td>
+                            <td >
+                                <Template>
+                                    <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
+                                        <ChildContent>
+                                            <Button Icon="menu" />
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
+
+                                                <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
+                                                    <Icon Type="edit" /> Edit
+                                                </Button>
+
+                                                <Button Type="ButtonType.Text"
+                                                        OnClick="@(async () => await DeleteAsync(item.Id))"
+                                                        Style="text-align: left;">
+                                                    <Icon Type="delete" /> Delete
+                                                </Button>
+
+                                            </div>
+                                        </ContentTemplate>
+                                    </Popover>
+                                </Template>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<EquipmentModal OnSave="LoadData" @ref="equipmentModal" />
