@@ -1,56 +1,72 @@
-using AntDesign.Charts;
+﻿using AntDesign.Charts;
+using CMMS.Shared.Dtos.DashBoards;
+using Microsoft.AspNetCore.Components;
 
 namespace CMMS.Client.Components.DashBoards.DashBoardCharts
 {
 
-    #region Example 1
+
     public partial class DashBoardChart
     {
-        readonly object[] data1 =
-    {
-        new
+        [Parameter] public List<DashBoarDto> DashBoardData { get; set; } = new();
+        object[] data1 = Array.Empty<object>();
+
+        protected override void OnParametersSet()
         {
-            type = "Category One",
-            value = 27
-        },
-        new
-        {
-            type = "Category Two",
-            value = 25
-        },
-        new
-        {
-            type = "Category Three",
-            value = 18
-        },
-        new
-        {
-            type = "Category Four",
-            value = 15
-        },
-        new
-        {
-            type = "Category Five",
-            value = 10
-        },
-        new
-        {
-            type = "other",
-            value = 5
+            UpdateData1();
         }
-    };
+        #region Example 1
+        private void UpdateData1()
+        {
+            if (DashBoardData == null) return;
+
+            var currentDate = DateTime.Today;
+
+            var totalCount = DashBoardData.Count;
+            var runningData = DashBoardData.Where(x => x.IsActive == true).ToList();
+            
+            var dueSonData = DashBoardData.Where(x =>
+            {
+                if (x.IsActive == true && x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue)
+                {
+                    var nextDate = x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value);
+                    var diffDays = (nextDate - currentDate).TotalDays;
+                    return diffDays >= 0 && diffDays <= 7;
+                }
+                return false;
+            }).ToList();
+
+            var overDueData = DashBoardData.Where(x =>
+            {
+                if (x.IsActive == true && x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue)
+                {
+                    var nextDate = x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value);
+                    return nextDate < currentDate;
+                }
+                return false;
+            }).ToList();
+
+            var normalData = runningData.Except(dueSonData).Except(overDueData).ToList();
+
+            data1 = new object[]
+            {
+                new { type = "Normal", value = normalData.Count },
+                new { type = "DueSon", value = dueSonData.Count },
+                new { type = "OverDue", value = overDueData.Count }
+            };
+        }
         readonly PieConfig config1 = new PieConfig
         {
             ForceFit = true,
             Title = new Title
             {
                 Visible = true,
-                Text = "Donut Chart"
+                Text = "Trạng thái máy móc"
             },
             Description = new Description
             {
                 Visible = true,
-                Text = "The ring chart indicator card can replace the tooltip and display the detailed information of each category in the hollowed-out part of the ring chart."
+                Text = "Biểu đồ thể hiện phần trăm các máy đang hoạt động bình thường, sắp đến hạn bảo trì và quá hạn bảo trì."
             },
             AppendPadding = 10,
             InnerRadius = 0.6,
@@ -58,10 +74,12 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
             Padding = "auto",
             AngleField = "value",
             ColorField = "type",
+            Color = new[] { "#1890ff", "#faad14", "#f5222d" }, // Xanh biển (Normal), Cam (DueSon), Đỏ (OverDue)
             Height = 300
-
         };
         #endregion Example 1
+        
+    
         #region Example 2
 
         object[] data2 =

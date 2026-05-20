@@ -1,4 +1,4 @@
-﻿@page "/dash-board"
+@page "/dash-board"
 @using AntDesign
 @using CMMS.Client.Components.DashBoards.DashBoardCharts
 @using CMMS.Client.Components.DashBoards.DashBoardFooters
@@ -9,13 +9,22 @@
 <PageTitle>DashBoard</PageTitle>
 <h3>DashBoard</h3>
 <h5>Equipment status overview</h5>
-<div class="dashboard-section">
-    <DashBoardHeader />
-</div>
+@if (isLoading)
+{
+    <div style="text-align: center; margin-top: 50px;">
+        <Spin Spinning="true" Tip="Đang tải dữ liệu..." />
+    </div>
+}
+else
+{
+    <div class="dashboard-section">
+        <DashBoardHeader DashBoardData="@DashBoardData" />
+    </div>
 
-<div class="dashboard-section">
-    <DashBoardChart />
-</div>
-<div class="dashboard-section">
-    <DashBoardFooter />
-</div>
+    <div class="dashboard-section">
+        <DashBoardChart DashBoardData="@DashBoardData" />
+    </div>
+    <div class="dashboard-section">
+        <DashBoardFooter DashBoardData="@DashBoardData" />
+    </div>
+}

@@ -1,77 +1,57 @@
-﻿@using AntDesign
-
+@using AntDesign
+@inject NavigationManager NavigationManager
 <Row Gutter="20">
-
-    <!-- OVERDUE -->
-    <Col Span="12">
+    <Col Span="24">
         <Card Style="border-radius:15px" Class="maintenance-card overdue">
             <div class="card-header">
                 <div class="header-left">
                     <Icon Type="warning" />
                     <div>
-                        <div style="color:red" class="title">Overdue Maintenance</div>
-                        <div class="desc">Requires immediate attention</div>
+                        <div style="color:red" class="title">Maintenance Alerts</div>
+                        <div class="desc">Equipment requiring attention (Overdue & Due Soon)</div>
                     </div>
                 </div>
-                <Button Type="ButtonType.Default">
+                <Button Type="ButtonType.Default" @onclick="@(() => NavigationManager.NavigateTo("/maintenance"))">
                     View All <Icon Type="arrow-right" />
                 </Button>
             </div>
 
-            <div class="card-body">
-                <div class="item overdue-item">
-                    <div>
-                        <div class="item-title">Vertical Machining Center VMC-1</div>
-                        <div class="item-sub">Workshop A - Bay 02</div>
-                    </div>
-                    <Tag Color="Color.Red1.ToString()">5 days overdue</Tag>
-                </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                @foreach (var item in OverDue)
+                {
+                    var nextDate = item.LastMaintenanceDate.Value.AddDays(item.MaintenanceCircleTime.Value);
+                    var diffDays = Math.Abs(Math.Round((DateTime.Today - nextDate).TotalDays));
 
-                <div class="item overdue-item">
-                    <div>
-                        <div class="item-title">Air Compressor AC-200</div>
-                        <div class="item-sub">Power House</div>
+                    <div class="item overdue-item">
+                        <div>
+                            <div class="item-title">@item.EquipmentName</div>
+                            <div class="item-sub">@item.LocName</div>
+                        </div>
+                        <Tag Class="custom-tag overdue-tag">@diffDays days overdue</Tag>
                     </div>
-                    <Tag Color="Color.Red1.ToString()">5 days overdue</Tag>
-                </div>
+                }
+
+                @foreach (var item in DueSon)
+                {
+                    var nextDate = item.LastMaintenanceDate.Value.AddDays(item.MaintenanceCircleTime.Value);
+                    var diffDays = Math.Round((nextDate - DateTime.Today).TotalDays);
+
+                    <div class="item due-item">
+                        <div>
+                            <div class="item-title">@item.EquipmentName</div>
+                            <div class="item-sub">@item.LocName</div>
+                        </div>
+                        <Tag Class="custom-tag due-tag">@(diffDays == 0 ? "Today" : $"In {diffDays} days")</Tag>
+                    </div>
+                }
+
+                @if(!OverDue.Any() && !DueSon.Any())
+                {
+                    <div style="text-align: center; color: #888; padding: 20px;">
+                        No maintenance alerts at the moment.
+                    </div>
+                }
             </div>
         </Card>
     </Col>
-
-    <!-- DUE SOON -->
-    <Col Span="12">
-        <Card Style="border-radius:15px" Class="maintenance-card due-soon">
-            <div class="card-header">
-                <div class="header-left">
-                    <Icon Type="clock-circle" />
-                    <div>
-                        <div class="title" style="color:lightcoral">Due Soon</div>
-                        <div class="desc">Maintenance required within 7 days</div>
-                    </div>
-                </div>
-                <Button>
-                    View All <Icon Type="arrow-right" />
-                </Button>
-            </div>
-
-            <div class="card-body">
-                <div class="item due-item">
-                    <div>
-                        <div class="item-title">Laser Cutter LC-3000</div>
-                        <div class="item-sub">Workshop B - Bay 02</div>
-                    </div>
-                    <Tag Color="Color.Orange1.ToString()">In 1 days</Tag>
-                </div>
-
-                <div class="item due-item">
-                    <div>
-                        <div class="item-title">CNC Lathe CNC-1</div>
-                        <div class="item-sub">Workshop A - Bay 01</div>
-                    </div>
-                    <Tag Color="Color.Orange1.ToString()">In 4 days</Tag>
-                </div>
-            </div>
-        </Card>
-    </Col>
-
 </Row>

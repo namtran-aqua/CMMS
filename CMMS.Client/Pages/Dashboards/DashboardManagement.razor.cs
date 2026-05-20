@@ -1,4 +1,5 @@
-﻿using AntDesign;
+using AntDesign;
+using CMMS.Shared.Dtos.DashBoards;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using System.Net.Http.Json;
@@ -10,7 +11,8 @@ namespace CMMS.Client.Pages.Dashboards
         [Inject]
         public HttpClient HttpClient { get; set; }
 
-        public List<CMMS.Shared.Dtos.DashBoards.DashBoarDto> DashBoardData { get; set; } = new();
+        public List<DashBoarDto> DashBoardData { get; set; } = new();
+        private bool isLoading = true;
 
         protected override async Task OnInitializedAsync()
         {
@@ -20,7 +22,8 @@ namespace CMMS.Client.Pages.Dashboards
         {
             try
             {
-                var result = await HttpClient.GetFromJsonAsync<List<DashBoarDto>>("api/DashBoard");
+                isLoading = true;
+                var result = await HttpClient.GetFromJsonAsync<List<DashBoarDto>>("api/DashBoard/dashboard");
                 if (result != null)
                 {
                     DashBoardData = result;
@@ -29,6 +32,10 @@ namespace CMMS.Client.Pages.Dashboards
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+            }
+            finally
+            {
+                isLoading = false;
             }
         }
     }

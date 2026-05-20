@@ -1,4 +1,13 @@
-﻿.topbar {
+.app-layout {
+    height: 100vh !important;
+    overflow: hidden;
+}
+
+.main {
+    overflow: hidden;
+}
+
+.topbar {
     height: 0 !important;
     background: #fff;
     border-bottom: 1px solid #eee;
@@ -6,6 +15,13 @@
 
 .content {
     padding: 24px;
-    overflow: auto;
-    height: 80%
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+}
+
+.content::after {
+    content: '';
+    display: block;
+    height: 24px;
 }

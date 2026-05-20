@@ -1,4 +1,4 @@
-﻿/* Card lớn */
+/* Card lớn */
 .maintenance-card {
     border-radius: 20px;
     padding: 16px;
@@ -40,17 +40,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px;
-    border-radius: 14px;
+    padding: 10px 16px;
+    border-radius: 10px;
 }
 
 .item-title {
     font-weight: 600;
+    font-size: 15px;
+    color: #000;
 }
 
 .item-sub {
     font-size: 13px;
-    color: #666;
+    color: #8c8c8c;
+    /* Lighter elegant gray */
+    margin-top: 3px;
 }
 
 /* Overdue */
@@ -70,4 +74,30 @@
 
 .due-item {
     background-color: #fffbe6;
+}
+
+::deep .custom-tag {
+    font-size: 12px !important;
+    padding: 2px 12px !important;
+    border-radius: 50px !important;
+    /* Fully rounded capsule/pill shape */
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+    display: inline-block !important;
+}
+
+::deep .overdue-tag {
+    background-color: #d9001b !important;
+    /* Solid bright red background */
+    color: #ffffff !important;
+    /* White text */
+    border: none !important;
+}
+
+::deep .due-tag {
+    background-color: #fffbe6 !important;
+    color: #e67e22 !important;
+    border: 1px solid #f39c12 !important;
+    /* Orange outline border */
 }
