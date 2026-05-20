@@ -1,4 +1,4 @@
-﻿@page "/Maintenance"
+@page "/maintenance"
 @using AntDesign
 <PageTitle>Maintenance</PageTitle>
 
@@ -64,7 +64,8 @@
     <div class="row">
         @foreach (var item in GetFilteredData())
         {
-            var maintenance = GetMaintenanceText(item.BuyDate);
+            var nextDate = GetNextMaintenanceDate(item);
+            var maintenance = GetMaintenanceText(nextDate);
 
             <div class="col-4 mb-3">
                 <div class="card p-3"
@@ -86,7 +87,7 @@
 
                     <!-- Info -->
                     <div class="mt-3">
-                        <div>Scheduled: @item.BuyDate?.ToString("MMM dd, yyyy")</div>
+                        <div>Scheduled: @nextDate?.ToString("MMM dd, yyyy")</div>
                         <div>Circle: @item.MaintenanceCircleTime days</div>
                     </div>
 

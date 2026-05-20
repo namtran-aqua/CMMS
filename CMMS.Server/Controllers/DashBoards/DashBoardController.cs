@@ -14,7 +14,7 @@ namespace CMMS.Server.Controllers.DashBoards
             _dashBoardService = dashBoardService;
         }
 
-        [HttpGet]
+        [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashBoard()
         {
             var result = await _dashBoardService.GetDashBoard();

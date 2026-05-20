@@ -1,4 +1,4 @@
-﻿using CMMS.Shared.EquipmentDto;
+using CMMS.Shared.EquipmentDto;
 using Microsoft.AspNetCore.Components;
 
 namespace CMMS.Client.Pages.Maintenance
@@ -17,6 +17,20 @@ namespace CMMS.Client.Pages.Maintenance
         //    var res = await Http.GetFromJsonAsync<List<EquipmentDto>>("api/Equipment/get-all");
         //    _equipments = res ?? new();
         //}
+        private DateTime? GetNextMaintenanceDate(EquipmentDto item)
+        {
+            if (item.NextMaintenanceDate.HasValue)
+                return item.NextMaintenanceDate.Value;
+
+            var baseDate = item.LastMaintenanceDate ?? item.BuyDate;
+            if (baseDate.HasValue && item.MaintenanceCircleTime.HasValue)
+            {
+                return baseDate.Value.AddDays(item.MaintenanceCircleTime.Value);
+            }
+
+            return null;
+        }
+
         private (string text, string color) GetMaintenanceText(DateTime? date)
         {
             if (date == null)
@@ -46,19 +60,25 @@ namespace CMMS.Client.Pages.Maintenance
             if (selectedTab == "Pending")
             {
                 return _equipments.Where(x =>
-                    x.BuyDate != null &&
-                    x.BuyDate <= DateTime.Now);
+                {
+                    var nextDate = GetNextMaintenanceDate(x);
+                    return nextDate != null && nextDate <= DateTime.Now.AddDays(7);
+                });
             }
 
             return _equipments.Where(x =>
-                x.BuyDate != null &&
-                x.BuyDate > DateTime.Now);
+            {
+                var nextDate = GetNextMaintenanceDate(x);
+                return nextDate != null && nextDate > DateTime.Now.AddDays(7);
+            });
         }
         private int GetPendingCount()
         {
             return _equipments.Count(x =>
-                x.BuyDate != null &&
-                x.BuyDate <= DateTime.Now);
+            {
+                var nextDate = GetNextMaintenanceDate(x);
+                return nextDate != null && nextDate <= DateTime.Now.AddDays(7);
+            });
         }
         private async Task LoadData()
         {
@@ -73,18 +93,18 @@ namespace CMMS.Client.Pages.Maintenance
                     EquipmentSerial = "SN123456",
                     Location = "Workshop A - Bay 01",
                     Status = "Running",
-                    BuyDate = DateTime.Now.AddDays(-10),
+                    BuyDate = DateTime.Now.AddDays(-26),
                     MaintenanceCircleTime = 30
                 },
                 new EquipmentDto
                 {
-                    EquipmentName = "Vertical Machine VMC-1",
+                    EquipmentName = "Vertical Machining Center VMC-1",
                     EquipmentCode = "MZK-2022-015",
                     EquipmentModel = "MAZAK VCN-530C",
                     EquipmentSerial = "SN789012",
                     Location = "Workshop A - Bay 02",
                     Status = "Running",
-                    BuyDate = DateTime.Now.AddDays(-40),
+                    BuyDate = DateTime.Now.AddDays(-35),
                     MaintenanceCircleTime = 30
                 },
                 new EquipmentDto
