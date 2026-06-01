@@ -1,0 +1,127 @@
+﻿@using AntDesign
+@using CMMS.Shared.Dtos.Equipment
+@using CMMS.Shared.Dtos.User
+@inject HttpClient httpClient
+@inject IMessageService Message
+
+
+<style>
+    .ant-select-selector {
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        height: 38px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .ant-select-selection-item {
+        font-size: 14px !important;
+        font-weight: 400 !important;
+    }
+
+    .ant-select-arrow {
+        font-size: 12px;
+    }
+
+    .ant-input {
+        font-size: 14px;
+        height: 38px;
+    }
+
+    .ant-select-selection-placeholder {
+        color: #bfbfbf !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+    }
+</style>
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary">
+            Save
+        </Button>
+
+        <Button OnClick="@Close">Cancel</Button>
+        
+    </Template>;
+}
+
+<Modal @bind-Visible="IsModalVisible"
+       Title="Add Maintenance Record"
+       Style="z-index:9999;width:700px"
+       Footer="@footer">
+
+    <p style="color:gray;margin-bottom:16px">
+        Record a maintenance activity
+    </p>
+
+    <Form @ref="@formRef"
+          Model="@MaintenanceDto"
+          Layout="FormLayout.Vertical"
+          OnFinish="SaveAsync">
+
+        <!-- Equipment Name -->
+        <Row Gutter="16">
+            @* <Col Span="12">
+            <FormItem Label="Status" Name="StsMainID">
+                <Input @bind-Value="MaintenanceDto.StsMainID"
+                Placeholder="Status"/>
+            </FormItem>
+            </Col> *@
+            <Col Span="12">
+            <FormItem Label="Maint Date" Name="MaintDate" Required>
+                    <DatePicker @bind-Value="MaintenanceDto.MaintDate"
+                            Style="width:100%" />
+            </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Vendor" Name="VendorID" Required>
+                    <Select
+                        @bind-Value="MaintenanceDto.VendorID"
+                        DataSource="Vendors"
+                        ValueName="VendorID"
+                        LabelName="VendorName"
+                        Placeholder="Select vendor"
+                        AllowClear>
+                    </Select>
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="PIC" >
+                <Select TItem="UserDto"
+                        TItemValue="UserDto"
+                        DataSource="@Users"
+                        @bind-Value="SelectedUserId"
+                        ItemValue="c => c"
+                        ItemLabel="c => c.FullName"
+                        EnableSearch>
+                </Select>
+
+            </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="MaintPrice" Name="MaintPrice" Required>
+                <AntDesign.InputNumber TValue="decimal?"
+                    @bind-Value="MaintenanceDto.MaintPrice"
+                           Placeholder="Enter MaintPrice" 
+                                       Style="width:100%" />
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="Description" Name="MaintDescription" Required>
+                <Input @bind-Value="MaintenanceDto.MaintDescription"
+                       Placeholder="Enter Maint Description" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+            <FormItem Label="Maint Note" Name="MaintNote" Required>
+                <Input @bind-Value="MaintenanceDto.MaintNote" 
+                       Placeholder="Enter Maint Note" />
+                </FormItem>
+            </Col>
+        </Row>
+    </Form>
+</Modal>

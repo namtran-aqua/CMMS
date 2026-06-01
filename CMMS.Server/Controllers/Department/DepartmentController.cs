@@ -1,7 +1,6 @@
-﻿using CMMS.Shared.Equipment;
-
-using CMMS.Server.Services.DepartmentService;
+﻿using CMMS.Server.Services.DepartmentService;
 using Microsoft.AspNetCore.Mvc;
+using CMMS.Shared.Dtos.Equipment;
 
 [ApiController]
 [Route("api/[controller]")]

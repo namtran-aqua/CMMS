@@ -1,5 +1,5 @@
 ﻿using CMMS.Server.Services.EquipmentService;
-using CMMS.Shared.EquipmentDto;
+using CMMS.Shared.Dtos.Equipment;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -38,12 +38,27 @@ public class EquipmentController : ControllerBase
             return Ok(new {message = "Cập nhật thành công"});
         return NotFound("Không tìm thấy Equipment");
     }
-    [HttpDelete("delete/{equipmentCode}")]
-    public async Task<IActionResult> Delete(int equipmentCode)
+    [HttpDelete("delete/{eqId}")]
+    public async Task<IActionResult> Delete(int eqId)
     {
-        var success = await _service.DeleteAsync(equipmentCode);
+        var success = await _service.DeleteAsync(eqId);
         if (success)
             return Ok(new {message = "Xóa thành công"});
         return NotFound("Không tìm thấy Equipment");
     }
+    //[HttpPost("request/{eqId}")]
+    //public async Task<IActionResult> RequestScrap(int eqId)
+    //{
+    //    var result = await _service.RequestScrapAsync(eqId);
+
+    //    if (!result.Success)
+    //    {
+    //        return BadRequest(result.Message);
+    //    }
+
+    //    return Ok(new
+    //    {
+    //        message = result.Message
+    //    });
+    //}
 }

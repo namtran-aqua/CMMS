@@ -6,17 +6,23 @@ namespace CMMS.Data.Connection
 {
     public class SqlConnectionFactory : ISqlConnectionFactory
     {
-        private readonly string _connectionString;
+        private readonly IConfiguration _configuration;
 
         public SqlConnectionFactory(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") 
-                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            _configuration = configuration;
         }
 
         public IDbConnection CreateConnection()
         {
-            return new SqlConnection(_connectionString);
+            return new SqlConnection(
+                _configuration.GetConnectionString("DefaultConnection"));
+        }
+
+        public IDbConnection CreateSolutionConnection()
+        {
+            return new SqlConnection(
+                _configuration.GetConnectionString("SolutionConnection"));
         }
     }
 }

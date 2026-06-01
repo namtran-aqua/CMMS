@@ -1,5 +1,9 @@
 @page "/maintenance"
 @using AntDesign
+@using CMMS.Client.Modals.Maintenances
+@using CMMS.Shared.Dtos.Maintenance
+@inject HttpClient httpClient
+@inject IMessageService Message
 <PageTitle>Maintenance</PageTitle>
 
 <style>
@@ -37,10 +41,6 @@
             <h3>Maintenance</h3>
             <p class="text-muted">Manage equipment maintenance records</p>
         </div>
-
-        <button class="btn btn-dark">
-            + Add Record
-        </button>
     </div>
 
     <!-- TAB -->
@@ -49,7 +49,6 @@
         <div class="tab-item @(selectedTab == "Pending" ? "active" : "")"
              @onclick='() => selectedTab = "Pending"'>
             ⏱ Pending
-            <span class="badge">@GetPendingCount()</span>
         </div>
 
         <div class="tab-item @(selectedTab == "History" ? "active" : "")"
@@ -58,46 +57,164 @@
         </div>
 
     </div>
+    @if (selectedTab == "Pending")
+    {
+        <!-- Pending -->
+        <div class="row">
+            @foreach (var item in OverDue)
+            {
+                var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
 
+                <div class="col-4 mb-3">
+                    <div class="card p-3"
+                         style="border-radius:12px;
+                                        border:1px solid @(maintenance.color == "red" ? "#ff4d4f" :
+                                           maintenance.color == "orange" ? "#faad14" : "#ddd")">
 
-    <!-- CARD -->
-    <div class="row">
-        @foreach (var item in GetFilteredData())
-        {
-            var nextDate = GetNextMaintenanceDate(item);
-            var maintenance = GetMaintenanceText(nextDate);
+                        <!-- Header -->
+                        <div class="d-flex justify-content-between">
+                            <h5>@item.EquipmentName</h5>
 
-            <div class="col-4 mb-3">
-                <div class="card p-3"
-                     style="border-radius:12px;
-                                    border:1px solid @(maintenance.color == "red" ? "#ff4d4f" :
-                                       maintenance.color == "orange" ? "#faad14" : "#ddd")">
+                            <span style="color:@maintenance.color; font-size:12px">
+                                @maintenance.text
+                            </span>
+                        </div>
 
-                    <!-- Header -->
-                    <div class="d-flex justify-content-between">
-                        <h5>@item.EquipmentName</h5>
+                        <div class="text-muted">@item.LocName</div>
+                        <div class="text-muted">@item.PIC</div>
 
-                        <span style="color:@maintenance.color; font-size:12px">
-                            @maintenance.text
-                        </span>
+                        <div class="mt-3">
+                            <div>Scheduled: @item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</div>
+                            <div>Circle: @item.MaintenanceCircleTime days</div>
+                        </div>
+
+                        <!-- Button -->
+                        <button class="btn btn-dark mt-3"
+                                @onclick="() => CreatedAsync(item.EQID)">
+                            🔧 Record Maintenance
+                        </button>
+                        @* <button class="btn btn-red mt-3"
+                                @onclick="() => HandleScrap(item.EQID)">
+                            Scrap
+                        </button> *@
                     </div>
-
-                    <!-- Location -->
-                    <div class="text-muted">@item.Location</div>
-
-                    <!-- Info -->
-                    <div class="mt-3">
-                        <div>Scheduled: @nextDate?.ToString("MMM dd, yyyy")</div>
-                        <div>Circle: @item.MaintenanceCircleTime days</div>
-                    </div>
-
-                    <!-- Button -->
-                    <button class="btn btn-dark mt-3">
-                        🔧 Record Maintenance
-                    </button>
                 </div>
-            </div>
-        }
-    </div>
+            }
 
+            @foreach (var item in DueSoon)
+            {
+                var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
+
+                <div class="col-4 mb-3">
+                    <div class="card p-3"
+                         style="border-radius:12px;
+                                            border:1px solid @(maintenance.color == "red" ? "#ff4d4f" :
+                                                                maintenance.color == "orange" ? "#faad14" : "#ddd")">
+
+                        <!-- Header -->
+                        <div class="d-flex justify-content-between">
+                            <h5>@item.EquipmentName</h5>
+
+                            <span style="color:@maintenance.color; font-size:12px">
+                                @maintenance.text
+                            </span>
+                        </div>
+
+                        <div class="text-muted">@item.LocName</div>
+                        <div class="text-muted">@item.PIC</div>
+
+                        <div class="mt-3">
+                            <div>Scheduled: @item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</div>
+                            <div>Circle: @item.MaintenanceCircleTime days</div>
+                        </div>
+
+                        <!-- Button -->
+                        <button class="btn btn-dark mt-3" 
+                                @onclick="() => CreatedAsync(item.EQID)">
+                            🔧 Record Maintenance
+                        </button>
+                        @* <Button OnClick="@CreatedAsync" Type="ButtonType.Primary" Class="btn btn-dark mt-3">
+                            🔧 Record Maintenance
+                        </Button> *@
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    else if (selectedTab == "History")
+    {
+        <!-- History -->
+        <div class="card p-3 mb-4 search-card">
+            <div class="search-container" style="display:flex">
+
+                <!-- Search Input -->
+                <input class="form-control search-input" style="border-radius:10px"
+                       placeholder="Search by name, model, serial number, or LocName..." />
+
+                <!-- StsUseName Dropdown -->
+                <select class="form-select StsUseName-filter" style="margin-left:10px;width:15%;border-radius:10px">
+                    <option>All Status</option>
+                    <option>Repair</option>
+                    <option>Routine</option>
+                    <option>Routine</option>
+                </select>
+
+            </div>
+        </div>
+        <div class="card p-3 mb-4" style="border-radius:15px">
+            <div>
+                <div><h6>Maintenance Records</h6></div>
+                <div>@_maintenances.Count records total</div>
+            </div>
+            @* <Collapse>
+                @foreach (var group in _maintenances)
+                {
+                    <Panel Header="@($"{group.EQID}({group.Items.Count})")">
+                        <Table TItem="MaintenanceDto"
+                                DataSource="@group.Items">
+                            <ColumnDefinitions Context="rowItem">
+                                <PropertyColumn Title="StsMainID" Width="150" Property="c => c.StsMainID"></PropertyColumn>
+                                <PropertyColumn Title="Maint Description" Width="auto" Property="c => c.MaintDescription"></PropertyColumn>
+                                <PropertyColumn Title="Main PIC" Width="auto" Property="c => c.MaintPIC"></PropertyColumn>
+                                <PropertyColumn Title="Maint Date" Width="150" Property="c => c.MaintDate"></PropertyColumn>
+                            </ColumnDefinitions>
+                        </Table>
+                    </Panel>
+                }
+            </Collapse> *@
+            <!-- Equipment Table -->
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                        <th>Technician</th>
+                        <th>Date</th>
+                        <th>Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_maintenances != null && _maintenances.Any())
+                    {
+                        foreach (var item in _maintenances)
+                        {
+                            <tr>
+                                <td>@item.EQID</td>
+                                <td>@item.StsMainID</td>
+                                <td>@item.MaintDescription</td>
+                                <td>@item.MaintPIC</td>
+                                <td>@item.MaintDate?.ToString("dd/MM/yyyy")</td>
+                                <td>@String.Format("{0:N0} VND", item.MaintPrice)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+
+            </table> 
+
+        </div>
+    }
 </div>
+<MaintenanceModel OnSave="LoadData" @ref="_maintenanceModal"/>

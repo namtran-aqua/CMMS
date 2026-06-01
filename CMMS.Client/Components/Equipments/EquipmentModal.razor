@@ -1,6 +1,5 @@
 ﻿@using AntDesign
-@using CMMS.Shared.EquipmentDto
-@using CMMS.Shared.Equipment
+@using CMMS.Shared.Dtos.Equipment
 @inject HttpClient httpClient
 @inject IMessageService Message
 
@@ -36,7 +35,7 @@
 @{
     RenderFragment footer = @<Template>
         <Button OnClick="@SaveAsync" Type="ButtonType.Primary">
-            Add
+            Save
         </Button>
 
         <Button OnClick="@Close">Cancel</Button>
@@ -44,7 +43,7 @@
 }
 
 <Modal @bind-Visible="IsModalVisible"
-       Title="Add New Equipment"
+       Title="Equipment"
        Style="z-index:9999;width:700px"
        Footer="@footer">
 
@@ -114,7 +113,7 @@
             </FormItem>
             </Col>
         </Row>
-        <!-- Location + Purchase Date -->
+        <!-- LocName + Purchase Date -->
         <Row Gutter="16">
             <Col Span="12">
                 <FormItem Label="Purchase Date" Name="BuyDate">
@@ -125,27 +124,32 @@
 
             <Col Span="12">
                 <FormItem Label="Purchase Price" Name="BuyPrice">
-                    <Input @bind-Value="EquipmentDto.BuyPrice"
-                           Placeholder="e.g., Workshop A - Bay 01" />   
+                    <AntDesign.InputNumber TValue="decimal?"
+                       @bind-Value="EquipmentDto.BuyPrice" />
                 </FormItem>
             </Col>
+            <Col Span="4">
+            <FormItem Label="Active" Name="IsActive">
+                <Switch @bind-Checked="EquipmentDto.IsActive" />
+            </FormItem>
+            </Col>
         </Row>
-        <!-- Location + Department + Factory -->
+        <!-- LocName + Department + Factory -->
         <Row Gutter="16">
             <Col Span="12">
-                <FormItem Label="Location" Name="Location">
-                    <Input @bind-Value="EquipmentDto.Location"
+            <FormItem Label="LocName" Name="LocCode">
+                <Input @bind-Value="EquipmentDto.LocCode"
                            Placeholder="e.g., Workshop A - Bay 01" />
                 </FormItem>
             </Col>
             <Col Span="12">
-            <FormItem Label="Department" Name="DeptId">
+            <FormItem Label="Department" Name="DeptID">
 
                 <Select TValue="int?"
-                        @bind-Value="EquipmentDto.DeptId"
+                        @bind-Value="EquipmentDto.DeptID"
                         DataSource="Departments"
-                        ValueName="ID"
-                        LabelName="DeptName"
+                        ValueName="DeptID"
+                        LabelName="DeptFullName"
                         Placeholder="Select department"
                         ShowSearch
                         AllowClear>
@@ -156,12 +160,19 @@
 
             </Col>
         </Row>
-        <!-- Status + Sts Maintenance -->
+        <!-- StsUseName + Sts Maintenance -->
         <Row Gutter="16">
             <Col Span="12">
-                <FormItem Label="Status" Name="Status">
-                    <Input @bind-Value="EquipmentDto.StatusUsing"
-                    />
+            <FormItem Label="StsUseName" Name="StsUseID">
+                    <Select TValue="int?"
+                            @bind-Value="EquipmentDto.StsUseID"
+                            DataSource="StatusUsing"
+                            ValueName="StsUseID"
+                            LabelName="StsUseName"
+                            Placeholder="Select Status"
+                            ShowSearch
+                            AllowClear>
+                    </Select>
                 </FormItem>
             </Col>
             <Col Span="12">
@@ -174,16 +185,22 @@
         <!-- Vendor + ContactNo -->
         <Row Gutter="16">
             <Col Span="12">
-                <FormItem Label="Vendor" Name="Vendor">
-                    <Input @bind-Value="EquipmentDto.Vendor"
-                           Placeholder="e.g., FANUC α-D21MiB5" />
+                <FormItem Label="Vendor" Name="VendorID">
+                    <Select TValue="int?"
+                        @bind-Value="EquipmentDto.VendorID"
+                        DataSource="Vendors"
+                        ValueName="VendorID"
+                        LabelName="VendorName"
+                        Placeholder="Select vendor"
+                        ShowSearch
+                        AllowClear>
+                    </Select>
                 </FormItem>
             </Col>
 
             <Col Span="12">
                 <FormItem Label="Contact No" Name="ContactNo">
-                    <Input @bind-Value="EquipmentDto.ContactNo"
-                           Placeholder="e.g., FNC-2023-001" />
+                    <Input @bind-Value="EquipmentDto.ContactNo" />
                 </FormItem>
             </Col>
         </Row>
@@ -198,11 +215,20 @@
             </Col>
 
             <Col Span="12">
-            <FormItem Label="PIC" Name="PIC">
-                <Input @bind-Value="EquipmentDto.PIC"
-                       Placeholder="e.g., FNC-2023-001" />
+            <FormItem Label="PIC" Name="PICID">
+                <Select TValue="int?"
+                        @bind-Value="EquipmentDto.PICID"
+                        DataSource="Users"
+                        ValueName="WorkDayId"
+                        LabelName="FullName"
+                        Placeholder="Select PIC"
+                        ShowSearch
+                        EnableSearch
+                        AllowClear>
+                </Select>
             </FormItem>
             </Col>
+            
         </Row>
     </Form>
 </Modal>

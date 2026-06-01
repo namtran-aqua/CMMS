@@ -2,6 +2,7 @@ using AntDesign;
 using CMMS.Shared.Dtos.DashBoards;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using CMMS.Shared.Dtos.DashBoards;
 using System.Net.Http.Json;
 
 namespace CMMS.Client.Pages.Dashboards

@@ -1,8 +1,9 @@
-﻿@page "/Equipment"
+﻿@page "/equipment"
 @using AntDesign
 @using CMMS.Client.Components.Equipments
 @inject IMessageService Message
 @inject IJSRuntime JS
+@inject NavigationManager NavigationManager
 <PageTitle>Equipment</PageTitle>
 
 <div>
@@ -25,10 +26,10 @@
 
             <!-- Search Input -->
             <input class="form-control search-input" style="border-radius:10px"
-                   placeholder="Search by name, model, serial number, or location..." />
+                   placeholder="Search by name, model, serial number, or LocName..." />
 
-            <!-- Status Dropdown -->
-            <select class="form-select status-filter" style="margin-left:10px;width:15%;border-radius:10px">
+            <!-- StsUseName Dropdown -->
+            <select class="form-select StsUseName-filter" style="margin-left:10px;width:15%;border-radius:10px">
                 <option>All Status</option>
                 <option>Running</option>
                 <option>Stopped</option>
@@ -47,13 +48,15 @@
         <table class="table" >
             <thead>
                 <tr>
+                    <th> 
+                        
+                    </th>
                     <th>Name</th>
                     <th>Model</th>
                     <th>Serial Number</th>
-                    <th>Location</th>
-                    <th>Status</th>
+                    <th>LocName</th>
+                    <th>StsUseName</th>
                     <th>Next Maintanance</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -63,27 +66,6 @@
                     {
                         <tr>
                             <td>
-                                <div>@item.EquipmentName</div>
-                                <div class="text-muted">@item.EquipmentCode</div>
-                            </td>
-                            <td>@item.EquipmentModel</td>
-                            <td>@item.EquipmentSerial</td>
-                            <td>@item.Location</td>
-                            <td>
-                                <span class="@GetStatusClass(item.Status)">
-                                    @item.Status
-                                </span>
-                            </td>
-                            <td>
-                                <div>@item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</div>
-                                @{
-                                    var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
-                                }
-                                <div style="color:@maintenance.color">
-                                    @maintenance.text
-                                </div>
-                            </td>
-                            <td >
                                 <Template>
                                     <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
                                         <ChildContent>
@@ -97,7 +79,7 @@
                                                 </Button>
 
                                                 <Button Type="ButtonType.Text"
-                                                        OnClick="@(async () => await DeleteAsync(item.Id))"
+                                                        OnClick="@(async () => await DeleteAsync(item.EQID))"
                                                         Style="text-align: left;">
                                                     <Icon Type="delete" /> Delete
                                                 </Button>
@@ -107,10 +89,33 @@
                                     </Popover>
                                 </Template>
                             </td>
+                            <td>
+                                <div>@item.EquipmentName</div>
+                                <div class="text-muted">@item.EquipmentCode</div>
+                            </td>
+                            <td>@item.EquipmentModel</td>
+                            <td>@item.EquipmentSerial</td>
+                            <td>@item.LocName</td>
+                            <td>
+                                <span class="@GetStsUseNameClass(item.StsUseName)">
+                                    @item.StsUseName
+                                </span>
+                            </td>
+                            <td>
+                                <div>@item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</div>
+                                @{
+                                    var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
+                                }
+                                <div style="color:@maintenance.color">
+                                    @maintenance.text
+                                </div>
+                            </td>
+                            
                         </tr>
                     }
                 }
             </tbody>
+
         </table>
     </div>
 </div>
