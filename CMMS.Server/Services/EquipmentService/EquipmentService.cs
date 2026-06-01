@@ -1,153 +1,249 @@
-﻿using CMMS.Shared.EquipmentDto;
-using CMMS.Server.Services.EquipmentService;
+﻿using CMMS.Data.Connection;
+using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.Common;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-public class EquipmentService : IEquipmentService
+namespace CMMS.Server.Services.EquipmentService
 {
-    private readonly IConfiguration _config;
-
-    public EquipmentService(IConfiguration config)
+    public class EquipmentService : IEquipmentService
     {
-        _config = config;
-    }
-
-    public async Task<List<EquipmentDto>> GetAllAsync()
-    {
-        try
+        private readonly IConfiguration _config;
+        private readonly ISqlConnectionFactory _connectionFactory;
+        public EquipmentService(IConfiguration config, ISqlConnectionFactory connectionFactory)
         {
-            var list = new List<EquipmentDto>();
+            _config = config;
+            _connectionFactory = connectionFactory;
+        }
+        public async Task<List<EquipmentDto>> GetAllAsync()
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            string sql = "SELECT * FROM vw_EquipmentInfo WHERE IsActive = 1";
+
+            var result = await connection.QueryAsync<EquipmentDto>(sql);
+            return result.ToList();
+        }
+        public async Task<bool> CreatedAsync(EquipmentDto equipment)
+        {
             var connStr = _config.GetConnectionString("DefaultConnection");
 
             const string sql = @"
-                    SELECT *
-                    FROM dbo.vw_EquipmentInfo";
-
-            using var con = new SqlConnection(connStr);
-            using var cmd = new SqlCommand(sql, con);
-
-            await con.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-
-                list.Add(new EquipmentDto
-                {
-                    EquipmentName = reader["EquipmentName"]?.ToString() ?? "",
-                    EquipmentBarcode = reader["EquipmentBarcode"]?.ToString(),
-                    EquipmentCode = reader["EquipmentCode"]?.ToString(),
-                    EquipmentModel = reader["EquipmentModel"]?.ToString(),
-                    EquipmentSerial = reader["EquipmentSerial"]?.ToString(),
-                    EquipmentDescription = reader["EquipmentDescription"]?.ToString(),
-                    EquipmentNote = reader["EquipmentNote"]?.ToString(),
-                    Location = reader["Location"]?.ToString(),
-                    Status = reader["Status"]?.ToString(),
-                    BuyDate = reader["BuyDate"] as DateTime?,
-                    BuyPrice = reader["BuyPrice"]?.ToString(),
-                    BuyCurrency = reader["BuyCurrency"]?.ToString(),
-                    ContactNo = reader["ContactNo"]?.ToString(),
-                    SAPCode = reader["SAPCode"]?.ToString()
-                    //Id = reader.GetInt32(0),
-                    //EquipmentName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                    //EquipmentBarcode = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                    //EquipmentCode = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                    //EquipmentModel = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                    //EquipmentSerial = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                    //EquipmentDescription = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                    //EquipmentNote = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                    //BuyDate = reader.IsDBNull(8) ? (DateTime?)null : reader.GetDateTime(8),
-                    //BuyCurrency = reader.IsDBNull(9) ? string.Empty : reader.GetString(9)
-                });
-            }
-
-            return list;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching equipment data: {ex.Message}");
-            return new List<EquipmentDto>();
-        }
-    }
-    public async Task<bool> CreatedAsync (EquipmentDto equipment)
-    {
-        var connStr = _config.GetConnectionString("DefaultConnection");
-
-        const string sql = @"
             INSERT INTO dbo.Tbl_EquipmentInfo 
-                (EquipmentName, EquipmentCode, EquipmentBarcode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PIC)
+                (EquipmentName, EquipmentCode, EquipmentBarcode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PICID, PIC, VendorID, LastMaintenanceDate, StsUseID, IsActive)
             VALUES 
-                (@EquipmentName, @EquipmentCode, @EquipmentBarcode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PIC)
+                (@EquipmentName, @EquipmentCode, @EquipmentBarcode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PICID, @PIC, @VendorID, @LastMaintenanceDate, @StsUseID, @IsActive)
         ";
-        await using var con = new SqlConnection(connStr);
-        await using var cmd = new SqlCommand(sql, con);
+            await using var con = new SqlConnection(connStr);
+            await using var cmd = new SqlCommand(sql, con);
 
-        cmd.Parameters.Add("@EquipmentName", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentName ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentCode", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentCode ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentBarcode", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentBarcode ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentModel", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentModel ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentSerial", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentSerial ?? DBNull.Value;  
-        cmd.Parameters.Add("@EquipmentDescription", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentDescription ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentNote", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentNote ?? DBNull.Value;
-        cmd.Parameters.Add("@DeptId", SqlDbType.Int).Value = (object?)equipment.DeptId ?? DBNull.Value;
-        cmd.Parameters.Add("@BuyDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
-        cmd.Parameters.Add("@BuyPrice", SqlDbType.NVarChar).Value = (object?)equipment.BuyPrice ?? DBNull.Value;
-        cmd.Parameters.Add("@BuyCurrency", SqlDbType.NVarChar).Value = (object?)equipment.BuyCurrency ?? DBNull.Value;
-        cmd.Parameters.Add("@MaintenanceCircleTime", SqlDbType.Int).Value = (object?)equipment.MaintenanceCircleTime ?? DBNull.Value;
-        cmd.Parameters.Add("@ContactNo", SqlDbType.NVarChar).Value = (object?)equipment.ContactNo ?? DBNull.Value;
-        cmd.Parameters.Add("@SAPCode", SqlDbType.Int).Value = (object?)equipment.SAPCode ?? DBNull.Value;
-        cmd.Parameters.Add("@PIC", SqlDbType.NVarChar).Value = (object?)equipment.PIC ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentName", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentName ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentCode", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentCode ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentBarcode", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentBarcode ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentModel", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentModel ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentSerial", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentSerial ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentDescription", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentDescription ?? DBNull.Value;
+            cmd.Parameters.Add("@EquipmentNote", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentNote ?? DBNull.Value;
+            cmd.Parameters.Add("@DeptId", SqlDbType.Int).Value = (object?)equipment.DeptID ?? DBNull.Value;
+            cmd.Parameters.Add("@BuyDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
+            cmd.Parameters.Add("@BuyPrice", SqlDbType.Decimal).Value = (object?)equipment.BuyPrice ?? DBNull.Value;
+            cmd.Parameters.Add("@BuyCurrency", SqlDbType.NVarChar).Value = (object?)equipment.BuyCurrency ?? DBNull.Value;
+            cmd.Parameters.Add("@MaintenanceCircleTime", SqlDbType.Int).Value = (object?)equipment.MaintenanceCircleTime ?? DBNull.Value;
+            cmd.Parameters.Add("@ContactNo", SqlDbType.NVarChar).Value = (object?)equipment.ContactNo ?? DBNull.Value;
+            cmd.Parameters.Add("@SAPCode", SqlDbType.Int).Value = (object?)equipment.SAPCode ?? DBNull.Value;
+            cmd.Parameters.Add("@PICID", SqlDbType.UniqueIdentifier).Value = (object?)equipment.PICID ?? DBNull.Value;
+            cmd.Parameters.Add("@PIC", SqlDbType.NVarChar).Value = (object?)equipment.PIC ?? DBNull.Value;
+            cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)equipment.VendorID ?? DBNull.Value;
+            cmd.Parameters.Add("@LastMaintenanceDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
+            cmd.Parameters.Add("@StsUseID", SqlDbType.Int).Value = (object?)equipment.StsUseID ?? DBNull.Value;
+            cmd.Parameters.Add("@IsActive", SqlDbType.Bit).Value = (object?)equipment.IsActive ?? DBNull.Value;
+            await con.OpenAsync();
+            var result = await cmd.ExecuteNonQueryAsync();
+            return result > 0;
+        }
+        public async Task<bool> DeleteAsync(int id)
+        {
+            await using var connection = (SqlConnection)_connectionFactory.CreateConnection();
 
-        await con.OpenAsync();
-        var result = await cmd.ExecuteNonQueryAsync();
-        return result > 0;
-    }
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var connStr = _config.GetConnectionString("DefaultConnection");
-        const string sql = @" 
+            const string sql = @" 
             DELETE FROM dbo.Tbl_EquipmentInfo
-            WHERE Id = @Id
+            WHERE EQID = @EQID
         ";
-        await using var con = new SqlConnection(connStr);
-        await using var cmd = new SqlCommand(sql, con);
-        cmd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
-        await con.OpenAsync();
-        var result = await cmd.ExecuteNonQueryAsync();
-        return result > 0;
-    }
-    public async Task<bool> UpdateAsync(EquipmentDto equipment)
-    {
-        var connStr = _config.GetConnectionString("DefaultConnection");
-        const string sql = @"
-            UPDATE dbo.Tbl_EquipmentInfo
-            SET 
-                EquipmentName = @EquipmentName,
-                EquipmentCode = @EquipmentCode,
-                EquipmentBarcode = @EquipmentBarcode,
-                EquipmentModel = @EquipmentModel,
-                EquipmentSerial = @EquipmentSerial,
-                EquipmentDescription = @EquipmentDescription,
-                EquipmentNote = @EquipmentNote,
-                Location = @Location,
-                Status = @Status,
-                BuyDate = @BuyDate,
-                BuyPrice = @BuyPrice,
-                BuyCurrency = @BuyCurrency,
-                ContactNo = @ContactNo,
-                SAPCode = @SAPCode
-            WHERE Id = @Id
-        ";
-        await using var con = new SqlConnection(connStr);
-        await using var cmd = new SqlCommand(sql, con);
-        cmd.Parameters.Add("@EquipmentName", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentName ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentModel", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentModel ?? DBNull.Value;
-        cmd.Parameters.Add("@EquipmentSerial", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentSerial ?? DBNull.Value;
-        cmd.Parameters.Add("@Location", SqlDbType.NVarChar).Value = (object?)equipment.Location ?? DBNull.Value;
-        cmd.Parameters.Add("@Status", SqlDbType.NVarChar).Value = (object?)equipment.Status ?? DBNull.Value;
-        cmd.Parameters.Add("@BuyDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
-        await con.OpenAsync();
-        var result = await cmd.ExecuteNonQueryAsync();
-        return result > 0;
+            await using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.Add("@EQID", SqlDbType.Int).Value = id;
+            await connection.OpenAsync();
+            var result = await cmd.ExecuteNonQueryAsync();
+            return result > 0;
+        }
+        public async Task<bool> UpdateAsync(EquipmentDto equipment)
+        {
+            try
+            {
+                await using var connection = (SqlConnection)_connectionFactory.CreateConnection();
+                const string sql = @"
+                    UPDATE dbo.Tbl_EquipmentInfo
+                    SET 
+                        EquipmentName = @EquipmentName,
+                        EquipmentCode = @EquipmentCode,
+                        EquipmentBarcode = @EquipmentBarcode,
+                        EquipmentModel = @EquipmentModel,
+                        EquipmentSerial = @EquipmentSerial,
+                        EquipmentDescription = @EquipmentDescription,
+                        EquipmentNote = @EquipmentNote,
+                        DeptID = @DeptID,
+                        StsUseID = @StsUseID,
+                        VendorID = @VendorID,
+                        MaintenanceCircleTime = @MaintenanceCircleTime,
+                        BuyDate = @BuyDate,
+                        BuyPrice = @BuyPrice,
+                        BuyCurrency = @BuyCurrency,
+                        ContactNo = @ContactNo,
+                        SAPCode = @SAPCode,
+                        PIC = @PIC,
+                        IsActive = @IsActive
+                    WHERE EQID = @EQID
+                ";
+                await using var cmd = new SqlCommand(sql, connection);
+                cmd.Parameters.Add("@EQID", SqlDbType.Int).Value = equipment.EQID;
+                cmd.Parameters.Add("@EquipmentName", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentName ?? DBNull.Value;
+                cmd.Parameters.Add("@EquipmentCode", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentCode ?? DBNull.Value;
+                cmd.Parameters.Add("@EquipmentBarcode", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentBarcode ?? DBNull.Value;
+                cmd.Parameters.Add("@EquipmentModel", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentModel ?? DBNull.Value;
+                cmd.Parameters.Add("@EquipmentSerial", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentSerial ?? DBNull.Value;
+                cmd.Parameters.Add("@EquipmentDescription", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentDescription ?? DBNull.Value;
+                cmd.Parameters.Add("@EquipmentNote", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentNote ?? DBNull.Value;
+                cmd.Parameters.Add("@DeptId", SqlDbType.Int).Value = (object?)equipment.DeptID ?? DBNull.Value;
+                cmd.Parameters.Add("@BuyDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
+                cmd.Parameters.Add("@BuyPrice", SqlDbType.Decimal).Value = (object?)equipment.BuyPrice ?? DBNull.Value;
+                cmd.Parameters.Add("@BuyCurrency", SqlDbType.NVarChar).Value = (object?)equipment.BuyCurrency ?? DBNull.Value;
+                cmd.Parameters.Add("@MaintenanceCircleTime", SqlDbType.Int).Value = (object?)equipment.MaintenanceCircleTime ?? DBNull.Value;
+                cmd.Parameters.Add("@ContactNo", SqlDbType.NVarChar).Value = (object?)equipment.ContactNo ?? DBNull.Value;
+                cmd.Parameters.Add("@SAPCode", SqlDbType.Int).Value = (object?)equipment.SAPCode ?? DBNull.Value;
+                cmd.Parameters.Add("@PIC", SqlDbType.NVarChar).Value = (object?)equipment.PIC ?? DBNull.Value;
+                cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)equipment.VendorID ?? DBNull.Value;
+                cmd.Parameters.Add("@StsUseID", SqlDbType.Int).Value = (object?)equipment.StsUseID ?? DBNull.Value;
+                cmd.Parameters.Add("@IsActive", SqlDbType.Bit).Value = (object?)equipment.IsActive ?? DBNull.Value;
+                await connection.OpenAsync();
+                var result = await cmd.ExecuteNonQueryAsync();
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while updating equipment: {ex.Message}");
+                return false;
+
+            }
+        }
+        //public async Task<ApiResponse> RequestScrapAsync(int eqId)
+        //{
+        //    try
+        //    {
+        //        using var connection =
+        //            _connectionFactory.CreateConnection();
+
+        //        // tìm equipment
+        //        var equipment =
+        //            await connection.QueryFirstOrDefaultAsync<EquipmentDto>(
+        //                @"SELECT *
+        //              FROM dbo.Tbl_EquipmentInfo
+        //              WHERE EQID = @EQID",
+        //                new
+        //                {
+        //                    EQID = eqId
+        //                });
+
+        //        if (equipment == null)
+        //        {
+        //            return new ApiResponse
+        //            {
+        //                Success = false,
+        //                Message = "Không tìm thấy thiết bị"
+        //            };
+        //        }
+
+        //        //// kiểm tra status
+        //        //if (equipment.StsMainID == "Pending")
+        //        //{
+        //        //    return new ApiResponse
+        //        //    {
+        //        //        Success = false,
+        //        //        Message = "Thiết bị đang chờ approve"
+        //        //    };
+        //        //}
+
+        //        // update equipment
+        //        await connection.ExecuteAsync(
+        //            @"UPDATE dbo.Tbl_EquipmentInfo
+        //          SET StsUseID = 4
+        //          WHERE EQID = @EQID",
+        //            new
+        //            {
+        //                EQID = eqId
+        //            });
+
+        //        // insert scrap request
+        //        var requestId =
+        //            await connection.ExecuteScalarAsync<int>(
+        //                @"INSERT INTO dbo.Tbl_ScrapRequest
+        //              (
+        //                  EQID,
+        //                  RequestDate,
+        //                  RequestStatus
+        //              )
+        //              VALUES
+        //              (
+        //                  @EQID,
+        //                  GETDATE(),
+        //                  'Pending'
+        //              );
+
+        //              SELECT CAST(SCOPE_IDENTITY() as int)",
+        //                new
+        //                {
+        //                    EQID = eqId
+        //                });
+
+        //        // power automate
+        //        var flowUrl =
+        //            _config["PowerAutomate:ScrapFlowUrl"];
+
+        //        using var client = new HttpClient();
+
+        //        var payload = new
+        //        {
+        //            RequestId = requestId,
+        //            EQID = equipment.EQID,
+        //            EquipmentName = equipment.EquipmentName
+        //        };
+
+        //        var response =
+        //            await client.PostAsJsonAsync(
+        //                flowUrl,
+        //                payload);
+        //        var responseContent = await response.Content.ReadAsStringAsync();
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            return new ApiResponse
+        //            {
+        //                Success = false,
+        //                Message = "Không gửi được approval"
+        //            };
+        //        }
+
+        //        return new ApiResponse
+        //        {
+        //            Success = true,
+        //            Message = "Đã gửi yêu cầu approve"
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return new ApiResponse
+        //        {
+        //            Success = false,
+        //            Message = ex.Message
+        //        };
+        //    }
+        //}
     }
 }

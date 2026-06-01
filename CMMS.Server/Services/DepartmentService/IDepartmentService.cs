@@ -1,4 +1,5 @@
-﻿using CMMS.Shared.Equipment;
+﻿using CMMS.Shared.Dtos.Equipment;
+
 namespace CMMS.Server.Services.DepartmentService
 {
     public interface IDepartmentService

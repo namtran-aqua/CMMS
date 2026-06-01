@@ -1,7 +1,7 @@
-﻿using CMMS.Shared.Equipment;
-using CMMS.Server.Services.DepartmentService;
+﻿using CMMS.Server.Services.DepartmentService;
 using Microsoft.Data.SqlClient;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using CMMS.Shared.Dtos.Equipment;
 
 namespace CMMS.Server.Services.DepartmentService
 {
@@ -16,7 +16,7 @@ namespace CMMS.Server.Services.DepartmentService
         {
             var list = new List<DepartmentDto>();
 
-            var sql = "SELECT * FROM Tbl_FactoryDepartment";
+            var sql = "SELECT * FROM dbo.vw_FactoryDepartment";
 
             using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             using var cmd = new SqlCommand(sql, con);
@@ -28,8 +28,10 @@ namespace CMMS.Server.Services.DepartmentService
             {
                 list.Add(new DepartmentDto
                 {
-                    ID = (int)reader["DeptID"],
-                    DeptName = reader["DeptName"].ToString()
+                    DeptID = (int)reader["DeptID"],
+                    DeptName = reader["DeptName"].ToString(),
+                    DeptFullName = reader["DeptFullName"].ToString(),
+                    DeptCode = reader["DeptCode"].ToString()
                 });
             }
 

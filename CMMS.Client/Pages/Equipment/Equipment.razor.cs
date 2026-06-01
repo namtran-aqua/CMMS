@@ -1,6 +1,6 @@
 ﻿using AntDesign;
 using CMMS.Client.Components.Equipments;
-using CMMS.Shared.EquipmentDto;
+using CMMS.Shared.Dtos.Equipment;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -36,9 +36,9 @@ namespace CMMS.Client.Pages.Equipment
         }
         #endregion
         #region Action
-        private string GetStatusClass(string? status)
+        private string GetStsUseNameClass(string? StsUseName)
         {
-            return status switch
+            return StsUseName switch
             {
                 "Running" => "badge bg-dark",
                 "Fault" => "badge bg-danger",

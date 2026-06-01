@@ -1,4 +1,5 @@
-﻿using CMMS.Shared.EquipmentDto;
+﻿using CMMS.Shared.Dtos.Common;
+using CMMS.Shared.Dtos.Equipment;
 
 namespace CMMS.Server.Services.EquipmentService
 {
@@ -8,5 +9,6 @@ namespace CMMS.Server.Services.EquipmentService
         Task<bool> CreatedAsync(EquipmentDto equipment);
         Task<bool> UpdateAsync(EquipmentDto equipment);
         Task<bool> DeleteAsync(int equipmentCode);
+        //Task<ApiResponse> RequestScrapAsync(int equipmentCode);
     }
 }

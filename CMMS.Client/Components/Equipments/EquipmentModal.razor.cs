@@ -1,6 +1,6 @@
 ﻿using AntDesign;
-using CMMS.Shared.Equipment;
-using CMMS.Shared.EquipmentDto;
+using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
 
@@ -13,6 +13,9 @@ namespace CMMS.Client.Components.Equipments
         private bool IsModalVisible = false;
         private EquipmentDto EquipmentDto { get; set; } = new();
         private List<DepartmentDto> Departments  = new();
+        private List<VendorDto> Vendors = new();
+        private List<StatusUsingDto> StatusUsing = new();
+        private List<UserDto> Users = new();    
         [Parameter] public EventCallback OnSave { get; set; }
         private Form<EquipmentDto> formRef = new();
         private bool IsEdit { get; set; }
@@ -24,6 +27,9 @@ namespace CMMS.Client.Components.Equipments
             IsEdit = isEdit;
             EquipmentDto = new();
             await LoadDepartmentsData();
+            await LoadStatusUsingData();
+            await LoadVendorData();
+            await LoadUsersData();
             if (equipmentDto != null)
             {
                 EquipmentDto = equipmentDto;
@@ -59,7 +65,7 @@ namespace CMMS.Client.Components.Equipments
         #region HandleData
         private async Task UpdateAsync()
         {
-            var response = await Http.PutAsJsonAsync($"api/Equipment/update", EquipmentDto);
+            var response = await Http.PutAsJsonAsync("api/Equipment/update", EquipmentDto);
             if (response.IsSuccessStatusCode)
             {
                 await Message.Success("Cập nhật thành công !");
@@ -89,6 +95,18 @@ namespace CMMS.Client.Components.Equipments
         private async Task LoadDepartmentsData()
         {
             Departments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/Department/departments") ?? new();
+        }
+        private async Task LoadStatusUsingData()
+        {
+            StatusUsing = await Http.GetFromJsonAsync<List<StatusUsingDto>>("api/StatusUsing/statususing") ?? new();
+        }
+        private async Task LoadVendorData()
+        {
+            Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/Vendor/vendors") ?? new();
+        }
+        private async Task LoadUsersData()
+        {
+            Users = await Http.GetFromJsonAsync<List<UserDto>>("api/User/users") ?? new();
         }
     }
 
