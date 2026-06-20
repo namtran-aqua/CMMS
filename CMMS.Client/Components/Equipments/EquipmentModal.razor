@@ -121,26 +121,63 @@
                                 Style="width:100%" />
                 </FormItem>
             </Col>
-
             <Col Span="12">
-                <FormItem Label="Purchase Price" Name="BuyPrice">
-                    <AntDesign.InputNumber TValue="decimal?"
-                       @bind-Value="EquipmentDto.BuyPrice" />
-                </FormItem>
-            </Col>
-            <Col Span="4">
-            <FormItem Label="Active" Name="IsActive">
-                <Switch @bind-Checked="EquipmentDto.IsActive" />
+            <FormItem Label="Maintenance Circle Time" Name="MaintenanceCircleTime">
+                <AntDesign.InputNumber TValue="int?"
+                                       @bind-Value="EquipmentDto.MaintenanceCircleTime"
+                                       Style="width:100%" />
             </FormItem>
             </Col>
+            
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="Purchase Price" Name="BuyPrice">
+                <AntDesign.InputNumber TValue="decimal?"
+                                       @bind-Value="EquipmentDto.BuyPrice"
+                                       Style="width:100%" />
+            </FormItem>
+            </Col>
+            <Col Span="12">
+            <FormItem Label="BuyCurrency" Name="BuyCurrency">
+                    <Select TValue="string"
+                            @bind-Value="EquipmentDto.BuyCurrency"
+                            DataSource="CurrencyList"
+                            ValueName="Id"
+                            LabelName="Name"
+                            Placeholder="Select currency"
+                            Style="width:100%">
+                    </Select>
+                </FormItem>
+            </Col>
+            @* <Col Span="12">
+            <FormItem Label="Maintenance Type" Name="StsMainID" Required>
+                <Select TValue="int"
+                        @bind-Value="MaintenanceDto.StsMainID"
+                        DataSource="MaintenanceStatuses"
+                        ValueName="Id"
+                        LabelName="Name"
+                        Placeholder="Select type"
+                        Style="width:100%">
+                </Select>
+            </FormItem>
+            </Col> *@
         </Row>
         <!-- LocName + Department + Factory -->
         <Row Gutter="16">
             <Col Span="12">
-            <FormItem Label="LocName" Name="LocCode">
-                <Input @bind-Value="EquipmentDto.LocCode"
-                           Placeholder="e.g., Workshop A - Bay 01" />
-                </FormItem>
+            <FormItem Label="Location" Name="LocID">
+
+                <Select TValue="int?"
+                        @bind-Value="EquipmentDto.LocID"
+                        DataSource="Locations"
+                        ValueName="LocID"
+                        LabelName="LocCode"
+                        Placeholder="Select Location"
+                        ShowSearch
+                        AllowClear>
+                </Select>
+            </FormItem>
             </Col>
             <Col Span="12">
             <FormItem Label="Department" Name="DeptID">
@@ -160,29 +197,7 @@
 
             </Col>
         </Row>
-        <!-- StsUseName + Sts Maintenance -->
-        <Row Gutter="16">
-            <Col Span="12">
-            <FormItem Label="StsUseName" Name="StsUseID">
-                    <Select TValue="int?"
-                            @bind-Value="EquipmentDto.StsUseID"
-                            DataSource="StatusUsing"
-                            ValueName="StsUseID"
-                            LabelName="StsUseName"
-                            Placeholder="Select Status"
-                            ShowSearch
-                            AllowClear>
-                    </Select>
-                </FormItem>
-            </Col>
-            <Col Span="12">
-            <FormItem Label="Maintenance Circle Time" Name="MaintenanceCircleTime">
-                <Input @bind-Value="EquipmentDto.MaintenanceCircleTime"
-                            Style="width:100%" />
-            </FormItem>
-            </Col>
-        </Row>
-        <!-- Vendor + ContactNo -->
+        <!-- Vendor + PIC -->
         <Row Gutter="16">
             <Col Span="12">
                 <FormItem Label="Vendor" Name="VendorID">
@@ -197,37 +212,47 @@
                     </Select>
                 </FormItem>
             </Col>
-
             <Col Span="12">
-                <FormItem Label="Contact No" Name="ContactNo">
-                    <Input @bind-Value="EquipmentDto.ContactNo" />
-                </FormItem>
-            </Col>
-        </Row>
-
-        <!-- SAPCode + PIC -->
-        <Row Gutter="16">
-            <Col Span="12">
-            <FormItem Label="SAP Code" Name="SAPCode">
-                <Input @bind-Value="EquipmentDto.SAPCode"
-                       Placeholder="e.g., FANUC α-D21MiB5" />
-            </FormItem>
-            </Col>
-
-            <Col Span="12">
-            <FormItem Label="PIC" Name="PICID">
-                <Select TValue="int?"
+            <FormItem Label="PICID" Name="PICID">
+                <Select TValue="string?"
                         @bind-Value="EquipmentDto.PICID"
                         DataSource="Users"
                         ValueName="WorkDayId"
                         LabelName="FullName"
                         Placeholder="Select PIC"
                         ShowSearch
-                        EnableSearch
-                        AllowClear>
+                        EnableSearch>
                 </Select>
             </FormItem>
             </Col>
+            @* <Col Span="12">
+                <FormItem Label="Contact No" Name="ContactNo">
+                    <Input @bind-Value="EquipmentDto.ContactNo" />
+                </FormItem>
+            </Col> *@
+        </Row>
+
+        <!-- SAPCode + PIC -->
+        <Row Gutter="16">
+            @* <Col Span="12">
+            <FormItem Label="SAP Code" Name="SAPCode">
+                <AntDesign.InputNumber @bind-Value="EquipmentDto.SAPCode"
+                                       Style="width:100%" />
+            </FormItem>
+            </Col> *@
+            <Col Span="12">
+            <FormItem Label="SAPCode" Name="SAPCode">
+                <Input @bind-Value="EquipmentDto.SAPCode"
+                       />
+            </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Contact No" Name="ContactNo">
+                    <Input @bind-Value="EquipmentDto.ContactNo" />
+                </FormItem>
+            </Col>
+
+            
             
         </Row>
     </Form>

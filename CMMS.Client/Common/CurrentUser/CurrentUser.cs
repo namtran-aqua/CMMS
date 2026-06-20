@@ -5,12 +5,12 @@ using System.Security.Claims;
 
 namespace CMMS.Client.Common
 {
-    public class CurrenUser
+    public class CurrentUser
     {
         private readonly HttpClient _http;
         private readonly AuthenticationStateProvider _authStateProvider;
 
-        public CurrenUser(HttpClient http, AuthenticationStateProvider authStateProvider)
+        public CurrentUser(HttpClient http, AuthenticationStateProvider authStateProvider)
         {
             _http = http;
             _authStateProvider = authStateProvider;
@@ -32,8 +32,6 @@ namespace CMMS.Client.Common
                     WorkDayId = user.FindFirst("WorkDayId")?.Value ?? "",
                     FullName = user.FindFirst("FullName")?.Value ?? "",
                     Email = user.FindFirst(ClaimTypes.Email)?.Value ?? ""
-                    //Roles = user.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList(),
-                    //Permissions = user.FindAll("permission").Select(p => p.Value).ToList()
                 };
 
                 var CurrenUserInfo = await _http.GetFromJsonAsync<UserDto>($"api/user/get-currentUser/{users.UserId}");

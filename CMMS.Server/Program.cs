@@ -1,4 +1,5 @@
 ﻿using CMMS.Server;
+using CMMS.Server.Services.DailyJobService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -13,6 +14,7 @@ builder.Services.AddControllers()
     {
         opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
+builder.Services.AddHostedService<EquipmentStatusUpdateBackgroundService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

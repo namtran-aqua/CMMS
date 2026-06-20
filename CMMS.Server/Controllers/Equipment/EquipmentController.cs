@@ -1,4 +1,5 @@
 ﻿using CMMS.Server.Services.EquipmentService;
+using CMMS.Server.Services.DailyJobService;
 using CMMS.Shared.Dtos.Equipment;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,10 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 public class EquipmentController : ControllerBase
 {
     private readonly IEquipmentService _service;
+    private readonly IDailyJobService _statusService;
 
-    public EquipmentController(IEquipmentService service)
+    public EquipmentController(IEquipmentService service, IDailyJobService status)
     {
         _service = service;
+        _statusService = status;
     }
 
     [HttpGet("get-all")]
@@ -45,6 +48,12 @@ public class EquipmentController : ControllerBase
         if (success)
             return Ok(new {message = "Xóa thành công"});
         return NotFound("Không tìm thấy Equipment");
+    }
+    [HttpPost("update-status")]
+    public async Task<IActionResult> UpdateStatus()
+    {
+        await _statusService.UpdateStatusAsync();
+        return Ok();
     }
     //[HttpPost("request/{eqId}")]
     //public async Task<IActionResult> RequestScrap(int eqId)

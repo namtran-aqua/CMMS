@@ -1,9 +1,12 @@
 using AntDesign;
+using CMMS.Client.Common;
 using CMMS.Client.Components.Equipments;
 using CMMS.Client.Modals.Maintenances;
 using CMMS.Shared.Dtos.DashBoards;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.Maintenance;
+using Microsoft.AspNetCore.Components.Authorization;
+using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
 
@@ -12,7 +15,8 @@ namespace CMMS.Client.Pages.Maintenance
     public partial class Maintenance
     {
         [Inject] private HttpClient Http { get; set; }
-
+        [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        private bool IsAuthenticated { get; set; } = false;
         private List<EquipmentDto> _equipments = new();
         public List<DashBoarDto> DashBoardData { get; set; } = new();
         private List<DashBoarDto> DueSoon { get; set; } = new();
@@ -21,18 +25,117 @@ namespace CMMS.Client.Pages.Maintenance
         private List<MaintenanceDto> MaintenanceGroups = new();
         private MaintenanceModel? _maintenanceModal;
         private Table<MaintenanceModel>? _tableRef;
+        private UserDto CurrentUser { get; set; } = new();
+
         private bool isLoading = true;
 
         private string selectedTab = "Pending";
+
+        private string pendingSearchText = "";
+        private string pendingSortBy = "DueDateAsc";
+
+        private string historySearchText = "";
+        private int historyStatusFilter = 0;
+        private string historySortBy = "DateDesc";
+
+        private string GetEquipmentName(int eqid)
+        {
+            var eq = DashBoardData?.FirstOrDefault(d => d.EQID == eqid);
+            return eq?.EquipmentName ?? $"EQ #{eqid}";
+        }
+
+        private string GetStsMainName(int stsMainID)
+        {
+            return stsMainID switch
+            {
+                1 => "Routine",
+                2 => "Repair",
+                _ => "Routine"
+            };
+        }
+
+        private List<DashBoarDto> FilteredOverDue => FilterAndSortPending(OverDue);
+        private List<DashBoarDto> FilteredDueSoon => FilterAndSortPending(DueSoon);
+
+        private List<DashBoarDto> FilterAndSortPending(List<DashBoarDto> source)
+        {
+            if (source == null) return new();
+            var result = source.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(pendingSearchText))
+            {
+                var search = pendingSearchText.Trim().ToLower();
+                result = result.Where(x =>
+                    (x.EquipmentName != null && x.EquipmentName.ToLower().Contains(search)) ||
+                    (x.LocName != null && x.LocName.ToLower().Contains(search)) ||
+                    (x.PIC != null && x.PIC.ToLower().Contains(search))
+                );
+            }
+
+            result = pendingSortBy switch
+            {
+                "NameAsc" => result.OrderBy(x => x.EquipmentName ?? ""),
+                "NameDesc" => result.OrderByDescending(x => x.EquipmentName ?? ""),
+                "DueDateAsc" => result.OrderBy(x => x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue ? x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value) : DateTime.MaxValue),
+                "DueDateDesc" => result.OrderByDescending(x => x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue ? x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value) : DateTime.MinValue),
+                _ => result
+            };
+
+            return result.ToList();
+        }
+
+        private List<MaintenanceDto> FilteredHistory
+        {
+            get
+            {
+                if (_maintenances == null) return new();
+                var result = _maintenances.AsEnumerable();
+
+                // Filter by search text
+                if (!string.IsNullOrWhiteSpace(historySearchText))
+                {
+                    var search = historySearchText.Trim().ToLower();
+                    result = result.Where(m =>
+                        GetEquipmentName(m.EQID).ToLower().Contains(search) ||
+                        (m.MaintPIC != null && m.MaintPIC.ToLower().Contains(search)) ||
+                        (m.MaintDescription != null && m.MaintDescription.ToLower().Contains(search))
+                    );
+                }
+
+                // Filter by status
+                if (historyStatusFilter > 0)
+                {
+                    result = result.Where(m => m.StsMainID == historyStatusFilter);
+                }
+
+                // Sort
+                result = historySortBy switch
+                {
+                    "DateDesc" => result.OrderByDescending(m => m.MaintDate ?? DateTime.MinValue),
+                    "DateAsc" => result.OrderBy(m => m.MaintDate ?? DateTime.MaxValue),
+                    "CostDesc" => result.OrderByDescending(m => m.MaintPrice ?? 0),
+                    "CostAsc" => result.OrderBy(m => m.MaintPrice ?? 0),
+                    "NameAsc" => result.OrderBy(m => GetEquipmentName(m.EQID)),
+                    "NameDesc" => result.OrderByDescending(m => GetEquipmentName(m.EQID)),
+                    _ => result.OrderByDescending(m => m.MaintDate ?? DateTime.MinValue)
+                };
+
+                return result.ToList();
+            }
+        }
+
         protected override async Task OnInitializedAsync()
         {
+            //var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
+            //CurrentUser = await CurrentUserClass.LoadCurrentUser();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            IsAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
+            var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
+            CurrentUser = await CurrentUserClass.LoadCurrentUser();
             await LoadData();
         }
-        //private async Task LoadData()
-        //{
-        //    var res = await Http.GetFromJsonAsync<List<EquipmentDto>>("api/Equipment/get-all");
-        //    _equipments = res ?? new();
-        //}
+
         private async Task LoadData()
         {
             try
@@ -53,13 +156,13 @@ namespace CMMS.Client.Pages.Maintenance
 
                 _maintenances = await maintenanceTask ?? new();
                 MaintenanceGroups = _maintenances
-    .GroupBy(x => x.EQID)
-    .Select(g => new MaintenanceDto
-    {
-        EQID = g.Key,
-        Items = g.ToList()
-    })
-    .ToList();
+                    .GroupBy(x => x.EQID)
+                    .Select(g => new MaintenanceDto
+                    {
+                        EQID = g.Key,
+                        Items = g.ToList()
+                    })
+                    .ToList();
             }
             catch (Exception ex)
             {
@@ -70,7 +173,6 @@ namespace CMMS.Client.Pages.Maintenance
                 isLoading = false;
             }
         }
-
 
         protected override void OnParametersSet()
         {
@@ -103,19 +205,6 @@ namespace CMMS.Client.Pages.Maintenance
             .OrderBy(x => x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value))
             .ToList();
         }
-        //private DateTime? GetNextMaintenanceDate(DashBoarDto item)
-        //{
-        //    if (item.NextMaintenanceDate.HasValue)
-        //        return item.NextMaintenanceDate.Value;
-
-        //    var baseDate = item.LastMaintenanceDate ?? item.BuyDate;
-        //    if (baseDate.HasValue && item.MaintenanceCircleTime.HasValue)
-        //    {
-        //        return baseDate.Value.AddDays(item.MaintenanceCircleTime.Value);
-        //    }
-
-        //    return null;
-        //}
 
         private (string text, string color) GetMaintenanceText(DateTime? date)
         {
@@ -127,7 +216,7 @@ namespace CMMS.Client.Pages.Maintenance
 
             if (diff > 0)
             {
-                if (diff <= 5)
+                if (diff <= 7)
                     return ($"In {diff} days", "orange");
 
                 return ($"In {diff} days", "black");
@@ -141,31 +230,7 @@ namespace CMMS.Client.Pages.Maintenance
                 return ("Today", "orange");
             }
         }
-        //private IEnumerable<EquipmentDto> GetFilteredData()
-        //{
-        //    if (selectedTab == "Pending")
-        //    {
-        //        return _equipments.Where(x =>
-        //        {
-        //            var nextDate = GetNextMaintenanceDate(x);
-        //            return nextDate != null && nextDate <= DateTime.Now.AddDays(7);
-        //        });
-        //    }
 
-        //    return _equipments.Where(x =>
-        //    {
-        //        var nextDate = GetNextMaintenanceDate(x);
-        //        return nextDate != null && nextDate > DateTime.Now.AddDays(7);
-        //    });
-        //}
-        //private int GetPendingCount()
-        //{
-        //    return _equipments.Count(x =>
-        //    {
-        //        var nextDate = GetNextMaintenanceDate(x);
-        //        return nextDate != null && nextDate <= DateTime.Now.AddDays(7);
-        //    });
-        //}
         private async Task CreatedAsync(int eqid)
         {
             if (_maintenanceModal != null)
@@ -173,22 +238,5 @@ namespace CMMS.Client.Pages.Maintenance
                 await _maintenanceModal.ShowModal(eqid);
             }
         }
-        //private async Task HandleScrap(int eqId)
-        //{
-        //    var response = await Http.PostAsync(
-        //        $"api/equipment/request/{eqId}",
-        //        null);
-
-        //    if (response.IsSuccessStatusCode)
-        //    {
-        //        await Message.Success("?ã g?i yêu c?u approve!");
-        //    }
-        //    else
-        //    {
-        //        var error = await response.Content.ReadAsStringAsync();
-
-        //        await Message.Error(error);
-        //    }
-        //}
     }
 }

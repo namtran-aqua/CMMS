@@ -1,7 +1,10 @@
-﻿using AntDesign;
+using AntDesign;
+using CMMS.Client.Common;
 using CMMS.Client.Components.Equipments;
 using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 namespace CMMS.Client.Pages.Equipment
@@ -10,14 +13,66 @@ namespace CMMS.Client.Pages.Equipment
     {
         #region Declaration
         [Inject] private HttpClient Http { get; set; }
-
+        [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        private bool IsAuthenticated { get; set; } = false;
+        private UserDto CurrentUser { get; set; } = new();
         private List<EquipmentDto> _equipments = new();
         private EquipmentModal? equipmentModal;
+
+        private string searchText = "";
+        private string selectedStatus = "All Status";
+        private string sortBy = "NameAsc";
+        private bool isUpdating;
+
+        private List<EquipmentDto> FilteredEquipments
+        {
+            get
+            {
+                var result = _equipments.AsEnumerable();
+
+                // Filter by Search Text
+                if (!string.IsNullOrWhiteSpace(searchText))
+                {
+                    var search = searchText.Trim().ToLower();
+                    result = result.Where(e =>
+                        (e.EquipmentName != null && e.EquipmentName.ToLower().Contains(search)) ||
+                        (e.EquipmentCode != null && e.EquipmentCode.ToLower().Contains(search)) ||
+                        (e.EquipmentModel != null && e.EquipmentModel.ToLower().Contains(search)) ||
+                        (e.EquipmentSerial != null && e.EquipmentSerial.ToLower().Contains(search)) ||
+                        (e.LocName != null && e.LocName.ToLower().Contains(search))
+                    );
+                }
+
+                // Filter by Status
+                if (selectedStatus != "All Status" && !string.IsNullOrWhiteSpace(selectedStatus))
+                {
+                    result = result.Where(e => string.Equals(e.StsUseName, selectedStatus, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Sort
+                result = sortBy switch
+                {
+                    "NameAsc" => result.OrderBy(e => e.EquipmentName ?? ""),
+                    "NameDesc" => result.OrderByDescending(e => e.EquipmentName ?? ""),
+                    "NextMaintAsc" => result.OrderBy(e => e.NextMaintenanceDate ?? DateTime.MaxValue),
+                    "NextMaintDesc" => result.OrderByDescending(e => e.NextMaintenanceDate ?? DateTime.MinValue),
+                    "StatusAsc" => result.OrderBy(e => e.StsUseName ?? ""),
+                    _ => result.OrderBy(e => e.EquipmentName ?? "")
+                };
+
+                return result.ToList();
+            }
+        }
         #endregion
 
         #region Innit
         protected override async Task OnInitializedAsync()
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            IsAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
+            var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
+            CurrentUser = await CurrentUserClass.LoadCurrentUser();
             await LoadData();
         }
 
@@ -25,7 +80,7 @@ namespace CMMS.Client.Pages.Equipment
         {
             try
             {
-                var res = await Http.GetFromJsonAsync<List<EquipmentDto>>("api/Equipment/get-all");
+                var res = await Http.GetFromJsonAsync<List<EquipmentDto>>("api/equipment/get-all");
                 _equipments = res ?? new List<EquipmentDto>();
             }
             catch (Exception ex)
@@ -36,17 +91,17 @@ namespace CMMS.Client.Pages.Equipment
         }
         #endregion
         #region Action
-        private string GetStsUseNameClass(string? StsUseName)
-        {
-            return StsUseName switch
-            {
-                "Running" => "badge bg-dark",
-                "Fault" => "badge bg-danger",
-                "Maintenance" => "badge bg-secondary",
-                "Stopped" => "badge bg-light text-dark",
-                _ => "badge bg-secondary"
-            };
-        }
+        //private string GetStsUseNameClass(string? StsUseName)
+        //{
+        //    return StsUseName switch
+        //    {
+        //        "Running" => "badge bg-dark",
+        //        "Fault" => "badge bg-danger",
+        //        "Maintenance" => "badge bg-secondary",
+        //        "Stopped" => "badge bg-light text-dark",
+        //        _ => "badge bg-secondary"
+        //    };
+        //}
         private (string text, string color) GetMaintenanceText(DateTime? date)
         {
             if (date == null)
@@ -57,7 +112,7 @@ namespace CMMS.Client.Pages.Equipment
 
             if (diff > 0)
             {
-                if (diff <= 5)
+                if (diff <= 7)
                     return ($"In {diff} days", "orange");
 
                 return ($"In {diff} days", "black");
@@ -78,6 +133,16 @@ namespace CMMS.Client.Pages.Equipment
                 await equipmentModal.ShowModal(false);
             }
         }
+        private async Task TaskUpdate()
+        {
+            var response = await Http.PostAsync("api/equipment/update-status",null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await Message.Success("Cập nhật trạng thái thành công");
+                await LoadData();
+            }
+        }
         private async Task EditAsync(EquipmentDto equipmentDto)
         {
             if (equipmentModal != null)
@@ -90,7 +155,7 @@ namespace CMMS.Client.Pages.Equipment
             var confirm = await JS.InvokeAsync<bool>("confirm", "Bạn có chắc chắn muốn xóa không?");
             if (!confirm)
                 return;
-            var response = await Http.DeleteAsync($"api/Equipment/delete/{id}");
+            var response = await Http.DeleteAsync($"api/equipment/delete/{id}");
             if (response.IsSuccessStatusCode)
             {
                 await Message.Success("Xóa thành công !");

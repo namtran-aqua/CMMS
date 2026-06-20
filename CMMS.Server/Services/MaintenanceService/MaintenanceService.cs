@@ -67,7 +67,7 @@ namespace CMMS.Server.Services.MaintenanceService
                 await using (var cmd = new SqlCommand(sqlInsert, con, (SqlTransaction)tran))
                 {
                     cmd.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
-                    cmd.Parameters.Add("@UpdateBy", SqlDbType.NVarChar, 50).Value = fullName ?? "Unknown";
+                    cmd.Parameters.Add("@UpdateBy", SqlDbType.NVarChar, 50).Value = (object?)maintenance.WorkDayId ?? DBNull.Value;
                     cmd.Parameters.Add("@UpdateTime", SqlDbType.DateTime).Value = DateTime.Now;
 
                     cmd.Parameters.Add("@StsMainID", SqlDbType.Int).Value = (object?)maintenance.StsMainID ?? DBNull.Value;

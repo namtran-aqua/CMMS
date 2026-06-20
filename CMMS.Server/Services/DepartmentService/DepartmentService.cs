@@ -1,6 +1,5 @@
 ﻿using CMMS.Server.Services.DepartmentService;
 using Microsoft.Data.SqlClient;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using CMMS.Shared.Dtos.Equipment;
 
 namespace CMMS.Server.Services.DepartmentService

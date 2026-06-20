@@ -22,5 +22,6 @@ namespace CMMS.Shared.Dtos.Maintenance
         public string MaintNote { get; set; }
         public bool IsEQActive { get; set; } = true;
         public List<MaintenanceDto> Items { get; set; } = new();
+        public string? WorkDayId { get; set; }
     }
 }

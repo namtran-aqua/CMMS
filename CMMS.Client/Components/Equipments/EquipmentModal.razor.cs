@@ -13,9 +13,19 @@ namespace CMMS.Client.Components.Equipments
         private bool IsModalVisible = false;
         private EquipmentDto EquipmentDto { get; set; } = new();
         private List<DepartmentDto> Departments  = new();
+        private List<LocationDto> Locations = new();
         private List<VendorDto> Vendors = new();
-        private List<StatusUsingDto> StatusUsing = new();
-        private List<UserDto> Users = new();    
+        //private List<StatusUsingDto> StatusUsing = new();
+        private List<UserDto> Users = new();
+        private record CurrencyOption(string Id, string Name);
+        
+
+        private List<CurrencyOption> CurrencyList = new()
+        {
+            new("VND", "VND"),
+            new("USD", "USD"),
+            new("CNY", "CNY (NDT)"),
+        };
         [Parameter] public EventCallback OnSave { get; set; }
         private Form<EquipmentDto> formRef = new();
         private bool IsEdit { get; set; }
@@ -26,13 +36,18 @@ namespace CMMS.Client.Components.Equipments
         {
             IsEdit = isEdit;
             EquipmentDto = new();
-            await LoadDepartmentsData();
-            await LoadStatusUsingData();
-            await LoadVendorData();
-            await LoadUsersData();
+            await Task.WhenAll(
+                LoadDepartmentsData(),
+                LoadLocationsData(),
+                LoadVendorData(),
+                LoadUsersData()
+            );
             if (equipmentDto != null)
             {
                 EquipmentDto = equipmentDto;
+
+                Console.WriteLine($"PICID = [{EquipmentDto.PICID}]");
+                Console.WriteLine($"PIC   = [{EquipmentDto.PIC}]");
             }
             IsModalVisible = true;
             await InvokeAsync(StateHasChanged);
@@ -41,6 +56,11 @@ namespace CMMS.Client.Components.Equipments
         #region Action
         private async Task SaveAsync()
         {
+            var selectedUser = Users.FirstOrDefault(u => u.WorkDayId == EquipmentDto.PICID);
+            EquipmentDto.PIC = selectedUser?.FullName;
+            Console.WriteLine(selectedUser == null
+                ? "USER NOT FOUND"
+                : $"FOUND USER: {selectedUser.FullName}");
             var valid = formRef.Validate();
             if (!valid)
             {
@@ -65,7 +85,7 @@ namespace CMMS.Client.Components.Equipments
         #region HandleData
         private async Task UpdateAsync()
         {
-            var response = await Http.PutAsJsonAsync("api/Equipment/update", EquipmentDto);
+            var response = await Http.PutAsJsonAsync("api/equipment/update", EquipmentDto);
             if (response.IsSuccessStatusCode)
             {
                 await Message.Success("Cập nhật thành công !");
@@ -78,12 +98,18 @@ namespace CMMS.Client.Components.Equipments
         }
         private async Task CreatedAsync()
         {
-            var response = await Http.PostAsJsonAsync("api/Equipment/create", EquipmentDto);
+            var response = await Http.PostAsJsonAsync("api/equipment/create", EquipmentDto);
+            var response2 = await Http.PostAsync("api/equipment/update-status", null);
+
+            
 
             if (response.IsSuccessStatusCode)
             {
-
                 await Message.Success("Tạo thành công!");
+                if (response2.IsSuccessStatusCode)
+                {
+                    await Message.Success("Cập nhật trạng thái thành công");
+                }
             }
             else
             {
@@ -94,20 +120,25 @@ namespace CMMS.Client.Components.Equipments
         #endregion
         private async Task LoadDepartmentsData()
         {
-            Departments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/Department/departments") ?? new();
+            Departments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/department/departments") ?? new();
         }
-        private async Task LoadStatusUsingData()
+        private async Task LoadLocationsData()
         {
-            StatusUsing = await Http.GetFromJsonAsync<List<StatusUsingDto>>("api/StatusUsing/statususing") ?? new();
+            Locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/location/locations") ?? new();
         }
+        //private async Task LoadStatusUsingData()
+        //{
+        //    StatusUsing = await Http.GetFromJsonAsync<List<StatusUsingDto>>("api/statusUsing/statususing") ?? new();
+        //}
         private async Task LoadVendorData()
         {
-            Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/Vendor/vendors") ?? new();
+            Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
         }
         private async Task LoadUsersData()
         {
-            Users = await Http.GetFromJsonAsync<List<UserDto>>("api/User/users") ?? new();
+            Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
         }
+
     }
 
 }
