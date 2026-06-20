@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @using AntDesign
 <div class="app-layout">
 
@@ -27,14 +27,14 @@
             </MenuItem>
 
             <MenuItem>
-                <NavLink href="@GetLink("/Equipment")" class="menu-link">
+                <NavLink href="@GetLink("/equipment")" class="menu-link">
                     <i class="fa-solid fa-sliders menu-icon"></i>
                     <span>Equipment</span>
                 </NavLink>
             </MenuItem>
 
             <MenuItem>
-                <NavLink href="/maintenance" class="menu-link">
+                <NavLink href="@GetLink("/maintenance")" class="menu-link">
                     <i class="fa-solid fa-wrench menu-icon"></i>
                     <span>Maintenance</span>
                 </NavLink>
@@ -50,9 +50,38 @@
         </Menu>
     </aside>
 
-    <!-- MAIN -->
+    <!-- MAIN - LOGIN INFO-->
     <section class="main">
-        <header class="topbar"></header>
+        <header class="topbar">
+            @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName))
+            {
+                <div class="user-display">
+                    @if (!string.IsNullOrEmpty(CurrentUser.Avatar))
+                    {
+                        <img class="user-avatar" src="@CurrentUser.Avatar" alt="Avatar" />
+                    }
+                    else
+                    {
+                        <div class="user-avatar-placeholder">
+                            @CurrentUser.FullName.Substring(0, 1).ToUpper()
+                        </div>
+                    }
+                    <div class="user-details">
+                        <div class="user-fullname">@CurrentUser.FullName</div>
+                        <div class="user-workday">ID: @CurrentUser.WorkDayId</div>
+                    </div>
+                    <button class="btn btn-logout" @onclick="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                </div>
+            }
+            else
+            {
+                <button class="btn btn-login" @onclick="GoToLogin">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </button>
+            }
+        </header>
         <main class="content">
             @Body
         </main>

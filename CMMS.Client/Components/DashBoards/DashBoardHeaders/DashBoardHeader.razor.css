@@ -58,7 +58,6 @@
 .card-value {
     font-size: 32px; /* ✅ số to hơn giống mẫu */
     font-weight: 600;
-    color: #000;
 }
 
 /* text màu */
@@ -72,5 +71,8 @@
 
 .red-text {
     color: #f5222d;
+}
+.blue-text {
+    color: #1677ff;
 }
 

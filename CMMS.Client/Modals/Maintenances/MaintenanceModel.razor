@@ -1,8 +1,12 @@
-﻿@using AntDesign
+@using AntDesign
 @using CMMS.Shared.Dtos.Equipment
 @using CMMS.Shared.Dtos.User
+@using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient httpClient
 @inject IMessageService Message
+@inject CurrentUserInfo CurrentUserInfo
+@inject AuthenticationStateProvider AuthStateProvider
+
 
 
 <style>
@@ -61,21 +65,22 @@
 
         <!-- Equipment Name -->
         <Row Gutter="16">
-            @* <Col Span="12">
-            <FormItem Label="Status" Name="StsMainID">
-                <Input @bind-Value="MaintenanceDto.StsMainID"
-                Placeholder="Status"/>
-            </FormItem>
-            </Col> *@
             <Col Span="12">
-            <FormItem Label="Maint Date" Name="MaintDate" Required>
-                    <DatePicker @bind-Value="MaintenanceDto.MaintDate"
-                            Style="width:100%" />
-            </FormItem>
+                <FormItem Label="Maintenance Type" Name="StsMainID" Required>
+                    <Select TValue="int"
+                            @bind-Value="MaintenanceDto.StsMainID"
+                            DataSource="MaintenanceStatuses"
+                            ValueName="Id"
+                            LabelName="Name"
+                            Placeholder="Select type"
+                            Style="width:100%">
+                    </Select>
+                </FormItem>
             </Col>
+            
             <Col Span="12">
                 <FormItem Label="Vendor" Name="VendorID" Required>
-                    <Select
+                <Select TValue="int?"
                         @bind-Value="MaintenanceDto.VendorID"
                         DataSource="Vendors"
                         ValueName="VendorID"
@@ -88,13 +93,14 @@
         </Row>
         <Row Gutter="16">
             <Col Span="12">
-            <FormItem Label="PIC" >
-                <Select TItem="UserDto"
-                        TItemValue="UserDto"
-                        DataSource="@Users"
-                        @bind-Value="SelectedUserId"
-                        ItemValue="c => c"
-                        ItemLabel="c => c.FullName"
+            <FormItem Label="PICID" Name="PICID">
+                <Select TValue="string?"
+                        @bind-Value="MaintenanceDto.PICID"
+                        DataSource="Users"
+                        ValueName="WorkDayId"
+                        LabelName="FullName"
+                        Placeholder="Select PIC"
+                        ShowSearch
                         EnableSearch>
                 </Select>
 
@@ -121,6 +127,14 @@
                 <Input @bind-Value="MaintenanceDto.MaintNote" 
                        Placeholder="Enter Maint Note" />
                 </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+            <FormItem Label="Maint Date" Name="MaintDate" Required>
+                <DatePicker @bind-Value="MaintenanceDto.MaintDate"
+                            Style="width:100%" />
+            </FormItem>
             </Col>
         </Row>
     </Form>

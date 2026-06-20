@@ -1,6 +1,7 @@
 ﻿@page "/equipment"
 @using AntDesign
 @using CMMS.Client.Components.Equipments
+@using AquaSolution.Client.Common
 @inject IMessageService Message
 @inject IJSRuntime JS
 @inject NavigationManager NavigationManager
@@ -14,27 +15,53 @@
             <h3>Equipment</h3>
             <p class="text-muted">Manage all equipment information</p>
         </div>
+        @* <button @onclick="TaskUpdate" class="btn btn-dark">
+            Update
+        </button> *@
+        @* Cách 1: Ẩn hoàn toàn nút nếu chưa đăng nhập *@
+        @if (IsAuthenticated)
+        {
+            <button @onclick="CreatedAsync" class="btn btn-dark">
+                <Icon Type="plus" /> Add Equipment
+            </button>
+        }
 
-        <button @onclick="CreatedAsync" class="btn btn-dark">
+        @* Cách 2: Disable nút nếu chưa đăng nhập *@
+        @* <Button Type="@ButtonType.Primary"
+                Disabled="!IsAuthenticated"
+                OnClick="CreatedAsync"
+                Class="btn btn-dark">
+            Add Equipment
+        </Button> *@
+        @* <button @onclick="CreatedAsync" class="btn btn-dark">
             <Icon Type="plus" /> Add Equipment
-        </button>
+        </button> *@
     </div>
 
     <!-- Search -->
-    <div class="card p-3 mb-4 search-card">
-        <div class="search-container" style="display:flex">
+    <div class="card p-3 mb-4 search-card" style="border-radius:15px">
+        <div class="search-container" style="display:flex; gap:10px">
 
             <!-- Search Input -->
-            <input class="form-control search-input" style="border-radius:10px"
-                   placeholder="Search by name, model, serial number, or LocName..." />
+            <input class="form-control search-input" style="border-radius:10px; flex:1"
+                   placeholder="Search by name, model, serial number, or LocName..." 
+                   @bind-value="searchText" @bind-value:event="oninput" />
 
             <!-- StsUseName Dropdown -->
-            <select class="form-select StsUseName-filter" style="margin-left:10px;width:15%;border-radius:10px">
-                <option>All Status</option>
-                <option>Running</option>
-                <option>Stopped</option>
-                <option>Maintenance</option>
-                <option>Fault</option>
+            <select class="form-select StsUseName-filter" style="width:200px;border-radius:10px" @bind="selectedStatus">
+                <option value="All Status">All Status</option>
+                <option value="Normal">Normal</option>
+                <option value="Due Soon">DueSoon</option>
+                <option value="Overdue">Overdue</option>
+            </select>
+
+            <!-- Sort Dropdown -->
+            <select class="form-select sort-select" style="width:200px;border-radius:10px" @bind="sortBy">
+                <option value="NameAsc">Name (A-Z)</option>
+                <option value="NameDesc">Name (Z-A)</option>
+                <option value="NextMaintAsc">Next Maint (Earliest)</option>
+                <option value="NextMaintDesc">Next Maint (Latest)</option>
+                <option value="StatusAsc">Status (A-Z)</option>
             </select>
 
         </div>
@@ -42,7 +69,7 @@
     <div class="card p-3 mb-4" style="border-radius:15px">
         <div> 
             <div><h6>Equipment List</h6></div>
-            <div>@_equipments.Count equipment total</div>
+            <div>@FilteredEquipments.Count equipment total</div>
         </div>
         <!-- Equipment Table -->
         <table class="table" >
@@ -60,34 +87,38 @@
                 </tr>
             </thead>
             <tbody>
-                @if (_equipments != null && _equipments.Any())
+                @if (FilteredEquipments != null && FilteredEquipments.Any())
                 {
-                    foreach (var item in _equipments)
+                    foreach (var item in FilteredEquipments)
                     {
                         <tr>
-                            <td>
-                                <Template>
-                                    <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
-                                        <ChildContent>
-                                            <Button Icon="menu" />
-                                        </ChildContent>
-                                        <ContentTemplate>
-                                            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
+                            <td> 
+                                @if (IsAuthenticated)
+                                {
 
-                                                <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
-                                                    <Icon Type="edit" /> Edit
-                                                </Button>
+                                    <Template>
+                                        <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
+                                            <ChildContent>
+                                                <Button Icon="menu" />
+                                            </ChildContent>
+                                            <ContentTemplate>
+                                                <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
 
-                                                <Button Type="ButtonType.Text"
+                                                    <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
+                                                        <Icon Type="edit" /> Edit
+                                                    </Button>
+
+                                                    @* <Button Type="ButtonType.Text"
                                                         OnClick="@(async () => await DeleteAsync(item.EQID))"
                                                         Style="text-align: left;">
                                                     <Icon Type="delete" /> Delete
-                                                </Button>
+                                                </Button> *@
 
-                                            </div>
-                                        </ContentTemplate>
-                                    </Popover>
-                                </Template>
+                                                </div>
+                                            </ContentTemplate>
+                                        </Popover>
+                                    </Template>
+                                }
                             </td>
                             <td>
                                 <div>@item.EquipmentName</div>
@@ -95,11 +126,15 @@
                             </td>
                             <td>@item.EquipmentModel</td>
                             <td>@item.EquipmentSerial</td>
-                            <td>@item.LocName</td>
+                            <td>@item.LocCode</td>
                             <td>
-                                <span class="@GetStsUseNameClass(item.StsUseName)">
+                                <Tag Color="@GetTagColor.GetTagColorCss(item.StsUseName.ToString())" Style="border-radius: 12px; padding: 2px 12px; font-weight: 500;">
+                                    <Icon Type="@GetTagIcon.GetTagIconCss(item.StsUseName)" Theme="IconThemeType.Outline" Style="margin-right: 4px;" />
                                     @item.StsUseName
-                                </span>
+                                </Tag>
+                                @* <span class="@GetStsUseNameClass(item.StsUseName)">
+                                    @item.StsUseName
+                                </span> *@
                             </td>
                             <td>
                                 <div>@item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</div>

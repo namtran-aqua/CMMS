@@ -29,7 +29,7 @@ namespace CMMS.Server.Services.UserService
         {
             var list = new List<UserDto>();
             using var con = new SqlConnection(_config.GetConnectionString("SolutionConnection"));
-            var sql = "SELECT * FROM Admin.tbl_Users";
+            var sql = "SELECT * FROM Admin.tbl_Users WHERE IsActive = 1";
             using var cmd = new SqlCommand(sql, con);
             await con.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();

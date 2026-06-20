@@ -45,7 +45,7 @@ namespace CMMS.Shared.Dtos.Equipment
 
         public bool? InSAP { get; set; }
 
-        public string? SAPCode { get; set; }
+        public int? SAPCode { get; set; }
         public string? LocName { get; set; }
         public string? LocCode { get; set; }
         public string? LocDescription { get; set; }
@@ -54,7 +54,7 @@ namespace CMMS.Shared.Dtos.Equipment
 
         public bool IsActive { get; set; } = true;
 
-        public string? LocID { get; set; }
+        public int? LocID { get; set; }
         public string? LocFACID { get; set; }
 
         public string? LocDeptID { get; set; }

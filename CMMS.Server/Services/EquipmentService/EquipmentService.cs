@@ -30,9 +30,9 @@ namespace CMMS.Server.Services.EquipmentService
 
             const string sql = @"
             INSERT INTO dbo.Tbl_EquipmentInfo 
-                (EquipmentName, EquipmentCode, EquipmentBarcode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PICID, PIC, VendorID, LastMaintenanceDate, StsUseID, IsActive)
+                (EquipmentName, EquipmentCode, EquipmentBarcode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, LocID, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PICID, PIC, VendorID, LastMaintenanceDate, StsUseID, IsActive)
             VALUES 
-                (@EquipmentName, @EquipmentCode, @EquipmentBarcode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PICID, @PIC, @VendorID, @LastMaintenanceDate, @StsUseID, @IsActive)
+                (@EquipmentName, @EquipmentCode, @EquipmentBarcode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @LocID, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PICID, @PIC, @VendorID, @LastMaintenanceDate, @StsUseID, @IsActive)
         ";
             await using var con = new SqlConnection(connStr);
             await using var cmd = new SqlCommand(sql, con);
@@ -45,13 +45,14 @@ namespace CMMS.Server.Services.EquipmentService
             cmd.Parameters.Add("@EquipmentDescription", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentDescription ?? DBNull.Value;
             cmd.Parameters.Add("@EquipmentNote", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentNote ?? DBNull.Value;
             cmd.Parameters.Add("@DeptId", SqlDbType.Int).Value = (object?)equipment.DeptID ?? DBNull.Value;
+            cmd.Parameters.Add("@LocID", SqlDbType.Int).Value = (object?)equipment.LocID ?? DBNull.Value;
             cmd.Parameters.Add("@BuyDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
             cmd.Parameters.Add("@BuyPrice", SqlDbType.Decimal).Value = (object?)equipment.BuyPrice ?? DBNull.Value;
             cmd.Parameters.Add("@BuyCurrency", SqlDbType.NVarChar).Value = (object?)equipment.BuyCurrency ?? DBNull.Value;
             cmd.Parameters.Add("@MaintenanceCircleTime", SqlDbType.Int).Value = (object?)equipment.MaintenanceCircleTime ?? DBNull.Value;
             cmd.Parameters.Add("@ContactNo", SqlDbType.NVarChar).Value = (object?)equipment.ContactNo ?? DBNull.Value;
             cmd.Parameters.Add("@SAPCode", SqlDbType.Int).Value = (object?)equipment.SAPCode ?? DBNull.Value;
-            cmd.Parameters.Add("@PICID", SqlDbType.UniqueIdentifier).Value = (object?)equipment.PICID ?? DBNull.Value;
+            cmd.Parameters.Add("@PICID", SqlDbType.NVarChar).Value = (object?)equipment.PICID ?? DBNull.Value;
             cmd.Parameters.Add("@PIC", SqlDbType.NVarChar).Value = (object?)equipment.PIC ?? DBNull.Value;
             cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)equipment.VendorID ?? DBNull.Value;
             cmd.Parameters.Add("@LastMaintenanceDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
@@ -90,7 +91,8 @@ namespace CMMS.Server.Services.EquipmentService
                         EquipmentSerial = @EquipmentSerial,
                         EquipmentDescription = @EquipmentDescription,
                         EquipmentNote = @EquipmentNote,
-                        DeptID = @DeptID,
+                        DeptId = @DeptId,
+                        LocID = @LocID, 
                         StsUseID = @StsUseID,
                         VendorID = @VendorID,
                         MaintenanceCircleTime = @MaintenanceCircleTime,
@@ -100,6 +102,7 @@ namespace CMMS.Server.Services.EquipmentService
                         ContactNo = @ContactNo,
                         SAPCode = @SAPCode,
                         PIC = @PIC,
+                        PICID = @PICID,
                         IsActive = @IsActive
                     WHERE EQID = @EQID
                 ";
@@ -113,6 +116,7 @@ namespace CMMS.Server.Services.EquipmentService
                 cmd.Parameters.Add("@EquipmentDescription", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentDescription ?? DBNull.Value;
                 cmd.Parameters.Add("@EquipmentNote", SqlDbType.NVarChar).Value = (object?)equipment.EquipmentNote ?? DBNull.Value;
                 cmd.Parameters.Add("@DeptId", SqlDbType.Int).Value = (object?)equipment.DeptID ?? DBNull.Value;
+                cmd.Parameters.Add("@LocID", SqlDbType.Int).Value = (object?)equipment.LocID ?? DBNull.Value;
                 cmd.Parameters.Add("@BuyDate", SqlDbType.DateTime).Value = (object?)equipment.BuyDate ?? DBNull.Value;
                 cmd.Parameters.Add("@BuyPrice", SqlDbType.Decimal).Value = (object?)equipment.BuyPrice ?? DBNull.Value;
                 cmd.Parameters.Add("@BuyCurrency", SqlDbType.NVarChar).Value = (object?)equipment.BuyCurrency ?? DBNull.Value;
@@ -120,6 +124,7 @@ namespace CMMS.Server.Services.EquipmentService
                 cmd.Parameters.Add("@ContactNo", SqlDbType.NVarChar).Value = (object?)equipment.ContactNo ?? DBNull.Value;
                 cmd.Parameters.Add("@SAPCode", SqlDbType.Int).Value = (object?)equipment.SAPCode ?? DBNull.Value;
                 cmd.Parameters.Add("@PIC", SqlDbType.NVarChar).Value = (object?)equipment.PIC ?? DBNull.Value;
+                cmd.Parameters.Add("@PICID", SqlDbType.NVarChar).Value = (object?)equipment.PICID ?? DBNull.Value;
                 cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)equipment.VendorID ?? DBNull.Value;
                 cmd.Parameters.Add("@StsUseID", SqlDbType.Int).Value = (object?)equipment.StsUseID ?? DBNull.Value;
                 cmd.Parameters.Add("@IsActive", SqlDbType.Bit).Value = (object?)equipment.IsActive ?? DBNull.Value;
