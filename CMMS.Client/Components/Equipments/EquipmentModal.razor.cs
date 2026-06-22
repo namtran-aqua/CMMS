@@ -1,4 +1,4 @@
-﻿using AntDesign;
+using AntDesign;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
@@ -120,10 +120,12 @@ namespace CMMS.Client.Components.Equipments
         #endregion
         private async Task LoadDepartmentsData()
         {
+            if (Departments != null && Departments.Any()) return;
             Departments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/department/departments") ?? new();
         }
         private async Task LoadLocationsData()
         {
+            if (Locations != null && Locations.Any()) return;
             Locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/location/locations") ?? new();
         }
         //private async Task LoadStatusUsingData()
@@ -132,10 +134,12 @@ namespace CMMS.Client.Components.Equipments
         //}
         private async Task LoadVendorData()
         {
+            if (Vendors != null && Vendors.Any()) return;
             Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
         }
         private async Task LoadUsersData()
         {
+            if (Users != null && Users.Any()) return;
             Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
         }
 

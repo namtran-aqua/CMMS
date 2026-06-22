@@ -115,10 +115,12 @@ namespace CMMS.Client.Modals.Maintenances
         #endregion
         private async Task LoadVendorData()
         {
+            if (Vendors != null && Vendors.Any()) return;
             Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
         }
         private async Task LoadUsersData()
         {
+            if (Users != null && Users.Any()) return;
             Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
         }
         

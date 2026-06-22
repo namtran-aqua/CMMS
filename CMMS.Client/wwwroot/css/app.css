@@ -1,7 +1,9 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
 }
 
 h1:focus {
@@ -153,7 +155,7 @@ a, .btn-link {
     .custom-menu .ant-menu-item {
         height: auto !important;
         margin: 6px 12px !important;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 0 !important;
         width: auto !important;
         overflow: hidden;
@@ -204,16 +206,147 @@ a, .btn-link {
     flex: 1;
     display: flex;
     flex-direction: column;
+    background: #f8fafc;
 }
-
-
 
 span {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 li {
     list-style: none;
     line-height: 1.6 !important;
+}
+
+/* ===== MODERN PREMIUM STYLING DETAILS ===== */
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Modern Card style */
+.card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03) !important;
+    border-radius: 16px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card:hover {
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
+    transform: translateY(-2px);
+}
+
+/* Modern Table style */
+.table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100%;
+    margin-bottom: 0 !important;
+}
+
+.table th {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 14px 18px !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    border-top: none !important;
+}
+
+.table td {
+    padding: 16px 18px !important;
+    vertical-align: middle !important;
+    font-size: 14px !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    transition: background-color 0.2s ease;
+}
+
+.table tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Form Controls & Inputs */
+.form-control, .form-select {
+    height: 40px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 8px 14px !important;
+    font-size: 14px !important;
+    color: #1e293b !important;
+    background-color: #f8fafc !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #ffffff !important;
+    border-color: #1677ff !important;
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15) !important;
+    outline: none !important;
+}
+
+.search-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 18px;
+    padding-left: 40px !important;
+}
+
+/* Sidebar styles refine */
+.sidebar {
+    box-shadow: 2px 0 12px rgba(15, 23, 42, 0.02) !important;
+}
+
+.sidebar-header {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.topbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02) !important;
+    padding: 14px 24px !important;
+}
+
+/* Custom buttons */
+.btn-dark {
+    background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1) !important;
+}
+
+.btn-dark:hover {
+    background: linear-gradient(135deg, #334155, #1e293b) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15) !important;
+}
+
+.btn-dark:active {
+    transform: translateY(0);
 }

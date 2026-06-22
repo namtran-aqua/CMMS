@@ -1,4 +1,4 @@
-﻿@page "/equipment"
+@page "/equipment"
 @using AntDesign
 @using CMMS.Client.Components.Equipments
 @using AquaSolution.Client.Common
@@ -15,9 +15,6 @@
             <h3>Equipment</h3>
             <p class="text-muted">Manage all equipment information</p>
         </div>
-        @* <button @onclick="TaskUpdate" class="btn btn-dark">
-            Update
-        </button> *@
         @* Cách 1: Ẩn hoàn toàn nút nếu chưa đăng nhập *@
         @if (IsAuthenticated)
         {
@@ -66,10 +63,10 @@
 
         </div>
     </div>
-    <div class="card p-3 mb-4" style="border-radius:15px">
-        <div> 
-            <div><h6>Equipment List</h6></div>
-            <div>@FilteredEquipments.Count equipment total</div>
+    <div class="card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3"> 
+            <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Equipment List</h6>
+            <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredEquipments.Count equipment total</p>
         </div>
         <!-- Equipment Table -->
         <table class="table" >
@@ -80,9 +77,9 @@
                     </th>
                     <th>Name</th>
                     <th>Model</th>
-                    <th>Serial Number</th>
+                    <th>Serial</th>
                     <th>LocName</th>
-                    <th>StsUseName</th>
+                    <th>Status</th>
                     <th>Next Maintanance</th>
                 </tr>
             </thead>
