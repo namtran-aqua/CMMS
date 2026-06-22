@@ -20,14 +20,14 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         var token = await _sessionStorage.GetItemAsync<string>("authToken");
         var currentUri = _navigation.Uri;
 
-        bool isMaintenancePage = currentUri.Contains("/maintenance", StringComparison.OrdinalIgnoreCase);
+        //bool isMaintenancePage = currentUri.Contains("/maintenance", StringComparison.OrdinalIgnoreCase);
 
         if (string.IsNullOrWhiteSpace(token) || token.Count(c => c == '.') != 2)
         {
-            if (isMaintenancePage)
-            {
-                _navigation.NavigateTo($"{_navigation.BaseUri}login", forceLoad: false);
-            }
+            //if (isMaintenancePage)
+            //{
+            //    _navigation.NavigateTo($"{_navigation.BaseUri}login", forceLoad: false);
+            //}
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
 
@@ -39,10 +39,10 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             if (jwt.ValidTo < DateTime.UtcNow)
             {
                 await _sessionStorage.RemoveItemAsync("authToken");
-                if (isMaintenancePage)
-                {
-                    _navigation.NavigateTo($"{_navigation.BaseUri}login", forceLoad: false);
-                }
+                //if (isMaintenancePage)
+                //{
+                //    _navigation.NavigateTo($"{_navigation.BaseUri}login", forceLoad: false);
+                //}
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
@@ -53,10 +53,10 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         }
         catch
         {
-            if (isMaintenancePage)
-            {
-                _navigation.NavigateTo($"{_navigation.BaseUri}login", forceLoad: false);
-            }
+            //if (isMaintenancePage)
+            //{
+            //    _navigation.NavigateTo($"{_navigation.BaseUri}login", forceLoad: false);
+            //}
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
     }

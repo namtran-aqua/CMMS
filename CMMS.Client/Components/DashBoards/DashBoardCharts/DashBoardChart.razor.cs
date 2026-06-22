@@ -1,4 +1,4 @@
-﻿using AntDesign.Charts;
+using AntDesign.Charts;
 using CMMS.Shared.Dtos.DashBoards;
 using Microsoft.AspNetCore.Components;
 
@@ -14,6 +14,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
         protected override void OnParametersSet()
         {
             UpdateData1();
+            UpdateData2();
         }
         #region Example 1
         private void UpdateData1()
@@ -82,87 +83,57 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
     
         #region Example 2
 
-        object[] data2 =
-        {
-        new
-        {
-            year = "1991",
-            value = 31
-        },
-        new
-        {
-            year = "1992",
-            value = 41
-        },
-        new
-        {
-            year = "1993",
-            value = 35
-        },
-        new
-        {
-            year = "1994",
-            value = 55
-        },
-        new
-        {
-            year = "1995",
-            value = 49
-        },
-        new
-        {
-            year = "1996",
-            value = 15
-        },
-        new
-        {
-            year = "1997",
-            value = 17
-        },
-        new
-        {
-            year = "1998",
-            value = 29
-        },
-        new
-        {
-            year = "1999",
-            value = 33
-        }
-    };
+        object[] data2 = Array.Empty<object>();
 
-        ColumnConfig config2 = new ColumnConfig
+        private void UpdateData2()
+        {
+            if (DashBoardData == null) return;
+
+            var grouped = DashBoardData
+                .GroupBy(x => string.IsNullOrEmpty(x.LocName) ? "Chưa xác định" : x.LocName)
+                .Select(g => new
+                {
+                    location = g.Key,
+                    count = g.Count()
+                })
+                .OrderByDescending(g => g.count)
+                .Cast<object>()
+                .ToArray();
+
+            data2 = grouped;
+        }
+
+        readonly ColumnConfig config2 = new ColumnConfig
         {
             Title = new Title
             {
                 Visible = true,
-                Text = "Change chart guide style"
+                Text = "Số lượng thiết bị theo vị trí"
             },
-            XField = "year",
-            YField = "value",
+            XField = "location",
+            YField = "count",
             Height = 300,
             GuideLine = new[]
             {
-            new GuideLineConfig
-            {
-                Type = "mean",
-                LineStyle = new LineStyle
+                new GuideLineConfig
                 {
-                    Stroke = "red",
-                    LineDash = new[] {4, 2}
-                },
-                Text = new GuideLineConfigText
-                {
-                    Position = "start",
-                    Content = "Warning line",
-                    Style = new TextStyle
+                    Type = "mean",
+                    LineStyle = new LineStyle
                     {
-                        Fill = "red"
-                    }
-                },
-
+                        Stroke = "red",
+                        LineDash = new[] {4, 2}
+                    },
+                    Text = new GuideLineConfigText
+                    {
+                        Position = "start",
+                        Content = "Đường trung bình",
+                        Style = new TextStyle
+                        {
+                            Fill = "red"
+                        }
+                    },
+                }
             }
-        }
         };
 
         #endregion Example 2
