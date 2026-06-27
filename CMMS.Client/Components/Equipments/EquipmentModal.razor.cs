@@ -1,7 +1,9 @@
 using AntDesign;
+using CMMS.Client.Common;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 
 namespace CMMS.Client.Components.Equipments
@@ -10,6 +12,9 @@ namespace CMMS.Client.Components.Equipments
     {
         #region Declaration
         [Inject] private HttpClient Http { get; set; }
+        [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        private bool IsAuthenticated { get; set; } = false;
+
         private bool IsModalVisible = false;
         private EquipmentDto EquipmentDto { get; set; } = new();
         private List<DepartmentDto> Departments  = new();
@@ -17,6 +22,7 @@ namespace CMMS.Client.Components.Equipments
         private List<VendorDto> Vendors = new();
         //private List<StatusUsingDto> StatusUsing = new();
         private List<UserDto> Users = new();
+        private UserDto CurrentUser { get; set; } = new();
         private record CurrencyOption(string Id, string Name);
         
 
@@ -34,6 +40,11 @@ namespace CMMS.Client.Components.Equipments
         #region Innit
         public async Task ShowModal(bool isEdit, EquipmentDto? equipmentDto = null)
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            IsAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
+            var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
+            CurrentUser = await CurrentUserClass.LoadCurrentUser();
             IsEdit = isEdit;
             EquipmentDto = new();
             await Task.WhenAll(

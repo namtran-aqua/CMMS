@@ -5,6 +5,7 @@
 @inject HttpClient httpClient
 @inject IMessageService Message
 @inject CurrentUserInfo CurrentUserInfo
+@inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 
 
@@ -107,7 +108,7 @@
             </FormItem>
             </Col>
             <Col Span="12">
-                <FormItem Label="MaintPrice" Name="MaintPrice" Required>
+                <FormItem Label="MaintPrice" Name="MaintPrice">
                 <AntDesign.InputNumber TValue="decimal?"
                     @bind-Value="MaintenanceDto.MaintPrice"
                            Placeholder="Enter MaintPrice" 
@@ -117,25 +118,87 @@
         </Row>
         <Row Gutter="16">
             <Col Span="12">
-            <FormItem Label="Description" Name="MaintDescription" Required>
+            <FormItem Label="Description" Name="MaintDescription">
                 <Input @bind-Value="MaintenanceDto.MaintDescription"
                        Placeholder="Enter Maint Description" />
                 </FormItem>
             </Col>
-            <Col Span="12">
-            <FormItem Label="Maint Note" Name="MaintNote" Required>
+            @* <Col Span="12">
+            <FormItem Label="Maint Note" Name="MaintNote">
                 <Input @bind-Value="MaintenanceDto.MaintNote" 
                        Placeholder="Enter Maint Note" />
                 </FormItem>
-            </Col>
-        </Row>
-        <Row Gutter="16">
+            </Col> *@
             <Col Span="12">
-            <FormItem Label="Maint Date" Name="MaintDate" Required>
+            <FormItem Label="Maint Date" Name="MaintDate">
                 <DatePicker @bind-Value="MaintenanceDto.MaintDate"
                             Style="width:100%" />
             </FormItem>
             </Col>
         </Row>
+        @* <Row Gutter="16">
+            
+        </Row> *@
+        <!-- Attachments -->
+        <div class="its-attach-area">
+            <div class="its-attach-header">
+                <div class="its-section-title" style="margin-bottom:0;">
+                    <Icon Type="paper-clip" Theme="IconThemeType.Outline" Style="font-size:12px;" />
+                    Attachments
+                </div>
+                <Upload Action="@($"{Navigation.BaseUri}api/Common/upload-file-suport")"
+                        Name="file"
+                        Accept=".jpg,.jpeg,.png,.xlsx,.docx,.pdf,.slx"
+                        BeforeUpload="BeforeUpload1"
+                        ShowUploadList="false"
+                        OnSingleCompleted="OnSingleCompleted">
+                    <Button Shape="ButtonShape.Round"
+                            Size="ButtonSize.Small"
+                            Icon="upload"
+                            Style="font-size:12px;">
+                        Upload file
+                    </Button>
+                </Upload>
+            </div>
+
+            @if (Attachment != null && Attachment.Any())
+            {
+                <Table Class="style-attach"
+                       DataSource="Attachment"
+                       HidePagination
+                       Size="TableSize.Small">
+                    <ChildContent Context="file">
+                        <Column Title="File name" TData="string">
+                            <div style="display:flex;align-items:center;gap:7px;">
+                                <Icon Type="file" Theme="IconThemeType.Outline"
+                                      Style="color:#1677ff;font-size:14px;" />
+                                <span style="font-size:12px;">@file.FileName</span>
+                            </div>
+                        </Column>
+                        <Column Title="Size" Width="90" TData="string">
+                            <span style="font-size:11px;color:#595959;">@FormatSize(file.FileSize)</span>
+                        </Column>
+                        <Column Title="Uploaded" Width="170" TData="string">
+                            <span style="font-size:11px;color:#595959;">
+                                @file.CreatedTime.ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                        </Column>
+                        <ActionColumn Width="50">
+                            <Button Icon="delete"
+                                    Type="ButtonType.Link"
+                                    Danger="true"
+                                    Size="ButtonSize.Small"
+                                    OnClick="() => Deleted(file)" />
+                        </ActionColumn>
+                    </ChildContent>
+                </Table>
+            }
+            else
+            {
+                <div style="text-align:center;padding:12px 0;font-size:12px;color:#8c8c8c;">
+                    No attachments yet
+                </div>
+            }
+        </div>
     </Form>
 </Modal>

@@ -32,7 +32,7 @@ public partial class Login
         }
 
 
-        var response = await Http.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        var response = await Http.PostAsJsonAsync("api/auth/login", new LoginRequest
         {
             UserName = username,
             Password = password
