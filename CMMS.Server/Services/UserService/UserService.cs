@@ -78,6 +78,8 @@ namespace CMMS.Server.Services.UserService
                 FullName = reader["FullName"].ToString(),
                 PasswordHash = reader["PasswordHash"].ToString()
             };
+            await reader.CloseAsync();
+
 
             // Validate password
             if (!PasswordHelper.VerifyPassword(
@@ -86,6 +88,35 @@ namespace CMMS.Server.Services.UserService
             {
                 return null;
             }
+            var userId = user.Id;
+            using var cmmsCon = new SqlConnection(
+                _config.GetConnectionString("DefaultConnection"));
+
+            const string checkSql = @"
+            SELECT
+                Id,
+                FACID,
+                DeptID,
+                LocID
+            FROM Tbl_User
+            WHERE Id = @Id";
+
+            using var checkCmd = new SqlCommand(checkSql, cmmsCon);
+
+            checkCmd.Parameters.AddWithValue("@Id", userId);
+
+            await cmmsCon.OpenAsync();
+
+            using var cmmsReader = await checkCmd.ExecuteReaderAsync();
+
+            if (!await cmmsReader.ReadAsync())
+            {
+                return null;
+            }
+
+            var facId = cmmsReader["FACID"]?.ToString();
+            var deptId = cmmsReader["DeptID"]?.ToString();
+            var locId = cmmsReader["LocID"]?.ToString();
 
             // Generate JWT
             var jwtKey = _config["Jwt:Key"];
@@ -104,11 +135,14 @@ namespace CMMS.Server.Services.UserService
 
             var claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.SerialNumber, user.WorkDayId),
-        new Claim(ClaimTypes.Name, user.FullName)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.SerialNumber, user.WorkDayId),
+                new Claim(ClaimTypes.Name, user.FullName),
 
-    };
+                new Claim("FACID", facId ?? ""),
+                new Claim("DeptID", deptId ?? ""),
+                new Claim("LocID", locId ?? "")
+            };
 
             var token = new JwtSecurityToken(
                 claims: claims,
