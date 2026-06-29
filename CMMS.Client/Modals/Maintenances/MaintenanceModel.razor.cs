@@ -97,16 +97,18 @@ namespace CMMS.Client.Modals.Maintenances
             {
                 var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
                 CurrentUser = await CurrentUserClass.LoadCurrentUser();
-                MaintenanceDto.WorkDayId = CurrentUser.WorkDayId;   
+                MaintenanceDto.WorkDayId = CurrentUser.WorkDayId;
+                MaintenanceDto.Attachments = Attachment;
                 var response = await Http.PostAsJsonAsync($"api/Maintenance/create/{eqId}",MaintenanceDto);
                 if (response.IsSuccessStatusCode)
                 {
-                    await Message.Success("Tạo thành công!");
+                    Message.Success("Tạo thành công!");
+                    Attachment.Clear();
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    await Message.Error($"Tạo thất bại: {error}");
+                    Message.Error($"Tạo thất bại: {error}");
                 }
                 var update = await Http.PostAsync("api/equipment/update-status", null);
             }

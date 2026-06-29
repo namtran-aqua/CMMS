@@ -1,9 +1,14 @@
 
+
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Blazored.SessionStorage;
 using CMMS.Client.Common;
+using CMMS.Client.Services;
+using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
+using System.Net.Http.Json;
+
 
 namespace CMMS.Client.Shared
 {
@@ -13,13 +18,17 @@ namespace CMMS.Client.Shared
         [Inject] AuthenticationStateProvider AuthStateProvider { get; set; }
         [Inject] HttpClient Http { get; set; }
         [Inject] ISessionStorageService SessionStorage { get; set; }
+        [Inject] FactoryStateService FactoryState { get; set; }
 
         private UserDto? CurrentUser { get; set; }
+        private List<DepartmentDto> _allDepartments = new();
 
         protected override async Task OnInitializedAsync()
         {
             await LoadCurrentUser();
+            await LoadFactories();
         }
+
 
         private async Task LoadCurrentUser()
         {
@@ -31,6 +40,19 @@ namespace CMMS.Client.Shared
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading current user in layout: {ex.Message}");
+            }
+        }
+
+        private async Task LoadFactories()
+        {
+            try
+            {
+                _allDepartments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/department/departments") ?? new();
+                FactoryState.LoadFactoriesFromDepartments(_allDepartments);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading factories: {ex.Message}");
             }
         }
 
@@ -53,6 +75,25 @@ namespace CMMS.Client.Shared
         private void GoToLogin()
         {
             NavigationManager.NavigateTo($"{NavigationManager.BaseUri}login");
+        }
+
+        private void OnFactoryChanged(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out var facId))
+            {
+                var fac = FactoryState.Factories
+                    .FirstOrDefault(f => f.FacId == facId);
+
+                FactoryState.SetFactory(
+                    facId,
+                    fac?.FacName ?? "");
+            }
+            else
+            {
+                FactoryState.SetFactory(
+                    null,
+                    "All Factories");
+            }
         }
     }
 }

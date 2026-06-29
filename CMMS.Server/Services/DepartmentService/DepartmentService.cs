@@ -1,4 +1,4 @@
-﻿using CMMS.Server.Services.DepartmentService;
+using CMMS.Server.Services.DepartmentService;
 using Microsoft.Data.SqlClient;
 using CMMS.Shared.Dtos.Equipment;
 
@@ -27,10 +27,16 @@ namespace CMMS.Server.Services.DepartmentService
             {
                 list.Add(new DepartmentDto
                 {
-                    DeptID = (int)reader["DeptID"],
-                    DeptName = reader["DeptName"].ToString(),
-                    DeptFullName = reader["DeptFullName"].ToString(),
-                    DeptCode = reader["DeptCode"].ToString()
+                    DeptID    = (int)reader["DeptID"],
+                    FACID     = reader["FACID"] as int?,
+                    FACCode   = reader["FACCode"]?.ToString(),
+                    FACName   = reader["FACName"]?.ToString(),
+                    FACFullName = reader["FACFullName"]?.ToString(),
+                    DeptCode  = reader["DeptCode"]?.ToString(),
+                    DeptName  = reader["DeptName"]?.ToString(),
+                    DeptFullName = reader["DeptFullName"]?.ToString(),
+                    FactoryDept  = reader["FactoryDept"]?.ToString(),
+                    HODWD     = reader["HODWD"]?.ToString()
                 });
             }
 

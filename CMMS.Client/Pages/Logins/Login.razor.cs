@@ -22,12 +22,12 @@ public partial class Login
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(username))
         {
-            await Message.Error("username cannot be blank");
+            Message.Error("username cannot be blank");
             return;
         }
         if (string.IsNullOrWhiteSpace(password) || string.IsNullOrEmpty(password))
         {
-            await Message.Error("password cannot be blank");
+            Message.Error("password cannot be blank");
             return;
         }
 
@@ -39,19 +39,19 @@ public partial class Login
         });
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            await Message.Error("Incorrect Account or Password, Please Check Again !");
+            Message.Error("Incorrect Account or Password, Please Check Again !");
             return;
         }
         if (!response.IsSuccessStatusCode)
         {
-            await Message.Error($"Server error: {(int)response.StatusCode}");
+            Message.Error($"Server error: {(int)response.StatusCode}");
             return;
         }
         var content = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
 
         if (content == null || !content.ContainsKey("token"))
         {
-            await Message.Error("Invalid response from server.");
+            Message.Error("Invalid response from server.");
             return;
         }
         var handler = new JwtSecurityTokenHandler();

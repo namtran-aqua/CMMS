@@ -1,6 +1,8 @@
 ﻿using CMMS.Data.Connection;
-using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Authorization;
 using CMMS.Shared.Dtos.Common;
+using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.User;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
@@ -62,9 +64,19 @@ namespace CMMS.Server.Services.EquipmentService
             var result = await cmd.ExecuteNonQueryAsync();
             return result > 0;
         }
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id, UserDto currentUser)
         {
             await using var connection = (SqlConnection)_connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            const string selectSql = "SELECT FACID, PICID FROM dbo.vw_EquipmentInfo WHERE EQID = @EQID";
+            var original = await connection.QueryFirstOrDefaultAsync<EquipmentDto>(selectSql, new { EQID = id });
+
+            if (original == null)
+                throw new KeyNotFoundException($"Không tìm thấy thiết bị EQID = {id}.");
+
+            if (!AuthorizationHelper.CanEditOrMaintain(currentUser, original.FACID, original.PICID))
+                throw new UnauthorizedAccessException("Bạn không có quyền xóa thiết bị này.");
 
             const string sql = @" 
             DELETE FROM dbo.Tbl_EquipmentInfo
@@ -73,14 +85,27 @@ namespace CMMS.Server.Services.EquipmentService
             await using var cmd = new SqlCommand(sql, connection);
             cmd.Parameters.Add("@EQID", SqlDbType.Int).Value = id;
             await connection.OpenAsync();
+
             var result = await cmd.ExecuteNonQueryAsync();
             return result > 0;
         }
-        public async Task<bool> UpdateAsync(EquipmentDto equipment)
+        public async Task<bool> UpdateAsync(EquipmentDto equipment, UserDto currentUser)
         {
+            await using var connection = (SqlConnection)_connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            // Lấy FACID và PICID gốc từ DB để check quyền
+            const string selectSql = "SELECT FACID, PICID FROM dbo.vw_EquipmentInfo WHERE EQID = @EQID";
+            var original = await connection.QueryFirstOrDefaultAsync<EquipmentDto>(selectSql, new { equipment.EQID });
+
+            if (original == null)
+                throw new KeyNotFoundException($"Không tìm thấy thiết bị EQID = {equipment.EQID}.");
+
+            if (!AuthorizationHelper.CanEditOrMaintain(currentUser, original.FACID, original.PICID))
+                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa thiết bị này.");
+
             try
             {
-                await using var connection = (SqlConnection)_connectionFactory.CreateConnection();
                 const string sql = @"
                     UPDATE dbo.Tbl_EquipmentInfo
                     SET 
@@ -128,7 +153,6 @@ namespace CMMS.Server.Services.EquipmentService
                 cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)equipment.VendorID ?? DBNull.Value;
                 cmd.Parameters.Add("@StsUseID", SqlDbType.Int).Value = (object?)equipment.StsUseID ?? DBNull.Value;
                 cmd.Parameters.Add("@IsActive", SqlDbType.Bit).Value = (object?)equipment.IsActive ?? DBNull.Value;
-                await connection.OpenAsync();
                 var result = await cmd.ExecuteNonQueryAsync();
                 return result > 0;
             }

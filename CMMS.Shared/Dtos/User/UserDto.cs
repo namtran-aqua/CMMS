@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,7 @@ namespace CMMS.Shared.Dtos.User
         public int? FACID { get; set; }
         public int? DeptID { get; set; }
         public int? LocID { get; set; }
+        public int? RoleID { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
@@ -33,5 +34,6 @@ namespace CMMS.Shared.Dtos.User
         public Guid? PositionId { get; set; }
         public Guid? FactoryId { get; set; }
         public int FlowApproval { get; set; }
+        public List<string> Roles { get; set; } = new();
     }
 }

@@ -1,6 +1,7 @@
 @using AntDesign
 @using CMMS.Shared.Dtos.Equipment
 @using CMMS.Shared.Dtos.User
+@using CMMS.Shared.Dtos.Maintenance.Attachments
 @using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient httpClient
 @inject IMessageService Message
@@ -37,6 +38,34 @@
         color: #bfbfbf !important;
         font-size: 14px !important;
         font-weight: 400 !important;
+    }
+
+    .its-attach-area {
+        margin-top: 20px;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 15px;
+    }
+
+    .its-attach-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .its-section-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: #262626;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .style-attach {
+        background-color: #fafafa;
+        border-radius: 8px;
+        border: 1px solid #f0f0f0;
     }
 </style>
 @{
@@ -80,7 +109,7 @@
             </Col>
             
             <Col Span="12">
-                <FormItem Label="Vendor" Name="VendorID" Required>
+                <FormItem Label="Vendor" Name="VendorID">
                 <Select TValue="int?"
                         @bind-Value="MaintenanceDto.VendorID"
                         DataSource="Vendors"
@@ -166,7 +195,8 @@
                 <Table Class="style-attach"
                        DataSource="Attachment"
                        HidePagination
-                       Size="TableSize.Small">
+                       Size="TableSize.Small"
+                       TItem="AttachmentDto">
                     <ChildContent Context="file">
                         <Column Title="File name" TData="string">
                             <div style="display:flex;align-items:center;gap:7px;">
@@ -175,10 +205,10 @@
                                 <span style="font-size:12px;">@file.FileName</span>
                             </div>
                         </Column>
-                        <Column Title="Size" Width="90" TData="string">
+                        <Column Title="Size" Width="90" TData="long">
                             <span style="font-size:11px;color:#595959;">@FormatSize(file.FileSize)</span>
                         </Column>
-                        <Column Title="Uploaded" Width="170" TData="string">
+                        <Column Title="Uploaded" Width="170" TData="DateTime">
                             <span style="font-size:11px;color:#595959;">
                                 @file.CreatedTime.ToString("dd/MM/yyyy HH:mm")
                             </span>

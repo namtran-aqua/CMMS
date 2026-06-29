@@ -1,4 +1,4 @@
-﻿using CMMS.Server;
+using CMMS.Server;
 using CMMS.Server.Services.DailyJobService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -25,7 +25,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("VerySecretKey12345"))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "VerySecretKey12345"))
         };
     });
 builder.Services.AddAppServices();

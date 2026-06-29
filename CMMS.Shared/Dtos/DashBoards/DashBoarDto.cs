@@ -41,6 +41,7 @@ namespace CMMS.Shared.Dtos.DashBoards
         public string LocName { get; set; }
         public string LocCode { get; set; }
         public string PIC { get; set; } 
+        public string PICID { get; set; }
         public bool? IsActive { get; set; }
         public int? LocID { get; set; }
         public int? LocFACID { get; set; }

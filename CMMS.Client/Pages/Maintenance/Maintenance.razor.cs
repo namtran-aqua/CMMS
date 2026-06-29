@@ -2,20 +2,22 @@ using AntDesign;
 using CMMS.Client.Common;
 using CMMS.Client.Components.Equipments;
 using CMMS.Client.Modals.Maintenances;
+using CMMS.Client.Services;
 using CMMS.Shared.Dtos.DashBoards;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.Maintenance;
-using Microsoft.AspNetCore.Components.Authorization;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 
 namespace CMMS.Client.Pages.Maintenance
 {
-    public partial class Maintenance
+    public partial class Maintenance : IDisposable
     {
         [Inject] private HttpClient Http { get; set; }
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        [Inject] private FactoryStateService FactoryState { get; set; }
         private bool IsAuthenticated { get; set; } = false;
         private List<EquipmentDto> _equipments = new();
         public List<DashBoarDto> DashBoardData { get; set; } = new();
@@ -24,6 +26,7 @@ namespace CMMS.Client.Pages.Maintenance
         private List<MaintenanceDto> _maintenances = new();
         private List<MaintenanceDto> MaintenanceGroups = new();
         private MaintenanceModel? _maintenanceModal;
+        private MaintenanceDetailModel? _detailModal;
         private Table<MaintenanceModel>? _tableRef;
         private UserDto CurrentUser { get; set; } = new();
 
@@ -61,6 +64,11 @@ namespace CMMS.Client.Pages.Maintenance
         {
             if (source == null) return new();
             var result = source.AsEnumerable();
+            // Filter by Factory
+            if (FactoryState.SelectedFacId.HasValue)
+            {
+                result = result.Where(e => e.FACID == FactoryState.SelectedFacId.Value);
+            }
 
             if (!string.IsNullOrWhiteSpace(pendingSearchText))
             {
@@ -123,6 +131,15 @@ namespace CMMS.Client.Pages.Maintenance
                 return result.ToList();
             }
         }
+        private async void OnFactoryChanged()
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+
+        public void Dispose()
+        {
+            FactoryState.OnChange -= OnFactoryChanged;
+        }
 
         protected override async Task OnInitializedAsync()
         {
@@ -133,6 +150,10 @@ namespace CMMS.Client.Pages.Maintenance
 
             var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
             CurrentUser = await CurrentUserClass.LoadCurrentUser();
+
+            // Subscribe factory change event
+            FactoryState.OnChange += OnFactoryChanged;
+
             await LoadData();
         }
 
@@ -236,6 +257,15 @@ namespace CMMS.Client.Pages.Maintenance
             if (_maintenanceModal != null)
             {
                 await _maintenanceModal.ShowModal(eqid);
+            }
+        }
+
+        private void ShowDetail(MaintenanceDto record)
+        {
+            if (_detailModal != null)
+            {
+                var eqName = GetEquipmentName(record.EQID);
+                _detailModal.Show(record, eqName);
             }
         }
     }

@@ -2,6 +2,7 @@
 @using AntDesign
 @using CMMS.Client.Modals.Maintenances
 @using CMMS.Shared.Dtos.Maintenance
+@using CMMS.Shared.Authorization
 @* @using Microsoft.AspNetCore.Components.Authorization *@
 @inject HttpClient httpClient
 @inject IMessageService Message
@@ -143,10 +144,13 @@
                         <!-- Button -->
                         @if (IsAuthenticated)
                         {
-                            <button class="btn btn-dark mt-3 w-100"
-                            @onclick="() => CreatedAsync(item.EQID)">
-                                🔧 Record Maintenance
-                            </button>
+                            @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                            {
+                                <button class="btn btn-dark mt-3 w-100"
+                                @onclick="() => CreatedAsync(item.EQID)">
+                                    🔧 Record Maintenance
+                                </button>
+                            }
                         }
                     </div>
                 </div>
@@ -187,10 +191,13 @@
                         <!-- Button -->
                         @if (IsAuthenticated)
                         {
-                            <button class="btn btn-dark mt-3 w-100" 
-                            @onclick="() => CreatedAsync(item.EQID)">
-                                🔧 Record Maintenance
-                            </button>
+                            @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                            {
+                                <button class="btn btn-dark mt-3 w-100"
+                                        @onclick="() => CreatedAsync(item.EQID)">
+                                    🔧 Record Maintenance
+                                </button>
+                            }
                         }
                     </div>
                 </div>
@@ -243,6 +250,8 @@
                         <th>Technician</th>
                         <th>Date</th>
                         <th>Cost</th>
+                        <th>Attachment</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -263,6 +272,26 @@
                                 <td>@item.MaintPIC</td>
                                 <td>@item.MaintDate?.ToString("dd/MM/yyyy")</td>
                                 <td>@String.Format("{0:N0} VND", item.MaintPrice)</td>
+                                <td>
+                                    @if (item.Attachments != null && item.Attachments.Any())
+                                    {
+                                        <div style="margin-top:6px;">
+                                            @foreach (var att in item.Attachments)
+                                            {
+                                                <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+                                                    <Icon Type="file" Theme="IconThemeType.Outline"
+                                                          Style="color:#1677ff;font-size:12px;" />
+                                                    <a href="@att.FilePath" target="_blank">@att.FileName</a>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => ShowDetail(item)">
+                                        <Icon Type="eye" Theme="IconThemeType.Outline" /> Detail
+                                    </Button>
+                                </td>
                             </tr>
                         }
                     }
@@ -274,3 +303,4 @@
     }
 </div>
 <MaintenanceModel OnSave="LoadData" @ref="_maintenanceModal"/>
+<MaintenanceDetailModel @ref="_detailModal" />

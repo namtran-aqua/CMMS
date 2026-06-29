@@ -1,4 +1,4 @@
-﻿using CMMS.Data.Connection;
+using CMMS.Data.Connection;
 using CMMS.Server.Services.UserService;
 using CMMS.Shared.Dtos.AuthModels;
 using CMMS.Shared.Dtos.User;
@@ -27,20 +27,28 @@ namespace CMMS.Server.Services.UserService
         }
         public async Task<List<UserDto>> GetUsersAsync()
         {
-            var list = new List<UserDto>();
             using var con = new SqlConnection(_config.GetConnectionString("SolutionConnection"));
-            var sql = "SELECT * FROM Admin.tbl_Users WHERE IsActive = 1";
-            using var cmd = new SqlCommand(sql, con);
-            await con.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            // JOIN cross-database với Tbl_User trong CMMS để lấy FACID, DeptID, LocID, RoleID
+            const string sql = @"
+                SELECT
+                    u.Id,
+                    u.WorkDayId,
+                    u.FullName,
+                    cu.FACID,
+                    cu.DeptID,
+                    cu.LocID,
+                    cu.RoleID
+                FROM Admin.tbl_Users u
+                LEFT JOIN CMMS.dbo.Tbl_User cu ON cu.Id = u.Id
+                WHERE u.IsActive = 1";
+
+            var result = await con.QueryAsync<UserDto>(sql);
+            var list = result.AsList();
+            foreach (var user in list)
             {
-                list.Add(new UserDto
-                {
-                    Id = (Guid)reader["Id"],
-                    WorkDayId = reader["WorkDayId"].ToString(),
-                    FullName = reader["FullName"].ToString()
-                });
+                user.Roles = new List<string>();
+                if (user.RoleID == 1) user.Roles.Add("Manager");
+                else if (user.RoleID == 2) user.Roles.Add("User");
             }
             return list;
         }
@@ -97,7 +105,8 @@ namespace CMMS.Server.Services.UserService
                 Id,
                 FACID,
                 DeptID,
-                LocID
+                LocID,
+                RoleID
             FROM Tbl_User
             WHERE Id = @Id";
 
@@ -117,6 +126,7 @@ namespace CMMS.Server.Services.UserService
             var facId = cmmsReader["FACID"]?.ToString();
             var deptId = cmmsReader["DeptID"]?.ToString();
             var locId = cmmsReader["LocID"]?.ToString();
+            var roleId = cmmsReader["RoleID"]?.ToString();
 
             // Generate JWT
             var jwtKey = _config["Jwt:Key"];
@@ -133,7 +143,7 @@ namespace CMMS.Server.Services.UserService
 
             var expires = DateTime.UtcNow.AddMinutes(60);
 
-            var claims = new[]
+            var claimsList = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.SerialNumber, user.WorkDayId),
@@ -141,11 +151,21 @@ namespace CMMS.Server.Services.UserService
 
                 new Claim("FACID", facId ?? ""),
                 new Claim("DeptID", deptId ?? ""),
-                new Claim("LocID", locId ?? "")
+                new Claim("LocID", locId ?? ""),
+                new Claim("RoleID", roleId ?? "")
             };
 
+            if (roleId == "1")
+            {
+                claimsList.Add(new Claim(ClaimTypes.Role, "Manager"));
+            }
+            else if (roleId == "2")
+            {
+                claimsList.Add(new Claim(ClaimTypes.Role, "User"));
+            }
+
             var token = new JwtSecurityToken(
-                claims: claims,
+                claims: claimsList,
                 expires: expires,
                 signingCredentials: creds
             );
@@ -253,31 +273,33 @@ namespace CMMS.Server.Services.UserService
                 using var con = new SqlConnection(
                     _config.GetConnectionString("SolutionConnection"));
 
+                // JOIN cross-database với Tbl_User trong CMMS để lấy FACID, DeptID, LocID, RoleID
                 const string sql = @"
-            SELECT Id,
-                   WorkDayId,
-                   FullName
-            FROM Admin.tbl_Users
-            WHERE Id = @Id";
+                    SELECT
+                        u.Id,
+                        u.WorkDayId,
+                        u.FullName,
+                        cu.FACID,
+                        cu.DeptID,
+                        cu.LocID,
+                        cu.RoleID
+                    FROM Admin.tbl_Users u
+                    LEFT JOIN CMMS.dbo.Tbl_User cu ON cu.Id = u.Id
+                    WHERE u.Id = @Id";
 
-                using var cmd = new SqlCommand(sql, con);
+                var user = await con.QueryFirstOrDefaultAsync<UserDto>(
+                    sql,
+                    new { Id = userId }
+                );
 
-                cmd.Parameters.Add("@Id", SqlDbType.UniqueIdentifier)
-                    .Value = userId;
-
-                await con.OpenAsync();
-
-                using var reader = await cmd.ExecuteReaderAsync();
-
-                if (!await reader.ReadAsync())
-                    return null;
-
-                return new UserDto
+                if (user != null)
                 {
-                    Id = (Guid)reader["Id"],
-                    WorkDayId = reader["WorkDayId"]?.ToString(),
-                    FullName = reader["FullName"]?.ToString()
-                };
+                    user.Roles = new List<string>();
+                    if (user.RoleID == 1) user.Roles.Add("Manager");
+                    else if (user.RoleID == 2) user.Roles.Add("User");
+                }
+
+                return user;
             }
             catch (Exception)
             {
