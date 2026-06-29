@@ -1,4 +1,4 @@
-﻿@using AntDesign
+@using AntDesign
 @using CMMS.Shared.Dtos.Equipment
 @inject HttpClient httpClient
 @inject IMessageService Message
@@ -184,7 +184,7 @@
 
                 <Select TValue="int?"
                         @bind-Value="EquipmentDto.DeptID"
-                        DataSource="Departments"
+                        DataSource="FilteredDepartments"
                         ValueName="DeptID"
                         LabelName="DeptFullName"
                         Placeholder="Select department"

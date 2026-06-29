@@ -9,7 +9,7 @@ namespace CMMS.Shared.Dtos.Maintenance.Attachments
     public class AttachmentDto
     {
         public Guid Id { get; set; }
-        public Guid RequestSuportId { get; set; }
+        public long MTID { get; set; }
         public string FilePath { get; set; }
         public string FileExtend { get; set; }
         public string FileName { get; set; }

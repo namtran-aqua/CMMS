@@ -1,4 +1,4 @@
-﻿using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.Equipment;
 using Microsoft.Data.SqlClient;
 
 namespace CMMS.Server.Services.LocationService
@@ -22,10 +22,12 @@ namespace CMMS.Server.Services.LocationService
             {
                 list.Add(new LocationDto
                 {
-                    LocID = (int)reader["LocID"],
-                    LocName = reader["LocName"].ToString(),
-                    LocCode = reader["LocCode"].ToString(),
-                    LocManager = reader["LocManager"].ToString()
+                    LocID = reader["LocID"] as int?,
+                    DeptID = reader["DeptID"] as int?,
+                    FACID = reader["FACID"] as int?,
+                    LocName = reader["LocName"] == DBNull.Value ? null : reader["LocName"].ToString(),
+                    LocCode = reader["LocCode"] == DBNull.Value ? null : reader["LocCode"].ToString(),
+                    LocManager = reader["LocManager"] == DBNull.Value ? null : reader["LocManager"].ToString()
                 });
             }
             return list;

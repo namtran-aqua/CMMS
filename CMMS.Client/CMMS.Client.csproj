@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  
+    <PackageReference Include="AntDesign" Version="1.6.2" />
     <PackageReference Include="AntDesign.Charts" Version="0.9.0" />
     <PackageReference Include="AntDesign.ProLayout" Version="1.1.2" />
     <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />

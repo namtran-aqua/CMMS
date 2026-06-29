@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CMMS.Server.Controllers.Common
 {
@@ -22,8 +22,12 @@ namespace CMMS.Server.Controllers.Common
             var extension = Path.GetExtension(file.FileName);
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
             var fileName = $"{originalName}_{timestamp}{extension}";
-
-            var filePath = Path.Combine("wwwroot/uploads/support-data", fileName);
+            var uploadDir = Path.Combine("wwwroot", "uploads", "support-data");
+            if (!Directory.Exists(uploadDir))
+            {
+                Directory.CreateDirectory(uploadDir);
+            }
+            var filePath = Path.Combine(uploadDir, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {

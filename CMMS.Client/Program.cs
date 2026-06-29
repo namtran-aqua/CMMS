@@ -1,6 +1,7 @@
-﻿using AquaSolution.Client.Common;
+using AquaSolution.Client.Common;
 using Blazored.SessionStorage;
 using CMMS.Client;
+using CMMS.Client.Services;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -16,13 +17,16 @@ builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<CustomAuthenticationStateProvider>());
 builder.Services.AddTransient<AuthMessageHandler>();
-builder.Services.AddScoped(sp =>
-    new HttpClient
+builder.Services.AddHttpClient("CMMS.API", client =>
     {
-        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
-    });
+        client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+    })
+    .AddHttpMessageHandler<AuthMessageHandler>();
+
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("CMMS.API"));
 
 
+builder.Services.AddSingleton<FactoryStateService>();
 builder.Services.AddAntDesign();
 builder.Services.AddAuthorizationCore();
 await builder.Build().RunAsync();

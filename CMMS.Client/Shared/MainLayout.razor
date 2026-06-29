@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@using CMMS.Client.Shared
+@using CMMS.Client.Services
 @using AntDesign
 <div class="app-layout">
 
@@ -40,12 +42,12 @@
                 </NavLink>
             </MenuItem>
 
-            <MenuItem>
+            @* <MenuItem>
                 <NavLink href="/spare-parts" class="menu-link">
                     <i class="fa-solid fa-box menu-icon"></i>
                     <span>Spare Parts</span>
                 </NavLink>
-            </MenuItem>
+            </MenuItem> *@
 
         </Menu>
     </aside>
@@ -53,6 +55,34 @@
     <!-- MAIN - LOGIN INFO-->
     <section class="main">
         <header class="topbar">
+            <!-- Factory Selector -->
+            <div class="factory-filter">
+
+                <div class="factory-select-wrapper">
+
+                    <i class="fa-solid fa-warehouse factory-icon"></i>
+
+                    <select class="factory-select"
+                            @onchange="OnFactoryChanged"
+                            value="@(FactoryState.SelectedFacId?.ToString() ?? "")">
+
+                        <option value="">All Factories</option>
+
+                        @foreach (var fac in FactoryState.Factories)
+                        {
+                            <option value="@fac.FacId">
+                                @fac.FacCode - @fac.FacName
+                            </option>
+                        }
+
+                    </select>
+
+                    <i class="fa-solid fa-chevron-down factory-arrow"></i>
+
+                </div>
+
+            </div>
+
             @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName))
             {
                 <div class="user-display">

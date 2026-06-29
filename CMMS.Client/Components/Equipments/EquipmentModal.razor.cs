@@ -1,10 +1,12 @@
 using AntDesign;
 using CMMS.Client.Common;
+using CMMS.Client.Services;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
+
 
 namespace CMMS.Client.Components.Equipments
 {
@@ -13,7 +15,9 @@ namespace CMMS.Client.Components.Equipments
         #region Declaration
         [Inject] private HttpClient Http { get; set; }
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        [Inject] private FactoryStateService FactoryState { get; set; }
         private bool IsAuthenticated { get; set; } = false;
+
 
         private bool IsModalVisible = false;
         private EquipmentDto EquipmentDto { get; set; } = new();
@@ -24,6 +28,16 @@ namespace CMMS.Client.Components.Equipments
         private List<UserDto> Users = new();
         private UserDto CurrentUser { get; set; } = new();
         private record CurrencyOption(string Id, string Name);
+
+        /// <summary>
+        /// Filter departments theo FACID của CurrentUser.
+        /// Nếu user chưa có FACID thì hiện tất cả.
+        /// </summary>
+        private List<DepartmentDto> FilteredDepartments =>
+            CurrentUser.FACID.HasValue
+                ? Departments.Where(d => d.FACID == CurrentUser.FACID).ToList()
+                : Departments;
+
         
 
         private List<CurrencyOption> CurrencyList = new()
@@ -99,12 +113,12 @@ namespace CMMS.Client.Components.Equipments
             var response = await Http.PutAsJsonAsync("api/equipment/update", EquipmentDto);
             if (response.IsSuccessStatusCode)
             {
-                await Message.Success("Cập nhật thành công !");
+                Message.Success("Cập nhật thành công !");
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await Message.Error($"Cập nhật thất bại ! {error}");
+                Message.Error($"Cập nhật thất bại ! {error}");
             }
         }
         private async Task CreatedAsync()
@@ -116,16 +130,16 @@ namespace CMMS.Client.Components.Equipments
 
             if (response.IsSuccessStatusCode)
             {
-                await Message.Success("Tạo thành công!");
+                Message.Success("Tạo thành công!");
                 if (response2.IsSuccessStatusCode)
                 {
-                    await Message.Success("Cập nhật trạng thái thành công");
+                    Message.Success("Cập nhật trạng thái thành công");
                 }
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await Message.Error($"Tạo thất bại: {error}");
+                Message.Error($"Tạo thất bại: {error}");
             }
         }
         #endregion

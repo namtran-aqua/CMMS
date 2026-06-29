@@ -1,6 +1,7 @@
 using AntDesign;
 using CMMS.Client.Common;
 using CMMS.Client.Components.Equipments;
+using CMMS.Client.Services;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
@@ -9,12 +10,14 @@ using Microsoft.JSInterop;
 using System.Net.Http.Json;
 namespace CMMS.Client.Pages.Equipment
 {
-    public partial class Equipment
+    public partial class Equipment : IDisposable
     {
         #region Declaration
         [Inject] private HttpClient Http { get; set; }
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        [Inject] private FactoryStateService FactoryState { get; set; }
         private bool IsAuthenticated { get; set; } = false;
+
         private UserDto CurrentUser { get; set; } = new();
         private List<EquipmentDto> _equipments = new();
         private EquipmentModal? equipmentModal;
@@ -29,6 +32,12 @@ namespace CMMS.Client.Pages.Equipment
             get
             {
                 var result = _equipments.AsEnumerable();
+
+                // Filter by Factory
+                if (FactoryState.SelectedFacId.HasValue)
+                {
+                    result = result.Where(e => e.FACID == FactoryState.SelectedFacId.Value);
+                }
 
                 // Filter by Search Text
                 if (!string.IsNullOrWhiteSpace(searchText))
@@ -52,12 +61,12 @@ namespace CMMS.Client.Pages.Equipment
                 // Sort
                 result = sortBy switch
                 {
-                    "NameAsc" => result.OrderBy(e => e.EquipmentName ?? ""),
-                    "NameDesc" => result.OrderByDescending(e => e.EquipmentName ?? ""),
+                    "NameAsc"      => result.OrderBy(e => e.EquipmentName ?? ""),
+                    "NameDesc"     => result.OrderByDescending(e => e.EquipmentName ?? ""),
                     "NextMaintAsc" => result.OrderBy(e => e.NextMaintenanceDate ?? DateTime.MaxValue),
-                    "NextMaintDesc" => result.OrderByDescending(e => e.NextMaintenanceDate ?? DateTime.MinValue),
-                    "StatusAsc" => result.OrderBy(e => e.StsUseName ?? ""),
-                    _ => result.OrderBy(e => e.EquipmentName ?? "")
+                    "NextMaintDesc"=> result.OrderByDescending(e => e.NextMaintenanceDate ?? DateTime.MinValue),
+                    "StatusAsc"    => result.OrderBy(e => e.StsUseName ?? ""),
+                    _              => result.OrderBy(e => e.EquipmentName ?? "")
                 };
 
                 return result.ToList();
@@ -73,7 +82,21 @@ namespace CMMS.Client.Pages.Equipment
 
             var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
             CurrentUser = await CurrentUserClass.LoadCurrentUser();
+
+            // Subscribe factory change event
+            FactoryState.OnChange += OnFactoryChanged;
+
             await LoadData();
+        }
+
+        private async void OnFactoryChanged()
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+
+        public void Dispose()
+        {
+            FactoryState.OnChange -= OnFactoryChanged;
         }
 
         private async Task LoadData()
@@ -139,7 +162,7 @@ namespace CMMS.Client.Pages.Equipment
 
             if (response.IsSuccessStatusCode)
             {
-                await Message.Success("Cập nhật trạng thái thành công");
+                Message.Success("Cập nhật trạng thái thành công");
                 await LoadData();
             }
         }
@@ -158,11 +181,11 @@ namespace CMMS.Client.Pages.Equipment
             var response = await Http.DeleteAsync($"api/equipment/delete/{id}");
             if (response.IsSuccessStatusCode)
             {
-                await Message.Success("Xóa thành công !");
+                Message.Success("Xóa thành công !");
             }
             else
             {
-                await Message.Error("Xóa thất bại !");
+                Message.Error("Xóa thất bại !");
             }
             await LoadData();
             await InvokeAsync(StateHasChanged);

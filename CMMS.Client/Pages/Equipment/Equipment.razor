@@ -2,6 +2,7 @@
 @using AntDesign
 @using CMMS.Client.Components.Equipments
 @using AquaSolution.Client.Common
+@using CMMS.Shared.Authorization
 @inject IMessageService Message
 @inject IJSRuntime JS
 @inject NavigationManager NavigationManager
@@ -92,7 +93,6 @@
                             <td> 
                                 @if (IsAuthenticated)
                                 {
-
                                     <Template>
                                         <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
                                             <ChildContent>
@@ -101,15 +101,12 @@
                                             <ContentTemplate>
                                                 <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
 
-                                                    <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
-                                                        <Icon Type="edit" /> Edit
-                                                    </Button>
-
-                                                    @* <Button Type="ButtonType.Text"
-                                                        OnClick="@(async () => await DeleteAsync(item.EQID))"
-                                                        Style="text-align: left;">
-                                                    <Icon Type="delete" /> Delete
-                                                </Button> *@
+                                                    @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                                                    {
+                                                        <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
+                                                            <Icon Type="edit" /> Edit
+                                                        </Button>
+                                                    }
 
                                                 </div>
                                             </ContentTemplate>
