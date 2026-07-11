@@ -11,7 +11,7 @@
 <div>
 
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
             <h3>Equipment</h3>
             <p class="text-muted">Manage all equipment information</p>
@@ -37,7 +37,7 @@
     </div>
 
     <!-- Search -->
-    <div class="card p-3 mb-4 search-card" style="border-radius:15px">
+    <div class="card p-3 mb-3 search-card" style="border-radius:15px">
         <div class="search-container" style="display:flex; gap:10px">
 
             <!-- Search Input -->
@@ -87,7 +87,7 @@
             <tbody>
                 @if (FilteredEquipments != null && FilteredEquipments.Any())
                 {
-                    foreach (var item in FilteredEquipments)
+                    foreach (var item in FilteredEquipments.Skip((currentPage - 1) * pageSize).Take(pageSize))
                     {
                         <tr>
                             <td> 
@@ -146,6 +146,21 @@
             </tbody>
 
         </table>
+        @if (FilteredEquipments != null && FilteredEquipments.Any())
+        {
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span style="font-size:12px; color:#595959;">
+                    Showing @(((currentPage - 1) * pageSize) + 1) to @(Math.Min(currentPage * pageSize, FilteredEquipments.Count)) of @FilteredEquipments.Count equipment
+                </span>
+                <Pagination Total="FilteredEquipments.Count"
+                            @bind-PageSize="pageSize"
+                            @bind-Current="currentPage"
+                            PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                            ShowSizeChanger="true"
+                            OnChange="OnPageChange"
+                            Size="PaginationSize.Small" />
+            </div>
+        }
     </div>
 </div>
 <EquipmentModal OnSave="LoadData" @ref="equipmentModal" />

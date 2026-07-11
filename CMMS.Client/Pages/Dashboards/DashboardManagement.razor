@@ -8,7 +8,7 @@
 @inject IMessageService Message
 <PageTitle>DashBoard</PageTitle>
 <h3>DashBoard</h3>
-<h5>Equipment status overview</h5>
+<p class="text-muted"> Equipment status overview</p>
 @if (isLoading)
 {
     <div style="text-align: center; margin-top: 50px;">
@@ -18,13 +18,13 @@
 else
 {
     <div class="dashboard-section">
-        <DashBoardHeader DashBoardData="@DashBoardData" />
+        <DashBoardHeader DashBoardData="@FilteredDashBoardData" />
     </div>
 
     <div class="dashboard-section">
-        <DashBoardChart DashBoardData="@DashBoardData" />
+        <DashBoardChart DashBoardData="@FilteredDashBoardData" />
     </div>
     <div class="dashboard-section">
-        <DashBoardFooter DashBoardData="@DashBoardData" />
+        <DashBoardFooter DashBoardData="@FilteredDashBoardData" />
     </div>
 }

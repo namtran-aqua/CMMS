@@ -58,6 +58,31 @@ namespace CMMS.Server.Services.MaintenanceService
                 },
                 splitOn: "Id");
 
+            var sparePartsSql = @"
+                SELECT 
+                    t.MTID, t.SPID, t.Quantity AS Qty, p.PartCode, p.PartName, p.Unit
+                FROM dbo.Tbl_Transactions t
+                JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
+                WHERE t.Type = 'MAINTENANCE' AND t.MTID IS NOT NULL";
+
+            var sparePartsList = await connection.QueryAsync<MaintenanceSparePartDtoHelper>(sparePartsSql);
+            var sparePartsGrouped = sparePartsList.GroupBy(x => x.MTID);
+
+            foreach (var group in sparePartsGrouped)
+            {
+                if (maintenanceDict.TryGetValue(group.Key, out var maintEntry))
+                {
+                    maintEntry.SpareParts = group.Select(x => new MaintenanceSparePartDto
+                    {
+                        SPID = x.SPID,
+                        PartCode = x.PartCode,
+                        PartName = x.PartName,
+                        Unit = x.Unit,
+                        Qty = x.Qty
+                    }).ToList();
+                }
+            }
+
             return maintenanceDict.Values.OrderByDescending(m => m.MaintDate).ToList();
         }
         public async Task<bool> CreatedAsync(MaintenanceDto maintenance, int ID, UserDto currentUser)
@@ -154,6 +179,64 @@ namespace CMMS.Server.Services.MaintenanceService
                     }
                 }
 
+                if (maintenance.SpareParts != null && maintenance.SpareParts.Any())
+                {
+                    foreach (var sp in maintenance.SpareParts)
+                    {
+                        if (sp.Qty <= 0) continue;
+
+                        // 1. Lock and check inventory
+                        const string sqlLock = "SELECT Inventory FROM dbo.Tbl_SparePart WITH (UPDLOCK, ROWLOCK) WHERE SPID = @SPID";
+                        int currentStock;
+                        await using (var cmdLock = new SqlCommand(sqlLock, con, (SqlTransaction)tran))
+                        {
+                            cmdLock.Parameters.Add("@SPID", SqlDbType.Int).Value = sp.SPID;
+                            var stockResult = await cmdLock.ExecuteScalarAsync();
+                            if (stockResult == null)
+                                throw new KeyNotFoundException($"Không tìm thấy phụ tùng SPID = {sp.SPID}.");
+                            currentStock = Convert.ToInt32(stockResult);
+                        }
+
+                        var newStock = currentStock - sp.Qty;
+                        if (newStock < 0)
+                            throw new InvalidOperationException($"Phụ tùng SPID = {sp.SPID} ({sp.PartName}) không đủ tồn kho (còn {currentStock}, cần {sp.Qty}).");
+
+                        // 2. Update stock
+                        const string sqlUpdateStock = "UPDATE dbo.Tbl_SparePart SET Inventory = @Inventory, UpdateDate = @UpdateDate WHERE SPID = @SPID";
+                        await using (var cmdUpdate = new SqlCommand(sqlUpdateStock, con, (SqlTransaction)tran))
+                        {
+                            cmdUpdate.Parameters.Add("@Inventory", SqlDbType.Int).Value = newStock;
+                            cmdUpdate.Parameters.Add("@UpdateDate", SqlDbType.DateTime).Value = DateTime.Now;
+                            cmdUpdate.Parameters.Add("@SPID", SqlDbType.Int).Value = sp.SPID;
+                            await cmdUpdate.ExecuteNonQueryAsync();
+                        }
+
+                        // 3. Insert transaction
+                        const string sqlInsertTx = @"
+                            INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, EQID, MTID, Note, CreateBy, CreateDate)
+                            VALUES (@SPID, 'MAINTENANCE', @Qty, @Date, @EQID, @MTID, @Note, @CreateBy, @CreateDate)";
+                        
+                        var noteText = $"Xuất cho bảo trì MTID: {newMTID}";
+                        if (!string.IsNullOrWhiteSpace(maintenance.MaintDescription))
+                        {
+                            noteText += $" - {maintenance.MaintDescription}";
+                        }
+
+                        await using (var cmdTx = new SqlCommand(sqlInsertTx, con, (SqlTransaction)tran))
+                        {
+                            cmdTx.Parameters.Add("@SPID", SqlDbType.Int).Value = sp.SPID;
+                            cmdTx.Parameters.Add("@Qty", SqlDbType.Int).Value = sp.Qty;
+                            cmdTx.Parameters.Add("@Date", SqlDbType.DateTime).Value = DateTime.Now;
+                            cmdTx.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
+                            cmdTx.Parameters.Add("@MTID", SqlDbType.BigInt).Value = newMTID;
+                            cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = noteText;
+                            cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
+                            cmdTx.Parameters.Add("@CreateDate", SqlDbType.DateTime).Value = DateTime.Now;
+                            await cmdTx.ExecuteNonQueryAsync();
+                        }
+                    }
+                }
+
                 await tran.CommitAsync();
                 return true;
             }
@@ -203,5 +286,14 @@ namespace CMMS.Server.Services.MaintenanceService
         //    var result = await cmd.ExecuteNonQueryAsync();
         //    return result > 0;
         //}
+        private class MaintenanceSparePartDtoHelper
+        {
+            public long MTID { get; set; }
+            public int SPID { get; set; }
+            public int Qty { get; set; }
+            public string? PartCode { get; set; }
+            public string? PartName { get; set; }
+            public string? Unit { get; set; }
+        }
     }
 }

@@ -1,0 +1,73 @@
+@namespace CMMS.Client.Modals.SpareParts
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@inject IMessageService Message
+
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Disabled="@(!CanSubmit)" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Confirm
+        </Button>
+        <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Cancel
+        </Button>
+    </Template>;
+}
+
+<Modal @bind-Visible="IsModalVisible" Title="Adjust Stock" Style="z-index:9999;width:480px" Footer="@footer">
+    @if (Part != null)
+    {
+        <p style="color:gray;margin-bottom:16px;">@Part.PartCode — @Part.PartName</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <div style="flex:1; text-align:center; padding:8px; border-radius:8px; cursor:pointer;
+                border:1px solid @(Type == "IN" ? "#52c41a" : "#d9d9d9");
+                background:@(Type == "IN" ? "#f6ffed" : "#fff");
+                color:@(Type == "IN" ? "#389e0d" : "#595959"); font-weight:600;"
+                 @onclick='() => SetType("IN")'>
+                <Icon Type="arrow-down" Theme="IconThemeType.Outline" /> Stock in
+            </div>
+            <div style="flex:1; text-align:center; padding:8px; border-radius:8px; cursor:pointer;
+                border:1px solid @(Type == "OUT" ? "#fa8c16" : "#d9d9d9");
+                background:@(Type == "OUT" ? "#fff7e6" : "#fff");
+                color:@(Type == "OUT" ? "#d46b08" : "#595959"); font-weight:600;"
+                 @onclick='() => SetType("OUT")'>
+                <Icon Type="arrow-up" Theme="IconThemeType.Outline" /> Stock out
+            </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:600;color:#595959;">Quantity</label>
+            <AntDesign.InputNumber TValue="int" @bind-Value="Qty" Min="1" Style="width:100%" />
+        </div>
+
+        <div style="display:flex; gap:12px; background:#fafafa; border-radius:8px; padding:12px 14px; margin-bottom:12px;">
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#8c8c8c;">Current stock</div>
+                <div style="font-size:18px;font-weight:700;">@Part.Inventory @Part.Unit</div>
+            </div>
+            <div style="width:1px; background:#e8e8e8;"></div>
+            <div style="flex:1;">
+                <div style="font-size:11px;color:#8c8c8c;">New stock (preview)</div>
+                <div style="font-size:18px;font-weight:700;color:@(IsOverdraw ? "#ff4d4f" : "#389e0d");">@NewStock @Part.Unit</div>
+            </div>
+        </div>
+
+        @if (IsOverdraw)
+        {
+            <div style="color:#ff4d4f; font-size:13px; margin-bottom:12px;">
+                <Icon Type="warning" Theme="IconThemeType.Outline" /> Not enough stock. Only @Part.Inventory @Part.Unit available.
+            </div>
+        }
+
+        <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:600;color:#595959;">Reference code (optional)</label>
+            <Input @bind-Value="RefCode" Placeholder="Invoice / PO number" />
+        </div>
+
+        <div>
+            <label style="font-size:12px;font-weight:600;color:#595959;">Note</label>
+            <TextArea @bind-Value="Note" Rows="2" />
+        </div>
+    }
+</Modal>

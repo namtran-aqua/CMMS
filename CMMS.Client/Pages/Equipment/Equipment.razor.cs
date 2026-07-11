@@ -22,9 +22,64 @@ namespace CMMS.Client.Pages.Equipment
         private List<EquipmentDto> _equipments = new();
         private EquipmentModal? equipmentModal;
 
-        private string searchText = "";
-        private string selectedStatus = "All Status";
-        private string sortBy = "NameAsc";
+        private int currentPage = 1;
+        private int pageSize = 10;
+
+        private string _searchText = "";
+        private string searchText
+        {
+            get => _searchText;
+            set
+            {
+                if (_searchText != value)
+                {
+                    _searchText = value;
+                    currentPage = 1;
+                }
+            }
+        }
+
+        private string _selectedStatus = "All Status";
+        private string selectedStatus
+        {
+            get => _selectedStatus;
+            set
+            {
+                if (_selectedStatus != value)
+                {
+                    _selectedStatus = value;
+                    currentPage = 1;
+                }
+            }
+        }
+
+        private string _sortBy = "NextMaintAsc";
+        private string sortBy
+        {
+            get => _sortBy;
+            set
+            {
+                if (_sortBy != value)
+                {
+                    _sortBy = value;
+                    currentPage = 1;
+                }
+            }
+        }
+
+        private void OnPageChange(PaginationEventArgs args)
+        {
+            if (pageSize != args.PageSize)
+            {
+                pageSize = args.PageSize;
+                currentPage = 1; // đổi page size thì về lại trang đầu
+            }
+            else
+            {
+                currentPage = args.Page;
+            }
+            StateHasChanged();
+        }
         private bool isUpdating;
 
         private List<EquipmentDto> FilteredEquipments
@@ -61,12 +116,12 @@ namespace CMMS.Client.Pages.Equipment
                 // Sort
                 result = sortBy switch
                 {
-                    "NameAsc"      => result.OrderBy(e => e.EquipmentName ?? ""),
-                    "NameDesc"     => result.OrderByDescending(e => e.EquipmentName ?? ""),
                     "NextMaintAsc" => result.OrderBy(e => e.NextMaintenanceDate ?? DateTime.MaxValue),
                     "NextMaintDesc"=> result.OrderByDescending(e => e.NextMaintenanceDate ?? DateTime.MinValue),
+                    "NameAsc"      => result.OrderBy(e => e.EquipmentName ?? ""),
+                    "NameDesc"     => result.OrderByDescending(e => e.EquipmentName ?? ""),
                     "StatusAsc"    => result.OrderBy(e => e.StsUseName ?? ""),
-                    _              => result.OrderBy(e => e.EquipmentName ?? "")
+                    _              => result.OrderBy(e => e.NextMaintenanceDate ?? DateTime.MaxValue)
                 };
 
                 return result.ToList();

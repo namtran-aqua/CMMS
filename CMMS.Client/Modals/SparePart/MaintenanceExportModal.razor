@@ -1,0 +1,67 @@
+@namespace CMMS.Client.Modals.SpareParts
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@inject IMessageService Message
+
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Confirm export
+        </Button>
+        <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Cancel
+        </Button>
+    </Template>;
+}
+
+<Modal @bind-Visible="IsModalVisible" Title="Export for Maintenance" Style="z-index:9999;width:640px" Footer="@footer">
+    <p style="color:gray;margin-bottom:16px;">Issue one or more parts for a maintenance job</p>
+
+    <Row Gutter="16">
+        <Col Span="12">
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px;font-weight:600;color:#595959;">Equipment / Job *</label>
+                <Input @bind-Value="Request.Equipment" Placeholder="e.g. Air compressor #2" />
+            </div>
+        </Col>
+        <Col Span="12">
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px;font-weight:600;color:#595959;">Requested by</label>
+                <Input @bind-Value="Request.RequestedBy" />
+            </div>
+        </Col>
+    </Row>
+
+    <div style="font-size:12px;font-weight:600;color:#595959;margin-bottom:6px;">Parts needed</div>
+
+    @foreach (var line in Request.Lines)
+    {
+        var part = Parts.FirstOrDefault(p => p.SPID == line.SPID);
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <Select TValue="int"
+                    Value="line.SPID"
+                    ValueChanged="(int v) => line.SPID = v"
+                    DataSource="Parts"
+                    ValueName="SPID"
+                    LabelName="Name"
+                    Style="flex:1;" />
+            <AntDesign.InputNumber TValue="int" @bind-Value="line.Qty" Min="1" Style="width:100px;" />
+            <span style="font-size:12px;color:#8c8c8c;width:50px;">@part?.Unit</span>
+            @if (Request.Lines.Count > 1)
+            {
+                <Button Type="@ButtonType.Link" Danger="true" OnClick="() => RemoveLine(line)">
+                    <Icon Type="close" Theme="IconThemeType.Outline" />
+                </Button>
+            }
+        </div>
+    }
+
+    <Button Type="@ButtonType.Link" OnClick="AddLine" Style="padding-left:0;">
+        <Icon Type="plus" Theme="IconThemeType.Outline" /> Add another part
+    </Button>
+
+    <div style="margin-top:12px;">
+        <label style="font-size:12px;font-weight:600;color:#595959;">Note</label>
+        <TextArea @bind-Value="Request.Note" Rows="2" />
+    </div>
+</Modal>

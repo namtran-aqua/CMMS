@@ -2,6 +2,8 @@
 @using CMMS.Shared.Dtos.Equipment
 @using CMMS.Shared.Dtos.User
 @using CMMS.Shared.Dtos.Maintenance.Attachments
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Shared.Dtos.Maintenance
 @using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient httpClient
 @inject IMessageService Message
@@ -70,12 +72,12 @@
 </style>
 @{
     RenderFragment footer = @<Template>
-        <Button OnClick="@SaveAsync" Type="ButtonType.Primary">
-            Save
-        </Button>
-
-        <Button OnClick="@Close">Cancel</Button>
-        
+            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                Save
+            </Button>
+            <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Cancel
+            </Button>
     </Template>;
 }
 
@@ -165,9 +167,72 @@
             </FormItem>
             </Col>
         </Row>
-        @* <Row Gutter="16">
-            
-        </Row> *@
+        <!-- Spare Parts Section -->
+        <div class="its-attach-area">
+            <div class="its-attach-header">
+                <div class="its-section-title" style="margin-bottom:0;">
+                    <Icon Type="tool" Theme="IconThemeType.Outline" Style="font-size:12px;" />
+                    Spare Parts Used
+                </div>
+                <Button Type="@ButtonType.Primary" Size="ButtonSize.Small" OnClick="AddSparePartRow" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                    <Icon Type="plus" Theme="IconThemeType.Outline" /> Add Part
+                </Button>
+            </div>
+
+            @if (MaintenanceDto.SpareParts != null && MaintenanceDto.SpareParts.Any())
+            {
+                <Table Class="style-attach"
+                       DataSource="MaintenanceDto.SpareParts"
+                       HidePagination
+                       Size="TableSize.Small"
+                       TItem="MaintenanceSparePartDto">
+                    <ChildContent Context="sp">
+                        <Column Title="Spare Part" TData="int">
+                            <AntDesign.Select TItemValue="int"
+                                              TItem="SparePartDto"
+                                              DataSource="SparePartsList"
+                                              ValueName="SPID"
+                                              LabelName="PartName"
+                                              Value="sp.SPID"
+                                              ValueChanged="(int val) => OnRowSparePartChanged(sp, val)"
+                                              Placeholder="Select spare part..."
+                                              ShowSearch
+                                              EnableSearch
+                                              Style="width: 100%;">
+                            </AntDesign.Select>
+                        </Column>
+                        <Column Title="In Stock" Width="100" TData="int?">
+                            <span style="font-size:12px;color:#595959;">@(sp.Inventory != null ? $"{sp.Inventory} {sp.Unit}" : "-")</span>
+                        </Column>
+                        <Column Title="Qty" Width="120" TData="int">
+                            @if (sp.SPID > 0)
+                            {
+                                <AntDesign.InputNumber TValue="int"
+                                                       Min="1"
+                                                       Max="@(sp.Inventory ?? 999999)"
+                                                       @bind-Value="sp.Qty"
+                                                       Size="InputSize.Small"
+                                                       Style="width: 80px;" />
+                            }
+                        </Column>
+                        <ActionColumn Width="50">
+                            <Button Icon="delete"
+                                    Type="ButtonType.Link"
+                                    Danger="true"
+                                    Size="ButtonSize.Small"
+                                    OnClick="() => RemoveSparePart(sp)" />
+                        </ActionColumn>
+                    </ChildContent>
+                </Table>
+            }
+            else
+            {
+                <div style="text-align:center;padding:12px 0;font-size:12px;color:#8c8c8c;">
+                    No spare parts added yet
+                </div>
+            }
+        </div>
+
         <!-- Attachments -->
         <div class="its-attach-area">
             <div class="its-attach-header">
@@ -184,7 +249,7 @@
                     <Button Shape="ButtonShape.Round"
                             Size="ButtonSize.Small"
                             Icon="upload"
-                            Style="font-size:12px;">
+                            Style="border-radius: 8px; padding: 0 24px; height: 38px;">
                         Upload file
                     </Button>
                 </Upload>

@@ -1,0 +1,382 @@
+@page "/spare-parts"
+@namespace CMMS.Client.Pages.SpareParts
+@using AntDesign
+@using CMMS.Client.Modals.SpareParts
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Shared.Authorization
+@using CMMS.Client.Common
+@inject IMessageService Message
+
+<PageTitle>Spare Parts</PageTitle>
+
+<style>
+    .tab-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        background: #e2e8f0;
+        padding: 5px;
+        border-radius: 12px;
+        width: fit-content;
+    }
+
+    .tab-item {
+        padding: 8px 20px;
+        background: transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s ease;
+    }
+
+    .tab-item:hover {
+        color: #0f172a;
+    }
+
+    .tab-item.active {
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .low-stock-badge {
+        background: #ff4d4f;
+        color: white;
+        border-radius: 12px;
+        padding: 1px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-left: 6px;
+    }
+</style>
+
+<div>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3>Spare Parts</h3>
+            <p class="text-muted">Manage spare parts, stock and maintenance issue</p>
+        </div>
+        @if (selectedTab == "Parts")
+        {
+            <div style="display:flex; gap:8px;">
+                @* <Button Type="@ButtonType.Default" OnClick="() => ShowMaintenanceExport()" Style="border-radius: 8px; height: 38px;">
+                    <Icon Type="tool" Theme="IconThemeType.Outline" /> Export for Maintenance
+                </Button> *@
+                @if (IsAuthenticated)
+                {
+                    <Button Type="@ButtonType.Primary" OnClick="() => ShowPartModal(null)" Style="border-radius: 8px; height: 38px;">
+                        <Icon Type="plus" Theme="IconThemeType.Outline" /> Add Part
+                    </Button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="tab-container">
+        <div class="tab-item @(selectedTab == "Parts" ? "active" : "")" @onclick='() => selectedTab = "Parts"'>
+            🔧 Parts
+            @if (LowStockCount > 0)
+            {
+                <span class="low-stock-badge">@LowStockCount</span>
+            }
+        </div>
+        <div class="tab-item @(selectedTab == "History" ? "active" : "")" @onclick='() => selectedTab = "History"'>
+            📄 History
+        </div>
+        <div class="tab-item @(selectedTab == "Catalog" ? "active" : "")" @onclick='() => selectedTab = "Catalog"'>
+            🏷 Category &amp; Supplier
+        </div>
+    </div>
+
+    @if (selectedTab == "Parts")
+    {
+        <div class="card p-3 mb-3" style="border-radius:15px">
+            <div style="display:flex; gap:10px">
+                <input class="form-control" style="border-radius:10px; flex:1"
+                       placeholder="Search by code, name, location or supplier..."
+                       @bind-value="searchText" @bind-value:event="oninput" />
+
+                <select class="form-select" style="width:200px; border-radius:10px" @bind="categoryFilter">
+                    <option value="0">All categories</option>
+                    @foreach (var c in Categories)
+                    {
+                        <option value="@c.CategoryID">@c.CategoryName</option>
+                    }
+                </select>
+
+                <select class="form-select" style="width:200px; border-radius:10px" @bind="stockFilter">
+                    <option value="All">All Stock</option>
+                    <option value="Low">Low Stock</option>
+                    <option value="InStock">In Stock</option>
+                    <option value="Out">Out of Stock</option>
+                </select>
+
+                <select class="form-select" style="width:200px; border-radius:10px" @bind="sortBy">
+                    <option value="NameAsc">Name (A-Z)</option>
+                    <option value="NameDesc">Name (Z-A)</option>
+                    <option value="CodeAsc">Code (A-Z)</option>
+                    <option value="PriceAsc">Price (Low-High)</option>
+                    <option value="PriceDesc">Price (High-Low)</option>
+                    <option value="StockAsc">Stock (Low-High)</option>
+                    <option value="StockDesc">Stock (High-Low)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card p-4 mb-4" >
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Parts list</h6>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredParts.Count parts total</p>
+            </div>
+            @* <div><h6>Parts list</h6></div>
+            <div>@FilteredParts.Count parts total</div> *@
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Inventory</th>
+                        <th>Price</th>
+                        <th>Location</th>
+                        <th>Supplier</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (FilteredParts != null && FilteredParts.Any())
+                    {
+                        foreach (var p in FilteredParts.Skip((partsPage - 1) * partsPageSize).Take(partsPageSize))
+                        {
+                            <tr>
+                                <td><strong>@p.PartCode</strong></td>
+                                <td>@p.PartName</td>
+                                <td>@p.CategoryName</td>
+                                <td>
+                                    <div style="
+                                        color:@(p.IsLowStock ? "#ff4d4f" : "#0f172a");
+                                        font-weight:@(p.IsLowStock ? "700" : "400");">
+                                        @p.Inventory @p.Unit
+                                        @if (p.IsLowStock)
+                                        {
+                                            <Icon Type="warning" Theme="IconThemeType.Fill" Style="color:#ff4d4f;margin-left:4px;" />
+                                        }
+                                    </div>
+                                </td>
+                                <td>@String.Format("{0:N0} VND", p.Price)</td>
+                                <td>@p.Location</td>
+                                <td>@p.SupplierName</td>
+                                <td>
+                                    @if (IsAuthenticated && AuthorizationHelper.CanManageSparePart(CurrentUser, p.FACID))
+                                    {
+                                        <Template>
+                                            <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
+                                                <ChildContent>
+                                                    <Button Icon="menu" />
+                                                </ChildContent>
+                                                <ContentTemplate>
+                                                    <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
+
+                                                        <Button Type="@ButtonType.Text" OnClick="() => ShowAdjustStock(p)" Style="text-align: left;">
+                                                            <Icon Type="swap" Theme="IconThemeType.Outline" /> Adjust
+                                                        </Button>
+                                                        <Button Type="@ButtonType.Text" OnClick="() => ShowPartModal(p)" Style="text-align: left;">
+                                                            <Icon Type="edit" Theme="IconThemeType.Outline" /> Edit
+                                                        </Button>
+                                                        <Button Type="@ButtonType.Text" Danger="true" OnClick="() => DeletePart(p)" Style="text-align: left;">
+                                                            <Icon Type="delete" Theme="IconThemeType.Outline" /> Delete
+                                                        </Button>
+
+                                                    </div>
+                                                </ContentTemplate>
+                                            </Popover>
+                                        </Template>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            @if (FilteredParts != null && FilteredParts.Any())
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span style="font-size:12px; color:#595959;">
+                        Showing @(((partsPage - 1) * partsPageSize) + 1) to @(Math.Min(partsPage * partsPageSize, FilteredParts.Count)) of @FilteredParts.Count parts
+                    </span>
+                    <Pagination Total="FilteredParts.Count"
+                                @bind-PageSize="partsPageSize"
+                                @bind-Current="partsPage"
+                                PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                                ShowSizeChanger="true"
+                                OnChange="OnPartsPageChange"
+                                Size="PaginationSize.Small" />
+                </div>
+            }
+        </div>
+    }
+    else if (selectedTab == "History")
+    {
+        <div class="card p-3 mb-3" style="border-radius:15px">
+            <div style="display:flex; gap:10px">
+                <input class="form-control" style="border-radius:10px; flex:1"
+                       placeholder="Search by part code, name or equipment..."
+                       @bind-value="historySearchText" @bind-value:event="oninput" />
+
+                <select class="form-select" style="width:200px; border-radius:10px" @bind="historyTypeFilter">
+                    <option value="">All types</option>
+                    <option value="IN">Stock in</option>
+                    <option value="OUT">Stock out</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Transaction history</h6>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredHistory.Count records total</p>
+            </div>
+            @* <div><h6>Transaction history</h6></div>
+            <div>@FilteredHistory.Count records total</div> *@
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Part</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Equipment / Note</th>
+                        <th>Ref code</th>
+                        <th>Adjust By</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (FilteredHistory != null && FilteredHistory.Any())
+                    {
+                        foreach (var t in FilteredHistory.Skip((historyPage - 1) * historyPageSize).Take(historyPageSize))
+                        {
+                            <tr>
+                                <td>@t.PartCode — @t.PartName</td>
+                                <td>
+                                    <span style="
+                                        background-color:@GetTxColor(t.Type);
+                                        color:white;
+                                        padding:4px 10px;
+                                        border-radius:12px;
+                                        font-size:12px;
+                                        font-weight:600;">
+                                        @GetTxLabel(t.Type)
+                                    </span>
+                                </td>
+                                
+                                <td>
+                                    <strong style="color:@(t.Type == "IN" ? "#52c41a" : "#fa8c16");">
+                                            @(t.Type == "IN" ? "+" : "-")@t.Quantity
+                                    </strong>
+                                </td>
+                                <td>@(t.Equipment ?? t.Note)</td>
+                                <td>@t.RefCode</td>
+                                <td>@t.CreateUser</td>
+                                <td>@t.CreateDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            @if (FilteredHistory != null && FilteredHistory.Any())
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span style="font-size:12px; color:#595959;">
+                        Showing @(((historyPage - 1) * historyPageSize) + 1) to @(Math.Min(historyPage * historyPageSize, FilteredHistory.Count)) of @FilteredHistory.Count records
+                    </span>
+                    <Pagination Total="FilteredHistory.Count"
+                                @bind-PageSize="historyPageSize"
+                                @bind-Current="historyPage"
+                                PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                                ShowSizeChanger="true"
+                                OnChange="OnHistoryPageChange"
+                                Size="PaginationSize.Small" />
+                </div>
+            }
+        </div>
+    }
+    else if (selectedTab == "Catalog")
+    {
+        <div class="row">
+            <div class="col-6">
+                <div class="card p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Categories</h6>
+                        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@Categories.Count records total</p>
+                    </div>
+                    @if (IsAuthenticated)
+                    {
+                        <div style="display:flex; gap:8px; margin-bottom:12px;">
+                            <input class="form-control" style="border-radius:10px" placeholder="New category name" @bind-value="newCategoryName" />
+                            <Button Type="@ButtonType.Primary" OnClick="AddCategory" Style="border-radius:8px;">
+                                <Icon Type="plus" Theme="IconThemeType.Outline" />
+                            </Button>
+                        </div>
+                    }
+                    @foreach (var c in Categories)
+                    {
+                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f0f0f0;">
+                            @c.CategoryName
+                            @if (IsAuthenticated)
+                            {
+                                <Button Type="@ButtonType.Link" Danger="true" Size="ButtonSize.Small" OnClick="() => DeleteCategory(c.CategoryID)">
+                                    <Icon Type="delete" Theme="IconThemeType.Outline" />
+                                </Button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Suppliers</h6>
+                        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@Suppliers.Count records total</p>
+                    </div>
+                    @if (IsAuthenticated)
+                    {
+                        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+                            <input class="form-control" style="border-radius:10px" placeholder="Supplier name" @bind-value="newSupplier.SupplierName" />
+                            <div style="display:flex; gap:8px;">
+                                <input class="form-control" style="border-radius:10px" placeholder="Phone" @bind-value="newSupplier.Phone" />
+                                <input class="form-control" style="border-radius:10px" placeholder="Email" @bind-value="newSupplier.Email" />
+                            </div>
+                            <Button Type="@ButtonType.Primary" OnClick="AddSupplier" Style="border-radius:8px; align-self:flex-start;">
+                                <Icon Type="plus" Theme="IconThemeType.Outline" /> Add supplier
+                            </Button>
+                        </div>
+                    }
+                    @foreach (var s in Suppliers)
+                    {
+                        <div style="padding:8px 0; border-bottom:1px solid #f0f0f0;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <strong>@s.SupplierName</strong>
+                                @if (IsAuthenticated)
+                                {
+                                    <Button Type="@ButtonType.Link" Danger="true" Size="ButtonSize.Small" OnClick="() => DeleteSupplier(s.SupplierID)">
+                                        <Icon Type="delete" Theme="IconThemeType.Outline" />
+                                    </Button>
+                                }
+                            </div>
+                            <div class="text-muted" style="font-size:12px;">@s.Phone · @s.Email</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<SparePartModal @ref="_partModal" OnSave="LoadData" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
+<AdjustStockModal @ref="_adjustModal" OnSave="LoadData" />
+<MaintenanceExportModal @ref="_exportModal" OnSave="LoadData" Parts="Parts" />

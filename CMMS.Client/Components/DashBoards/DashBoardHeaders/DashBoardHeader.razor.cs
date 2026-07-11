@@ -8,7 +8,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardHeaders
         [Parameter] public List<DashBoarDto> DashBoardData { get; set; } = new();
         private List<DashBoarDto> Normal { get; set; } = new();
         private List<DashBoarDto> Running { get; set; } = new();
-        private List<DashBoarDto> DueSon { get; set; } = new();
+        private List<DashBoarDto> DueSoon { get; set; } = new();
         private List<DashBoarDto> OverDue { get; set; } = new();
 
         protected override void OnParametersSet()
@@ -19,7 +19,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardHeaders
 
             var currentDate = DateTime.Today;
 
-            DueSon = DashBoardData.Where(x =>
+            DueSoon = DashBoardData.Where(x =>
             {
                 if (x.IsActive == true && x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue)
                 {
@@ -40,7 +40,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardHeaders
                 return false;
             }).ToList();
 
-            Normal = Running.Except(DueSon).Except(OverDue).ToList();
+            Normal = Running.Except(DueSoon).Except(OverDue).ToList();
         }
     }
 }

@@ -1,0 +1,160 @@
+@namespace CMMS.Client.Modals.SpareParts
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@inject IMessageService Message
+
+<style>
+    .ant-select-selector {
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        height: 38px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .ant-select-selection-item {
+        font-size: 14px !important;
+        font-weight: 400 !important;
+    }
+
+    .ant-select-arrow {
+        font-size: 12px;
+    }
+
+    .ant-input {
+        font-size: 14px;
+        height: 38px;
+    }
+
+    .ant-select-selection-placeholder {
+        color: #bfbfbf !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+    }
+</style>
+
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Save
+        </Button>
+        <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            Cancel
+        </Button>
+    </Template>;
+}
+
+<Modal @bind-Visible="IsModalVisible"
+       Title="@(PartDto.SPID == 0 ? "Add Spare Part" : "Edit Spare Part")"
+       Style="z-index:9999;width:600px"
+       Footer="@footer">
+
+    <Form @ref="@formRef" Model="@PartDto" Layout="FormLayout.Vertical" OnFinish="SaveAsync">
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Code" Name="Code" Required>
+                    <Input @bind-Value="PartDto.PartCode"/>
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Name" Name="Name" Required>
+                    <Input @bind-Value="PartDto.PartName" Placeholder="Part name" />
+                </FormItem>
+            </Col>
+        </Row>
+
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Category" Name="CategoryID">
+                    <Select TValue="int?"
+                            @bind-Value="PartDto.CategoryID"
+                            DataSource="Categories"
+                            ValueName="CategoryID"
+                            LabelName="CategoryName"
+                            AllowClear />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Supplier" Name="SupplierID">
+                    <Select TValue="int?"
+                            @bind-Value="PartDto.SupplierID"
+                            DataSource="Suppliers"
+                            ValueName="SupplierID"
+                            LabelName="SupplierName"
+                            AllowClear />
+                </FormItem>
+            </Col>
+        </Row>
+
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Unit" Name="Unit">
+                    <Input @bind-Value="PartDto.Unit" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Price" Name="Price">
+                    <AntDesign.InputNumber TValue="decimal?" @bind-Value="PartDto.Price" Style="width:100%" Min="0" />
+                </FormItem>
+            </Col>
+            
+        </Row>
+
+        <Row Gutter="16">
+            @if (PartDto.SPID == 0)
+            {
+                <AntDesign.Col Span="12">
+                    <FormItem Label="Quantity" Name="Inventory">
+                        <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.Inventory" Style="width:100%" Min="0" />
+                    </FormItem>
+                </AntDesign.Col>
+            }
+            <Col Span="12">
+                <FormItem Label="Min stock" Name="MinStock">
+                    <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.MinStock" Style="width:100%" Min="0" />
+                </FormItem>
+            </Col>
+            </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Location" Name="LocID">
+                    <Select TValue="int?"
+                            @bind-Value="PartDto.LocID"
+                            DataSource="Locations"
+                            ValueName="LocID"
+                            LabelName="LocName"
+                            Placeholder="Select location"
+                            AllowClear />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Department" Name="DeptID">
+
+                    <Select TValue="int?"
+                            @bind-Value="PartDto.DeptID"
+                            DataSource="FilteredDepartments"
+                            ValueName="DeptID"
+                            LabelName="DeptFullName"
+                            Placeholder="Select department"
+                            ShowSearch
+                            AllowClear>
+                    </Select>
+
+                </FormItem>
+
+
+            </Col>
+        </Row>
+
+        <FormItem Label="Note" Name="Note">
+            <TextArea @bind-Value="PartDto.Note" Rows="2" />
+        </FormItem>
+
+        @if (PartDto.SPID != 0)
+        {
+            <div style="font-size:12px;color:#8c8c8c;">
+                Current stock: <strong>@PartDto.Inventory @PartDto.Unit</strong> — use "Adjust stock" on the parts table to change quantity.
+            </div>
+        }
+    </Form>
+</Modal>

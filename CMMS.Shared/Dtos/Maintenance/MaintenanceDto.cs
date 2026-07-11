@@ -1,4 +1,4 @@
-﻿using CMMS.Shared.Dtos.Maintenance.Attachments;
+using CMMS.Shared.Dtos.Maintenance.Attachments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,5 +25,6 @@ namespace CMMS.Shared.Dtos.Maintenance
         public List<MaintenanceDto> Items { get; set; } = new();
         public List<AttachmentDto> Attachments { get; set; } = new();
         public string? WorkDayId { get; set; }
+        public List<MaintenanceSparePartDto> SpareParts { get; set; } = new();
     }
 }

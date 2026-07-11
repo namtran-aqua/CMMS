@@ -72,6 +72,36 @@
                 </div>
             }
 
+            @if (Record.SpareParts != null && Record.SpareParts.Any())
+            {
+                <div class="mb-4">
+                    <span class="info-label text-muted d-block mb-2" style="font-size: 11px; font-weight: 600; text-transform: uppercase;">Spare Parts Used</span>
+                    <div class="list-group">
+                        @foreach (var sp in Record.SpareParts)
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center p-2 mb-1 border rounded" style="background:#f8fafc; font-size: 13px;">
+                                <div>
+                                    <strong style="color: #1e293b;">@sp.PartCode</strong> - @sp.PartName
+                                </div>
+                                <span style="display: inline-flex;
+                                    align-items: center;
+                                    gap: 4px;
+                                    padding: 4px 10px;
+                                    background: #eef2ff;
+                                    color: #4338ca;
+                                    border: 1px solid #c7d2fe;
+                                    border-radius: 999px;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    transition: all .2s ease;">
+                                    @sp.Qty @sp.Unit
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             <div class="attachments-section mt-4 pt-3 border-top">
                 <span class="info-label text-muted d-block mb-3" style="font-size: 12px; font-weight: 600;">
                     <Icon Type="paper-clip" Theme="IconThemeType.Outline" Class="me-1" /> Attachments (@(Record.Attachments?.Count ?? 0))

@@ -124,22 +124,22 @@ namespace CMMS.Client.Components.Equipments
         private async Task CreatedAsync()
         {
             var response = await Http.PostAsJsonAsync("api/equipment/create", EquipmentDto);
-            var response2 = await Http.PostAsync("api/equipment/update-status", null);
 
-            
-
-            if (response.IsSuccessStatusCode)
-            {
-                Message.Success("Tạo thành công!");
-                if (response2.IsSuccessStatusCode)
-                {
-                    Message.Success("Cập nhật trạng thái thành công");
-                }
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
                 Message.Error($"Tạo thất bại: {error}");
+                return;
+            }
+
+            Message.Success("Tạo thành công!");
+
+            var response2 = await Http.PostAsync("api/equipment/update-status", null);
+
+            if (!response2.IsSuccessStatusCode)
+            {
+                var error = await response2.Content.ReadAsStringAsync();
+                Message.Warning($"Đã tạo thiết bị nhưng cập nhật trạng thái thất bại. {error}");
             }
         }
         #endregion

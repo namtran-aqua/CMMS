@@ -31,5 +31,13 @@ namespace CMMS.Shared.Authorization
             // Default safety check: treat as standard User (PIC check)
             return !string.IsNullOrEmpty(equipmentPicId) && string.Equals(equipmentPicId, user.WorkDayId, StringComparison.OrdinalIgnoreCase);
         }
+        public static bool CanManageSparePart(UserDto? user, int? partFacId)
+        {
+            if (user == null) return false;
+
+            // Must belong to the same factory — that's the only check needed
+            return user.FACID == partFacId;
+        }
     }
+
 }
