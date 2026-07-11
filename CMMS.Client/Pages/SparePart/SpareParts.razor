@@ -61,13 +61,13 @@
         @if (selectedTab == "Parts")
         {
             <div style="display:flex; gap:8px;">
-                @* <Button Type="@ButtonType.Default" OnClick="() => ShowMaintenanceExport()" Style="border-radius: 8px; height: 38px;">
-                    <Icon Type="tool" Theme="IconThemeType.Outline" /> Export for Maintenance
-                </Button> *@
                 @if (IsAuthenticated)
                 {
-                    <Button Type="@ButtonType.Primary" OnClick="() => ShowPartModal(null)" Style="border-radius: 8px; height: 38px;">
-                        <Icon Type="plus" Theme="IconThemeType.Outline" /> Add Part
+                    <Button Type="@ButtonType.Default" OnClick="ShowImportModal" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                        <Icon Type="import" Theme="IconThemeType.Outline" /> Import
+                    </Button>
+                    <Button Type="@ButtonType.Primary" OnClick="() => ShowPartModal(null)" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                        <Icon Type="plus" Theme="IconThemeType.Outline" /> Add
                     </Button>
                 }
             </div>
@@ -96,7 +96,7 @@
             <div style="display:flex; gap:10px">
                 <input class="form-control" style="border-radius:10px; flex:1"
                        placeholder="Search by code, name, location or supplier..."
-                       @bind-value="searchText" @bind-value:event="oninput" />
+                       @bind-value="searchText" />
 
                 <select class="form-select" style="width:200px; border-radius:10px" @bind="categoryFilter">
                     <option value="0">All categories</option>
@@ -128,7 +128,7 @@
         <div class="card p-4 mb-4" >
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Parts list</h6>
-                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredParts.Count parts total</p>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@totalPartsCount parts total</p>
             </div>
             @* <div><h6>Parts list</h6></div>
             <div>@FilteredParts.Count parts total</div> *@
@@ -149,7 +149,7 @@
                 <tbody>
                     @if (FilteredParts != null && FilteredParts.Any())
                     {
-                        foreach (var p in FilteredParts.Skip((partsPage - 1) * partsPageSize).Take(partsPageSize))
+                        foreach (var p in FilteredParts)
                         {
                             <tr>
                                 <td><strong>@p.PartCode</strong></td>
@@ -205,9 +205,9 @@
             {
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <span style="font-size:12px; color:#595959;">
-                        Showing @(((partsPage - 1) * partsPageSize) + 1) to @(Math.Min(partsPage * partsPageSize, FilteredParts.Count)) of @FilteredParts.Count parts
+                        Showing @(((partsPage - 1) * partsPageSize) + 1) to @(Math.Min(partsPage * partsPageSize, totalPartsCount)) of @totalPartsCount parts
                     </span>
-                    <Pagination Total="FilteredParts.Count"
+                    <Pagination Total="totalPartsCount"
                                 @bind-PageSize="partsPageSize"
                                 @bind-Current="partsPage"
                                 PageSizeOptions="new[] { 10, 20, 50, 100 }"
@@ -224,7 +224,7 @@
             <div style="display:flex; gap:10px">
                 <input class="form-control" style="border-radius:10px; flex:1"
                        placeholder="Search by part code, name or equipment..."
-                       @bind-value="historySearchText" @bind-value:event="oninput" />
+                       @bind-value="historySearchText" />
 
                 <select class="form-select" style="width:200px; border-radius:10px" @bind="historyTypeFilter">
                     <option value="">All types</option>
@@ -238,7 +238,7 @@
         <div class="card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Transaction history</h6>
-                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredHistory.Count records total</p>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@totalHistoryCount records total</p>
             </div>
             @* <div><h6>Transaction history</h6></div>
             <div>@FilteredHistory.Count records total</div> *@
@@ -258,7 +258,7 @@
                 <tbody>
                     @if (FilteredHistory != null && FilteredHistory.Any())
                     {
-                        foreach (var t in FilteredHistory.Skip((historyPage - 1) * historyPageSize).Take(historyPageSize))
+                        foreach (var t in FilteredHistory)
                         {
                             <tr>
                                 <td>@t.PartCode — @t.PartName</td>
@@ -292,9 +292,9 @@
             {
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <span style="font-size:12px; color:#595959;">
-                        Showing @(((historyPage - 1) * historyPageSize) + 1) to @(Math.Min(historyPage * historyPageSize, FilteredHistory.Count)) of @FilteredHistory.Count records
+                        Showing @(((historyPage - 1) * historyPageSize) + 1) to @(Math.Min(historyPage * historyPageSize, totalHistoryCount)) of @totalHistoryCount records
                     </span>
-                    <Pagination Total="FilteredHistory.Count"
+                    <Pagination Total="totalHistoryCount"
                                 @bind-PageSize="historyPageSize"
                                 @bind-Current="historyPage"
                                 PageSizeOptions="new[] { 10, 20, 50, 100 }"
@@ -318,8 +318,8 @@
                     {
                         <div style="display:flex; gap:8px; margin-bottom:12px;">
                             <input class="form-control" style="border-radius:10px" placeholder="New category name" @bind-value="newCategoryName" />
-                            <Button Type="@ButtonType.Primary" OnClick="AddCategory" Style="border-radius:8px;">
-                                <Icon Type="plus" Theme="IconThemeType.Outline" />
+                            <Button Type="@ButtonType.Primary" OnClick="AddCategory" Style="border-radius:8px; height:38px">
+                                <Icon Type="plus" Theme="IconThemeType.Outline" /> 
                             </Button>
                         </div>
                     }
@@ -351,7 +351,7 @@
                                 <input class="form-control" style="border-radius:10px" placeholder="Phone" @bind-value="newSupplier.Phone" />
                                 <input class="form-control" style="border-radius:10px" placeholder="Email" @bind-value="newSupplier.Email" />
                             </div>
-                            <Button Type="@ButtonType.Primary" OnClick="AddSupplier" Style="border-radius:8px; align-self:flex-start;">
+                            <Button Type="@ButtonType.Primary" OnClick="AddSupplier" Style="border-radius:8px; align-self:flex-start;height: 38px;">
                                 <Icon Type="plus" Theme="IconThemeType.Outline" /> Add supplier
                             </Button>
                         </div>
@@ -380,3 +380,4 @@
 <SparePartModal @ref="_partModal" OnSave="LoadData" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
 <AdjustStockModal @ref="_adjustModal" OnSave="LoadData" />
 <MaintenanceExportModal @ref="_exportModal" OnSave="LoadData" Parts="Parts" />
+<ImportModal @ref="_importModal" Title="Import Spare Parts" TemplateUrl="api/SparePart/import-template" UploadUrl="api/SparePart/import" OnSave="LoadData" />

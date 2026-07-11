@@ -1,0 +1,209 @@
+@namespace CMMS.Client.Components
+@using AntDesign
+@using Microsoft.AspNetCore.Components.Forms
+@using CMMS.Shared.Dtos.Common
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject IMessageService Message
+
+@{
+    RenderFragment footer = @<Template>
+        <Button OnClick="UploadFileAsync" Type="ButtonType.Primary" Disabled="@(_file == null || IsUploading)" Loading="IsUploading" Style="border-radius: 8px; height: 38px; padding: 0 12px;">
+            Start Import
+        </Button>
+        <Button OnClick="Close" Style="border-radius: 8px; height: 38px; padding: 0 12px;">
+            Cancel
+        </Button>
+    </Template>;
+}
+
+<Modal @bind-Visible="IsModalVisible" Title="@Title" Footer="@footer" Style="width: 550px;">
+    <div style="margin-bottom: 20px;">
+        <p class="text-muted" style="font-size: 13px;">
+            Please download the template format, populate it with data, and upload it below. Supporting format: <strong>.csv (Comma-delimited)</strong>.
+        </p>
+        <Button Type="ButtonType.Link" Icon="download" OnClick="DownloadTemplate" Style="padding-left: 0;">
+            Download CSV Template
+        </Button>
+    </div>
+
+    <!-- Drag & Drop Zone -->
+    <label class="import-zone" for="importFileInput">
+        <InputFile id="importFileInput" OnChange="HandleFileSelected" style="display: none;" accept=".csv" />
+        
+        <Icon Type="inbox" Theme="IconThemeType.Outline" Style="font-size: 48px; color: #4096ff; margin-bottom: 8px;" />
+        
+        @if (_file == null)
+        {
+            <div style="font-weight: 600; color: #262626;">Click to browse file</div>
+            <div style="font-size: 12px; color: #8c8c8c; margin-top: 4px;">Supports only CSV files up to 10MB</div>
+        }
+        else
+        {
+            <div style="font-weight: 600; color: #389e0d;">File selected!</div>
+            <div style="font-size: 14px; font-weight: 700; color: #262626; margin-top: 4px; word-break: break-all;">@_file.Name</div>
+            <div style="font-size: 12px; color: #8c8c8c; margin-top: 2px;">Size: @FormatSize(_file.Size)</div>
+        }
+    </label>
+
+    <!-- Import Results Summary -->
+    @if (ImportResult != null)
+    {
+        <div style="margin-top: 20px; border-radius: 12px; padding: 16px; background: @(ImportResult.SuccessCount > 0 && ImportResult.FailureCount == 0 ? "#f6ffed" : "#fff2f0"); border: 1px solid @(ImportResult.SuccessCount > 0 && ImportResult.FailureCount == 0 ? "#b7eb8f" : "#ffccc7");">
+            <div style="font-weight: 700; font-size: 14px; color: #262626; margin-bottom: 8px;">
+                Import Results:
+            </div>
+            <div style="display: flex; gap: 24px; font-size: 13px;">
+                <div>
+                    🟢 Success Rows: <strong style="color: #389e0d;">@ImportResult.SuccessCount</strong>
+                </div>
+                <div>
+                    🔴 Failed Rows: <strong style="color: #cf1322;">@ImportResult.FailureCount</strong>
+                </div>
+            </div>
+            
+            @if (ImportResult.Errors != null && ImportResult.Errors.Any())
+            {
+                <div style="margin-top: 12px;">
+                    <div style="font-weight: 600; font-size: 12px; color: #595959; margin-bottom: 4px;">Error Details:</div>
+                    <div class="error-log-container">
+                        @foreach (var err in ImportResult.Errors)
+                        {
+                            <div style="margin-bottom: 4px;">@err</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</Modal>
+
+<style>
+    .import-zone {
+        display: block;
+        border: 2px dashed #d9d9d9;
+        border-radius: 12px;
+        background: #fafafa;
+        padding: 32px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    .import-zone:hover {
+        border-color: #4096ff;
+        background: #f6ffed;
+    }
+    .error-log-container {
+        max-height: 150px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-family: Consolas, monospace;
+        font-size: 11px;
+        color: #cf1322;
+    }
+</style>
+
+@code {
+    [Inject] private IJSRuntime JS { get; set; }
+
+    [Parameter] public string Title { get; set; } = "Import Data";
+    [Parameter] public string TemplateUrl { get; set; } = "";
+    [Parameter] public string UploadUrl { get; set; } = "";
+    [Parameter] public EventCallback OnSave { get; set; }
+
+    private bool IsModalVisible { get; set; } = false;
+    private bool IsUploading { get; set; } = false;
+    private IBrowserFile? _file;
+    private ImportResultDto? ImportResult { get; set; }
+
+    public void Show()
+    {
+        _file = null;
+        ImportResult = null;
+        IsModalVisible = true;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        IsModalVisible = false;
+    }
+
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _file = e.File;
+        ImportResult = null;
+        StateHasChanged();
+    }
+
+    private async Task DownloadTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateUrl)) return;
+        await JS.InvokeVoidAsync("open", Http.BaseAddress + TemplateUrl, "_blank");
+    }
+
+    private async Task UploadFileAsync()
+    {
+        if (_file == null) return;
+        IsUploading = true;
+        ImportResult = null;
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(_file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10MB limit
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(_file.ContentType);
+            content.Add(fileContent, "file", _file.Name);
+
+            var response = await Http.PostAsync(UploadUrl, content);
+            if (response.IsSuccessStatusCode)
+            {
+                var res = await response.Content.ReadFromJsonAsync<ImportResultDto>();
+                if (res != null)
+                {
+                    ImportResult = res;
+                    if (res.Success && res.FailureCount == 0)
+                    {
+                        Message.Success("Data imported successfully!");
+                        IsModalVisible = false;
+                        await OnSave.InvokeAsync();
+                    }
+                    else if (!res.Success)
+                    {
+                        Message.Error(res.Message);
+                    }
+                    else
+                    {
+                        Message.Warning($"Import finished with {res.FailureCount} errors.");
+                        await OnSave.InvokeAsync();
+                    }
+                }
+            }
+            else
+            {
+                var errStr = await response.Content.ReadAsStringAsync();
+                Message.Error($"Import failed: {errStr}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"System error during import: {ex.Message}");
+        }
+        finally
+        {
+            IsUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string FormatSize(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return $"{Math.Round(bytes / (1024.0 * 1024.0), 2)} MB";
+        return $"{Math.Round(bytes / 1024.0, 2)} KB";
+    }
+}

@@ -1,4 +1,4 @@
-﻿using CMMS.Data.Connection;
+using CMMS.Data.Connection;
 using CMMS.Shared.Authorization;
 using CMMS.Shared.Dtos.Common;
 using CMMS.Shared.Dtos.Equipment;
@@ -6,6 +6,8 @@ using CMMS.Shared.Dtos.User;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.IO;
+using System.Linq;
 
 namespace CMMS.Server.Services.EquipmentService
 {
@@ -18,12 +20,15 @@ namespace CMMS.Server.Services.EquipmentService
             _config = config;
             _connectionFactory = connectionFactory;
         }
-        public async Task<List<EquipmentDto>> GetAllAsync()
+        public async Task<List<EquipmentDto>> GetAllAsync(int? factoryId = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             string sql = "SELECT * FROM vw_EquipmentInfo WHERE IsActive = 1";
-
-            var result = await connection.QueryAsync<EquipmentDto>(sql);
+            if (factoryId.HasValue)
+            {
+                sql += " AND FACID = @FactoryId";
+            }
+            var result = await connection.QueryAsync<EquipmentDto>(sql, new { FactoryId = factoryId });
             return result.ToList();
         }
         public async Task<bool> CreatedAsync(EquipmentDto equipment)
@@ -257,22 +262,242 @@ namespace CMMS.Server.Services.EquipmentService
         //                Success = false,
         //                Message = "Không gửi được approval"
         //            };
-        //        }
+        private static List<string> ParseCsvLine(string line)
+        {
+            var result = new List<string>();
+            var inQuotes = false;
+            var currentField = new System.Text.StringBuilder();
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    result.Add(currentField.ToString().Trim());
+                    currentField.Clear();
+                }
+                else
+                {
+                    currentField.Append(c);
+                }
+            }
+            result.Add(currentField.ToString().Trim());
+            return result;
+        }
 
-        //        return new ApiResponse
-        //        {
-        //            Success = true,
-        //            Message = "Đã gửi yêu cầu approve"
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return new ApiResponse
-        //        {
-        //            Success = false,
-        //            Message = ex.Message
-        //        };
-        //    }
-        //}
+        public async Task<ImportResultDto> ImportEquipmentsAsync(Stream fileStream, string fileName, UserDto currentUser)
+        {
+            var result = new ImportResultDto();
+            try
+            {
+                using var reader = new StreamReader(fileStream);
+                var content = await reader.ReadToEndAsync();
+                var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                if (lines.Length <= 1)
+                {
+                    result.Success = false;
+                    result.Message = "File import không có dữ liệu hoặc sai định dạng.";
+                    return result;
+                }
+
+                var headerLine = lines[0];
+                var headers = ParseCsvLine(headerLine);
+                
+                int colCode = headers.FindIndex(h => h.Equals("EquipmentCode", StringComparison.OrdinalIgnoreCase));
+                int colName = headers.FindIndex(h => h.Equals("EquipmentName", StringComparison.OrdinalIgnoreCase));
+                int colModel = headers.FindIndex(h => h.Equals("EquipmentModel", StringComparison.OrdinalIgnoreCase));
+                int colSerial = headers.FindIndex(h => h.Equals("EquipmentSerial", StringComparison.OrdinalIgnoreCase));
+                int colDesc = headers.FindIndex(h => h.Equals("EquipmentDescription", StringComparison.OrdinalIgnoreCase));
+                int colNote = headers.FindIndex(h => h.Equals("EquipmentNote", StringComparison.OrdinalIgnoreCase));
+                int colLoc = headers.FindIndex(h => h.Equals("LocCode", StringComparison.OrdinalIgnoreCase));
+                int colDept = headers.FindIndex(h => h.Equals("DeptCode", StringComparison.OrdinalIgnoreCase));
+                int colBuyDate = headers.FindIndex(h => h.Equals("BuyDate", StringComparison.OrdinalIgnoreCase));
+                int colBuyPrice = headers.FindIndex(h => h.Equals("BuyPrice", StringComparison.OrdinalIgnoreCase));
+                int colBuyCurrency = headers.FindIndex(h => h.Equals("BuyCurrency", StringComparison.OrdinalIgnoreCase));
+                int colMaintCircle = headers.FindIndex(h => h.Equals("MaintenanceCircleTime", StringComparison.OrdinalIgnoreCase));
+                int colContact = headers.FindIndex(h => h.Equals("ContactNo", StringComparison.OrdinalIgnoreCase));
+                int colSap = headers.FindIndex(h => h.Equals("SAPCode", StringComparison.OrdinalIgnoreCase));
+                int colPic = headers.FindIndex(h => h.Equals("PIC", StringComparison.OrdinalIgnoreCase));
+
+                if (colCode == -1 || colName == -1)
+                {
+                    result.Success = false;
+                    result.Message = "File import thiếu cột bắt buộc: EquipmentCode, EquipmentName.";
+                    return result;
+                }
+
+                using var connection = _connectionFactory.CreateConnection();
+                connection.Open();
+
+                var locations = (await connection.QueryAsync<LocationDto>("SELECT LocID, LocCode, LocName FROM dbo.Tbl_FactoryLocation")).ToList();
+                var departments = (await connection.QueryAsync<DepartmentDto>("SELECT DeptID, DeptCode FROM dbo.vw_FactoryDepartment")).ToList();
+                var users = (await connection.QueryAsync<UserDto>("SELECT Id, WorkDayId, FullName FROM dbo.Tbl_User")).ToList();
+
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+                    var fields = ParseCsvLine(line);
+                    if (fields.Count == 0 || fields.All(string.IsNullOrWhiteSpace)) continue;
+
+                    while (fields.Count < headers.Count) fields.Add("");
+
+                    try
+                    {
+                        var code = fields[colCode].Trim();
+                        var name = fields[colName].Trim();
+
+                        if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(name))
+                        {
+                            result.FailureCount++;
+                            result.Errors.Add($"Dòng {i + 1}: Mã hoặc tên thiết bị không được trống.");
+                            continue;
+                        }
+
+                        var model = colModel != -1 ? fields[colModel].Trim() : "";
+                        var serial = colSerial != -1 ? fields[colSerial].Trim() : "";
+                        var desc = colDesc != -1 ? fields[colDesc].Trim() : "";
+                        var note = colNote != -1 ? fields[colNote].Trim() : "";
+                        var contact = colContact != -1 ? fields[colContact].Trim() : "";
+                        
+                        DateTime? buyDate = null;
+                        if (colBuyDate != -1 && DateTime.TryParse(fields[colBuyDate], out var parsedDate)) buyDate = parsedDate;
+
+                        decimal? buyPrice = null;
+                        if (colBuyPrice != -1 && decimal.TryParse(fields[colBuyPrice], out var parsedPrice)) buyPrice = parsedPrice;
+
+                        var buyCurrency = (colBuyCurrency != -1 && !string.IsNullOrEmpty(fields[colBuyCurrency])) ? fields[colBuyCurrency].Trim() : "VND";
+
+                        int? maintCircle = null;
+                        if (colMaintCircle != -1 && int.TryParse(fields[colMaintCircle], out var parsedMaint)) maintCircle = parsedMaint;
+
+                        int? sapCode = null;
+                        if (colSap != -1 && int.TryParse(fields[colSap], out var parsedSap)) sapCode = parsedSap;
+
+                        string? picName = null;
+                        string? picId = null;
+                        if (colPic != -1)
+                        {
+                            var picValue = fields[colPic].Trim();
+                            if (!string.IsNullOrEmpty(picValue))
+                            {
+                                var u = users.FirstOrDefault(x => x.FullName.Equals(picValue, StringComparison.OrdinalIgnoreCase) || x.WorkDayId.Equals(picValue, StringComparison.OrdinalIgnoreCase));
+                                if (u != null)
+                                {
+                                    picName = u.FullName;
+                                    picId = u.WorkDayId;
+                                }
+                                else
+                                {
+                                    picName = picValue;
+                                }
+                            }
+                        }
+
+                        int? locId = null;
+                        if (colLoc != -1)
+                        {
+                            var locCodeVal = fields[colLoc].Trim();
+                            if (!string.IsNullOrEmpty(locCodeVal))
+                            {
+                                var loc = locations.FirstOrDefault(l => l.LocCode != null && l.LocCode.Equals(locCodeVal, StringComparison.OrdinalIgnoreCase));
+                                if (loc != null) locId = loc.LocID;
+                            }
+                        }
+
+                        int? deptId = null;
+                        if (colDept != -1)
+                        {
+                            var deptCodeVal = fields[colDept].Trim();
+                            if (!string.IsNullOrEmpty(deptCodeVal))
+                            {
+                                var dept = departments.FirstOrDefault(d => d.DeptCode != null && d.DeptCode.Equals(deptCodeVal, StringComparison.OrdinalIgnoreCase));
+                                if (dept != null) deptId = dept.DeptID;
+                            }
+                        }
+
+                        var existingEq = await connection.QueryFirstOrDefaultAsync<int?>(
+                            "SELECT EQID FROM dbo.Tbl_EquipmentInfo WHERE EquipmentCode = @EquipmentCode",
+                            new { EquipmentCode = code });
+
+                        if (existingEq.HasValue)
+                        {
+                            var updateSql = @"
+                                UPDATE dbo.Tbl_EquipmentInfo
+                                SET EquipmentName = @EquipmentName, EquipmentModel = @EquipmentModel, EquipmentSerial = @EquipmentSerial,
+                                    EquipmentDescription = @EquipmentDescription, EquipmentNote = @EquipmentNote, DeptId = @DeptId, LocID = @LocID,
+                                    BuyDate = @BuyDate, BuyPrice = @BuyPrice, BuyCurrency = @BuyCurrency, MaintenanceCircleTime = @MaintenanceCircleTime,
+                                    ContactNo = @ContactNo, SAPCode = @SAPCode, PIC = @PIC, PICID = @PICID
+                                WHERE EQID = @EQID";
+                            
+                            await connection.ExecuteAsync(updateSql, new {
+                                EQID = existingEq.Value,
+                                EquipmentName = name,
+                                EquipmentModel = model,
+                                EquipmentSerial = serial,
+                                EquipmentDescription = desc,
+                                EquipmentNote = note,
+                                DeptId = deptId,
+                                LocID = locId,
+                                BuyDate = buyDate,
+                                BuyPrice = buyPrice,
+                                BuyCurrency = buyCurrency,
+                                MaintenanceCircleTime = maintCircle,
+                                ContactNo = contact,
+                                SAPCode = sapCode,
+                                PIC = picName,
+                                PICID = picId
+                            });
+                        }
+                        else
+                        {
+                            var insertSql = @"
+                                INSERT INTO dbo.Tbl_EquipmentInfo 
+                                    (EquipmentName, EquipmentCode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, LocID, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PIC, PICID, LastMaintenanceDate, StsUseID, IsActive)
+                                VALUES 
+                                    (@EquipmentName, @EquipmentCode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @LocID, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PIC, @PICID, @LastMaintenanceDate, 1, 1)";
+                            
+                            await connection.ExecuteAsync(insertSql, new {
+                                EquipmentName = name,
+                                EquipmentCode = code,
+                                EquipmentModel = model,
+                                EquipmentSerial = serial,
+                                EquipmentDescription = desc,
+                                EquipmentNote = note,
+                                DeptId = deptId,
+                                LocID = locId,
+                                BuyDate = buyDate,
+                                BuyPrice = buyPrice,
+                                BuyCurrency = buyCurrency,
+                                MaintenanceCircleTime = maintCircle,
+                                ContactNo = contact,
+                                SAPCode = sapCode,
+                                PIC = picName,
+                                PICID = picId,
+                                LastMaintenanceDate = buyDate
+                            });
+                        }
+
+                        result.SuccessCount++;
+                    }
+                    catch (Exception rowEx)
+                    {
+                        result.FailureCount++;
+                        result.Errors.Add($"Dòng {i + 1}: Lỗi - {rowEx.Message}");
+                    }
+                }
+
+                result.Success = true;
+                result.Message = $"Nhập dữ liệu hoàn tất. Thành công: {result.SuccessCount}, Thất bại: {result.FailureCount}.";
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Message = $"Lỗi hệ thống khi import: {ex.Message}";
+            }
+            return result;
+        }
     }
 }

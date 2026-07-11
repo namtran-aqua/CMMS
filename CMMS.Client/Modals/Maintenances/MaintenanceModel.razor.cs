@@ -26,6 +26,7 @@ namespace CMMS.Client.Modals.Maintenances
         private Form<MaintenanceDto> formRef = new();
         private List<AttachmentDto> Attachment = new();
         private List<SparePartDto> SparePartsList = new();
+        private List<SparePartDto> SearchedPartsList = new();
 
         private List<StatusItem> MaintenanceStatuses = new()
         {
@@ -197,7 +198,45 @@ namespace CMMS.Client.Modals.Maintenances
 
         private async Task LoadSparePartsData()
         {
+            if (SparePartsList != null && SparePartsList.Any())
+            {
+                SearchedPartsList = SparePartsList.Take(50).ToList();
+                return;
+            }
             SparePartsList = await Http.GetFromJsonAsync<List<SparePartDto>>("api/SparePart/get-all") ?? new();
+            SearchedPartsList = SparePartsList.Take(50).ToList();
+        }
+
+        private void OnSearchParts(string searchValue)
+        {
+            if (string.IsNullOrWhiteSpace(searchValue))
+            {
+                SearchedPartsList = SparePartsList.Take(50).ToList();
+            }
+            else
+            {
+                var search = searchValue.Trim().ToLower();
+                SearchedPartsList = SparePartsList
+                    .Where(x => (x.PartCode != null && x.PartCode.ToLower().Contains(search)) ||
+                                (x.PartName != null && x.PartName.ToLower().Contains(search)))
+                    .Take(50)
+                    .ToList();
+            }
+            StateHasChanged();
+        }
+
+        private List<SparePartDto> GetRowSparePartsList(int selectedSpid)
+        {
+            var list = new List<SparePartDto>(SearchedPartsList);
+            if (selectedSpid > 0 && !list.Any(x => x.SPID == selectedSpid))
+            {
+                var selectedSp = SparePartsList.FirstOrDefault(x => x.SPID == selectedSpid);
+                if (selectedSp != null)
+                {
+                    list.Add(selectedSp);
+                }
+            }
+            return list;
         }
 
         private void AddSparePartRow()

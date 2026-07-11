@@ -125,50 +125,48 @@ namespace CMMS.Client.Pages.Maintenance
             };
         }
 
-        private List<DashBoarDto> FilteredOverDue => FilterAndSortPending(OverDue);
-        private List<DashBoarDto> FilteredDueSoon => FilterAndSortPending(DueSoon);
+        private List<DashBoarDto> FilteredOverDue => OverDue == null ? new() : OverDue.Where(e => !FactoryState.SelectedFacId.HasValue || e.FACID == FactoryState.SelectedFacId.Value).ToList();
+        private List<DashBoarDto> FilteredDueSoon => DueSoon == null ? new() : DueSoon.Where(e => !FactoryState.SelectedFacId.HasValue || e.FACID == FactoryState.SelectedFacId.Value).ToList();
 
         private List<DashBoarDto> FilteredPendingCombined
         {
             get
             {
                 var list = new List<DashBoarDto>();
-                list.AddRange(FilteredOverDue);
-                list.AddRange(FilteredDueSoon);
-                return list;
+                if (OverDue != null) list.AddRange(OverDue);
+                if (DueSoon != null) list.AddRange(DueSoon);
+
+                var result = list.AsEnumerable();
+
+                // Filter by Factory
+                if (FactoryState.SelectedFacId.HasValue)
+                {
+                    result = result.Where(e => e.FACID == FactoryState.SelectedFacId.Value);
+                }
+
+                // Filter by Search Text
+                if (!string.IsNullOrWhiteSpace(pendingSearchText))
+                {
+                    var search = pendingSearchText.Trim().ToLower();
+                    result = result.Where(x =>
+                        (x.EquipmentName != null && x.EquipmentName.ToLower().Contains(search)) ||
+                        (x.LocName != null && x.LocName.ToLower().Contains(search)) ||
+                        (x.PIC != null && x.PIC.ToLower().Contains(search))
+                    );
+                }
+
+                // Sort chronologically as real DateTime
+                result = pendingSortBy switch
+                {
+                    "NameAsc" => result.OrderBy(x => x.EquipmentName ?? ""),
+                    "NameDesc" => result.OrderByDescending(x => x.EquipmentName ?? ""),
+                    "DueDateAsc" => result.OrderBy(x => x.NextMaintenanceDate ?? DateTime.MaxValue),
+                    "DueDateDesc" => result.OrderByDescending(x => x.NextMaintenanceDate ?? DateTime.MinValue),
+                    _ => result.OrderBy(x => x.NextMaintenanceDate ?? DateTime.MaxValue)
+                };
+
+                return result.ToList();
             }
-        }
-
-        private List<DashBoarDto> FilterAndSortPending(List<DashBoarDto> source)
-        {
-            if (source == null) return new();
-            var result = source.AsEnumerable();
-            // Filter by Factory
-            if (FactoryState.SelectedFacId.HasValue)
-            {
-                result = result.Where(e => e.FACID == FactoryState.SelectedFacId.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(pendingSearchText))
-            {
-                var search = pendingSearchText.Trim().ToLower();
-                result = result.Where(x =>
-                    (x.EquipmentName != null && x.EquipmentName.ToLower().Contains(search)) ||
-                    (x.LocName != null && x.LocName.ToLower().Contains(search)) ||
-                    (x.PIC != null && x.PIC.ToLower().Contains(search))
-                );
-            }
-
-            result = pendingSortBy switch
-            {
-                "NameAsc" => result.OrderBy(x => x.EquipmentName ?? ""),
-                "NameDesc" => result.OrderByDescending(x => x.EquipmentName ?? ""),
-                "DueDateAsc" => result.OrderBy(x => x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue ? x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value) : DateTime.MaxValue),
-                "DueDateDesc" => result.OrderByDescending(x => x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue ? x.LastMaintenanceDate.Value.AddDays(x.MaintenanceCircleTime.Value) : DateTime.MinValue),
-                _ => result
-            };
-
-            return result.ToList();
         }
 
         private List<MaintenanceDto> FilteredHistory
@@ -177,6 +175,15 @@ namespace CMMS.Client.Pages.Maintenance
             {
                 if (_maintenances == null) return new();
                 var result = _maintenances.AsEnumerable();
+
+                // Filter by Factory
+                if (FactoryState.SelectedFacId.HasValue)
+                {
+                    result = result.Where(m => {
+                        var eq = DashBoardData?.FirstOrDefault(d => d.EQID == m.EQID);
+                        return eq != null && eq.FACID == FactoryState.SelectedFacId.Value;
+                    });
+                }
 
                 // Filter by search text
                 if (!string.IsNullOrWhiteSpace(historySearchText))

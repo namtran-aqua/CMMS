@@ -16,13 +16,27 @@
             <h3>Equipment</h3>
             <p class="text-muted">Manage all equipment information</p>
         </div>
+
         @* Cách 1: Ẩn hoàn toàn nút nếu chưa đăng nhập *@
+        <div style="display:flex; gap:8px;">
         @if (IsAuthenticated)
         {
-            <button @onclick="CreatedAsync" class="btn btn-dark">
-                <Icon Type="plus" /> Add Equipment
-            </button>
+            /* <div style="display: flex; gap: 8px;">
+                <button @onclick="ShowImportModal" class="btn btn-dark" style="border-radius: 8px;">
+                    <Icon Type="import" /> Import Equipment
+                </button>
+                <button @onclick="CreatedAsync" class="btn btn-dark" style="border-radius: 8px;">
+                    <Icon Type="plus" /> Add Equipment
+                </button>
+            </div> */
+                <Button Type="@ButtonType.Default" OnClick="ShowImportModal" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                <Icon Type="import" Theme="IconThemeType.Outline" /> Import
+            </Button>
+                <Button Type="@ButtonType.Primary" OnClick="CreatedAsync" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                <Icon Type="plus" Theme="IconThemeType.Outline" /> Add
+            </Button>
         }
+        </div>
 
         @* Cách 2: Disable nút nếu chưa đăng nhập *@
         @* <Button Type="@ButtonType.Primary"
@@ -164,3 +178,4 @@
     </div>
 </div>
 <EquipmentModal OnSave="LoadData" @ref="equipmentModal" />
+<ImportModal @ref="importModal" Title="Import Equipment" TemplateUrl="api/Equipment/import-template" UploadUrl="api/Equipment/import" OnSave="LoadData" />
