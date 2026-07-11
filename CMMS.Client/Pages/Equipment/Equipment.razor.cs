@@ -1,5 +1,6 @@
 using AntDesign;
 using CMMS.Client.Common;
+using CMMS.Client.Components;
 using CMMS.Client.Components.Equipments;
 using CMMS.Client.Services;
 using CMMS.Shared.Dtos.Equipment;
@@ -21,6 +22,7 @@ namespace CMMS.Client.Pages.Equipment
         private UserDto CurrentUser { get; set; } = new();
         private List<EquipmentDto> _equipments = new();
         private EquipmentModal? equipmentModal;
+        private ImportModal? importModal;
 
         private int currentPage = 1;
         private int pageSize = 10;
@@ -146,6 +148,8 @@ namespace CMMS.Client.Pages.Equipment
 
         private async void OnFactoryChanged()
         {
+            currentPage = 1;
+            await LoadData();
             await InvokeAsync(StateHasChanged);
         }
 
@@ -158,12 +162,18 @@ namespace CMMS.Client.Pages.Equipment
         {
             try
             {
-                var res = await Http.GetFromJsonAsync<List<EquipmentDto>>("api/equipment/get-all");
+                var facId = FactoryState.SelectedFacId;
+                var url = "api/equipment/get-all";
+                if (facId.HasValue)
+                {
+                    url += $"?factoryId={facId.Value}";
+                }
+                var res = await Http.GetFromJsonAsync<List<EquipmentDto>>(url);
                 _equipments = res ?? new List<EquipmentDto>();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading users: {ex.Message}");
+                Console.WriteLine($"Error loading equipment: {ex.Message}");
             }
 
         }
@@ -204,6 +214,12 @@ namespace CMMS.Client.Pages.Equipment
                 return ("Today", "orange");
             }
         }
+        private void ShowImportModal()
+        {
+            if (importModal != null)
+                importModal.Show();
+        }
+
         private async Task CreatedAsync()
         {
             if(equipmentModal != null)

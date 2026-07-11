@@ -2,8 +2,10 @@ using AntDesign;
 using CMMS.Client.Common;
 using CMMS.Client.Modals.SpareParts;
 using CMMS.Client.Services;
+using CMMS.Client.Components;
 using CMMS.Shared.Authorization;
 using CMMS.Shared.Dtos.SpareParts;
+using CMMS.Shared.Dtos.Common;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
 using Microsoft.AspNetCore.Components;
@@ -30,6 +32,7 @@ namespace CMMS.Client.Pages.SpareParts
         private SparePartModal? _partModal;
         private AdjustStockModal? _adjustModal;
         private MaintenanceExportModal? _exportModal;
+        private ImportModal? _importModal;
 
         private string selectedTab = "Parts";
 
@@ -37,6 +40,10 @@ namespace CMMS.Client.Pages.SpareParts
         private int partsPageSize = 10;
         private int historyPage = 1;
         private int historyPageSize = 10;
+
+        private int totalPartsCount = 0;
+        private int totalHistoryCount = 0;
+        private int lowStockCount = 0;
 
         private bool IsAuthenticated { get; set; } = false;
         private UserDto CurrentUser { get; set; } = new();
@@ -51,6 +58,7 @@ namespace CMMS.Client.Pages.SpareParts
                 {
                     _searchText = value;
                     partsPage = 1;
+                    _ = LoadParts();
                 }
             }
         }
@@ -65,6 +73,7 @@ namespace CMMS.Client.Pages.SpareParts
                 {
                     _categoryFilter = value;
                     partsPage = 1;
+                    _ = LoadParts();
                 }
             }
         }
@@ -79,6 +88,7 @@ namespace CMMS.Client.Pages.SpareParts
                 {
                     _stockFilter = value;
                     partsPage = 1;
+                    _ = LoadParts();
                 }
             }
         }
@@ -93,6 +103,7 @@ namespace CMMS.Client.Pages.SpareParts
                 {
                     _sortBy = value;
                     partsPage = 1;
+                    _ = LoadParts();
                 }
             }
         }
@@ -107,6 +118,7 @@ namespace CMMS.Client.Pages.SpareParts
                 {
                     _historySearchText = value;
                     historyPage = 1;
+                    _ = LoadHistory();
                 }
             }
         }
@@ -121,6 +133,7 @@ namespace CMMS.Client.Pages.SpareParts
                 {
                     _historyTypeFilter = value;
                     historyPage = 1;
+                    _ = LoadHistory();
                 }
             }
         }
@@ -128,88 +141,11 @@ namespace CMMS.Client.Pages.SpareParts
         private string newCategoryName = "";
         private SparePartSupplierDto newSupplier = new();
 
-        private int LowStockCount => Parts?.Count(p => p.IsLowStock) ?? 0;
+        private int LowStockCount => lowStockCount;
 
-        private List<SparePartDto> FilteredParts
-        {
-            get
-            {
-                if (Parts == null) return new();
-                var result = Parts.AsEnumerable();
+        private List<SparePartDto> FilteredParts => Parts;
 
-                // Filter by Factory
-                if (FactoryState.SelectedFacId.HasValue)
-                {
-                    result = result.Where(p => p.FACID == FactoryState.SelectedFacId.Value);
-                }
-
-                if (categoryFilter > 0)
-                    result = result.Where(p => p.CategoryID == categoryFilter);
-
-                // Filter by Stock Status
-                result = stockFilter switch
-                {
-                    "Low" => result.Where(p => p.IsLowStock),
-                    "InStock" => result.Where(p => p.Inventory > p.MinStock),
-                    "Out" => result.Where(p => p.Inventory <= 0),
-                    _ => result
-                };
-
-                if (!string.IsNullOrWhiteSpace(searchText))
-                {
-                    var s = searchText.Trim().ToLower();
-                    result = result.Where(p =>
-                        (p.PartCode != null && p.PartCode.ToLower().Contains(s)) ||
-                        (p.PartName != null && p.PartName.ToLower().Contains(s)) ||
-                        (p.Location != null && p.Location.ToLower().Contains(s)) ||
-                        (p.SupplierName != null && p.SupplierName.ToLower().Contains(s)));
-                }
-
-                // Sorting
-                result = sortBy switch
-                {
-                    "NameAsc" => result.OrderBy(p => p.PartName ?? ""),
-                    "NameDesc" => result.OrderByDescending(p => p.PartName ?? ""),
-                    "CodeAsc" => result.OrderBy(p => p.PartCode ?? ""),
-                    "PriceAsc" => result.OrderBy(p => p.Price ?? 0),
-                    "PriceDesc" => result.OrderByDescending(p => p.Price ?? 0),
-                    "StockAsc" => result.OrderBy(p => p.Inventory ?? 0),
-                    "StockDesc" => result.OrderByDescending(p => p.Inventory ?? 0),
-                    _ => result.OrderBy(p => p.PartName ?? "")
-                };
-
-                return result.ToList();
-            }
-        }
-
-        private List<SparePartTransactionDto> FilteredHistory
-        {
-            get
-            {
-                if (Transactions == null) return new();
-                var result = Transactions.AsEnumerable();
-
-                // Filter by Factory
-                if (FactoryState.SelectedFacId.HasValue)
-                {
-                    result = result.Where(t => t.FACID == FactoryState.SelectedFacId.Value);
-                }
-
-                if (!string.IsNullOrWhiteSpace(historyTypeFilter))
-                    result = result.Where(t => t.Type == historyTypeFilter);
-
-                if (!string.IsNullOrWhiteSpace(historySearchText))
-                {
-                    var s = historySearchText.Trim().ToLower();
-                    result = result.Where(t =>
-                        (t.PartCode != null && t.PartCode.ToLower().Contains(s)) ||
-                        (t.PartName != null && t.PartName.ToLower().Contains(s)) ||
-                        (t.Equipment != null && t.Equipment.ToLower().Contains(s)));
-                }
-
-                return result.OrderByDescending(t => t.Date).ToList();
-            }
-        }
+        private List<SparePartTransactionDto> FilteredHistory => Transactions;
 
         protected override async Task OnInitializedAsync()
         {
@@ -219,14 +155,17 @@ namespace CMMS.Client.Pages.SpareParts
             var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
             CurrentUser = await CurrentUserClass.LoadCurrentUser();
 
-            // Subscribe factory change event
             FactoryState.OnChange += OnFactoryChanged;
 
+            await LoadLookupData();
             await LoadData();
         }
 
         private async void OnFactoryChanged()
         {
+            partsPage = 1;
+            historyPage = 1;
+            await LoadData();
             await InvokeAsync(StateHasChanged);
         }
 
@@ -235,57 +174,108 @@ namespace CMMS.Client.Pages.SpareParts
             FactoryState.OnChange -= OnFactoryChanged;
         }
 
-        private async Task LoadData()
+        private async Task LoadLookupData()
         {
             try
             {
-                var partsTask = Http.GetFromJsonAsync<List<SparePartDto>>("api/SparePart/get-all");
                 var catTask = Http.GetFromJsonAsync<List<SparePartCategoryDto>>("api/SparePart/categories");
                 var supTask = Http.GetFromJsonAsync<List<SparePartSupplierDto>>("api/SparePart/suppliers");
-                var historyTask = Http.GetFromJsonAsync<List<SparePartTransactionDto>>("api/SparePart/history");
                 var locTask = Http.GetFromJsonAsync<List<LocationDto>>("api/Location/locations");
 
-                await Task.WhenAll(partsTask, catTask, supTask, historyTask, locTask);
+                await Task.WhenAll(catTask, supTask, locTask);
 
-                Parts = await partsTask ?? new();
                 Categories = await catTask ?? new();
                 Suppliers = await supTask ?? new();
-                Transactions = await historyTask ?? new();
                 Locations = await locTask ?? new();
-
-                await InvokeAsync(StateHasChanged);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading spare parts: {ex.Message}");
+                Console.WriteLine($"Error loading lookup data: {ex.Message}");
             }
         }
 
-        private void OnPartsPageChange(PaginationEventArgs args)
+        private async Task LoadParts()
+        {
+            try
+            {
+                var facId = FactoryState.SelectedFacId;
+                var url = $"api/SparePart/get-paged?page={partsPage}&pageSize={partsPageSize}&searchText={Uri.EscapeDataString(searchText)}&categoryId={categoryFilter}&stockStatus={stockFilter}&sortBy={sortBy}";
+                if (facId.HasValue)
+                {
+                    url += $"&factoryId={facId.Value}";
+                }
+                
+                var res = await Http.GetFromJsonAsync<SparePartPagedResultDto>(url);
+                if (res != null)
+                {
+                    Parts = res.Items ?? new();
+                    totalPartsCount = res.TotalCount;
+                    lowStockCount = res.LowStockCount;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading parts: {ex.Message}");
+            }
+        }
+
+        private async Task LoadHistory()
+        {
+            try
+            {
+                var facId = FactoryState.SelectedFacId;
+                var url = $"api/SparePart/history-paged?page={historyPage}&pageSize={historyPageSize}&searchText={Uri.EscapeDataString(historySearchText)}&typeFilter={historyTypeFilter}";
+                if (facId.HasValue)
+                {
+                    url += $"&factoryId={facId.Value}";
+                }
+
+                var res = await Http.GetFromJsonAsync<PagedResultDto<SparePartTransactionDto>>(url);
+                if (res != null)
+                {
+                    Transactions = res.Items ?? new();
+                    totalHistoryCount = res.TotalCount;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading transaction history: {ex.Message}");
+            }
+        }
+
+        private async Task LoadData()
+        {
+            await LoadParts();
+            await LoadHistory();
+        }
+
+        private async Task OnPartsPageChange(PaginationEventArgs args)
         {
             if (partsPageSize != args.PageSize)
             {
                 partsPageSize = args.PageSize;
-                partsPage = 1; // đổi page size thì về lại trang đầu
+                partsPage = 1;
             }
             else
             {
                 partsPage = args.Page;
             }
+            await LoadParts();
             StateHasChanged();
         }
 
-        private void OnHistoryPageChange(PaginationEventArgs args)
+        private async Task OnHistoryPageChange(PaginationEventArgs args)
         {
             if (historyPageSize != args.PageSize)
             {
                 historyPageSize = args.PageSize;
-                historyPage = 1; // đổi page size thì về lại trang đầu
+                historyPage = 1;
             }
             else
             {
                 historyPage = args.Page;
             }
+            await LoadHistory();
             StateHasChanged();
         }
 
@@ -368,6 +358,12 @@ namespace CMMS.Client.Pages.SpareParts
                 newSupplier = new();
                 await LoadData();
             }
+        }
+
+        private void ShowImportModal()
+        {
+            if (_importModal != null)
+                _importModal.Show();
         }
 
         private async Task DeleteSupplier(int id)

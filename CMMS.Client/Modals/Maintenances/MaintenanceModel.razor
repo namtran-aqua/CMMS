@@ -72,10 +72,10 @@
 </style>
 @{
     RenderFragment footer = @<Template>
-            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
                 Save
             </Button>
-            <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+            <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
             Cancel
             </Button>
     </Template>;
@@ -174,7 +174,7 @@
                     <Icon Type="tool" Theme="IconThemeType.Outline" Style="font-size:12px;" />
                     Spare Parts Used
                 </div>
-                <Button Type="@ButtonType.Primary" Size="ButtonSize.Small" OnClick="AddSparePartRow" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                <Button Type="@ButtonType.Primary" Size="ButtonSize.Small" OnClick="AddSparePartRow" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
                     <Icon Type="plus" Theme="IconThemeType.Outline" /> Add Part
                 </Button>
             </div>
@@ -190,14 +190,15 @@
                         <Column Title="Spare Part" TData="int">
                             <AntDesign.Select TItemValue="int"
                                               TItem="SparePartDto"
-                                              DataSource="SparePartsList"
+                                              DataSource="@GetRowSparePartsList(sp.SPID)"
                                               ValueName="SPID"
-                                              LabelName="PartName"
+                                              LabelName="DisplayName"
                                               Value="sp.SPID"
                                               ValueChanged="(int val) => OnRowSparePartChanged(sp, val)"
                                               Placeholder="Select spare part..."
                                               ShowSearch
                                               EnableSearch
+                                              OnSearch="OnSearchParts"
                                               Style="width: 100%;">
                             </AntDesign.Select>
                         </Column>
@@ -249,7 +250,7 @@
                     <Button Shape="ButtonShape.Round"
                             Size="ButtonSize.Small"
                             Icon="upload"
-                            Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                            Style="border-radius: 8px; padding: 0 12px; height: 38px;">
                         Upload file
                     </Button>
                 </Upload>

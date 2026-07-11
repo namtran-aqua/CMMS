@@ -1,8 +1,12 @@
-﻿using CMMS.Server.Services.SparePartService;
+using CMMS.Server.Services.SparePartService;
 using CMMS.Server.Services.UserService;
 using CMMS.Shared.Dtos.SpareParts;
+using CMMS.Shared.Dtos.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using System.IO;
+using System.Linq;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -26,6 +30,62 @@ public class SparePartController : ControllerBase
 
     [HttpGet("get-all")]
     public async Task<List<SparePartDto>> GetAll() => await _service.GetAllAsync();
+
+    [HttpGet("get-paged")]
+    public async Task<ActionResult<SparePartPagedResultDto>> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchText = null,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] string? stockStatus = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] int? factoryId = null)
+    {
+        return Ok(await _service.GetPagedAsync(page, pageSize, searchText, categoryId, stockStatus, sortBy, factoryId));
+    }
+
+    [HttpGet("history-paged")]
+    public async Task<ActionResult<PagedResultDto<SparePartTransactionDto>>> GetHistoryPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchText = null,
+        [FromQuery] string? typeFilter = null,
+        [FromQuery] int? factoryId = null)
+    {
+        return Ok(await _service.GetTransactionHistoryPagedAsync(page, pageSize, searchText, typeFilter, factoryId));
+    }
+
+    [HttpPost("import")]
+    public async Task<IActionResult> Import(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("File không hợp lệ hoặc rỗng.");
+
+        try
+        {
+            var currentUser = await GetCurrentUserAsync();
+            if (currentUser == null) return Unauthorized("Không tìm thấy thông tin người dùng.");
+
+            using var stream = file.OpenReadStream();
+            var result = await _service.ImportSparePartsAsync(stream, file.FileName, currentUser);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Lỗi import: {ex.Message}");
+        }
+    }
+
+    [HttpGet("import-template")]
+    public IActionResult DownloadTemplate()
+    {
+        var csv = "PartCode,PartName,Unit,Price,Inventory,MinStock,CategoryName,SupplierName,LocName,DeptCode,Note\n" +
+                  "SP-001,Cảm biến tiệm cận M18,Cái,150000,20,5,Cảm biến,Nhà cung cấp Omron,Khu vực A,Maint-Dept,Ghi chú mẫu\n" +
+                  "SP-002,Băng tải cao su B500,Mét,450000,5,2,Băng tải,Nhà cung cấp Habasit,Khu vực B,Prod-Dept,Ghi chú mẫu 2";
+        
+        var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
+        return File(bytes, "text/csv; charset=utf-8", "SparePart_Import_Template.csv");
+    }
 
     [HttpGet("categories")]
     public async Task<List<SparePartCategoryDto>> GetCategories() => await _service.GetCategoriesAsync();

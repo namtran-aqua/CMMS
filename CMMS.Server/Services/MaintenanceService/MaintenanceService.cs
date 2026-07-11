@@ -63,7 +63,7 @@ namespace CMMS.Server.Services.MaintenanceService
                     t.MTID, t.SPID, t.Quantity AS Qty, p.PartCode, p.PartName, p.Unit
                 FROM dbo.Tbl_Transactions t
                 JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
-                WHERE t.Type = 'MAINTENANCE' AND t.MTID IS NOT NULL";
+                WHERE t.MovementType = 'MAINTENANCE' AND t.MTID IS NOT NULL";
 
             var sparePartsList = await connection.QueryAsync<MaintenanceSparePartDtoHelper>(sparePartsSql);
             var sparePartsGrouped = sparePartsList.GroupBy(x => x.MTID);
@@ -213,8 +213,8 @@ namespace CMMS.Server.Services.MaintenanceService
 
                         // 3. Insert transaction
                         const string sqlInsertTx = @"
-                            INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, EQID, MTID, Note, CreateBy, CreateDate)
-                            VALUES (@SPID, 'MAINTENANCE', @Qty, @Date, @EQID, @MTID, @Note, @CreateBy, @CreateDate)";
+                            INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, EQID, MTID, Note, CreateBy, CreateDate, MovementType)
+                            VALUES (@SPID, 'OUT', @Qty, @Date, @EQID, @MTID, @Note, @CreateBy, @CreateDate, 'MAINTENANCE')";
                         
                         var noteText = $"Xuất cho bảo trì MTID: {newMTID}";
                         if (!string.IsNullOrWhiteSpace(maintenance.MaintDescription))

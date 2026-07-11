@@ -24,6 +24,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public DateTime CreateDate { get; set; }
         public string? RefCode { get; set; }
         public int? DeptID { get; set; }
+        public string? MovementType { get; set; }
 
 
         //// Aliased properties to match database columns and frontend bindings
