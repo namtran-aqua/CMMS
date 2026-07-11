@@ -11,10 +11,22 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
         [Parameter] public List<DashBoarDto> DashBoardData { get; set; } = new();
         object[] data1 = Array.Empty<object>();
 
-        protected override void OnParametersSet()
+        private Pie? _pieChart;
+        private AntDesign.Charts.Column? _columnChart;
+
+        protected override async Task OnParametersSetAsync()
         {
             UpdateData1();
             UpdateData2();
+
+            if (_pieChart != null)
+            {
+                await _pieChart.ChangeData(data1);
+            }
+            if (_columnChart != null)
+            {
+                await _columnChart.ChangeData(data2);
+            }
         }
         #region Example 1
         private void UpdateData1()
@@ -26,7 +38,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
             var totalCount = DashBoardData.Count;
             var runningData = DashBoardData.Where(x => x.IsActive == true).ToList();
             
-            var dueSonData = DashBoardData.Where(x =>
+            var DueSoonData = DashBoardData.Where(x =>
             {
                 if (x.IsActive == true && x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue)
                 {
@@ -47,12 +59,12 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
                 return false;
             }).ToList();
 
-            var normalData = runningData.Except(dueSonData).Except(overDueData).ToList();
+            var normalData = runningData.Except(DueSoonData).Except(overDueData).ToList();
 
             data1 = new object[]
             {
                 new { type = "Normal", value = normalData.Count },
-                new { type = "DueSon", value = dueSonData.Count },
+                new { type = "DueSoon", value = DueSoonData.Count },
                 new { type = "OverDue", value = overDueData.Count }
             };
         }
@@ -75,7 +87,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardCharts
             Padding = "auto",
             AngleField = "value",
             ColorField = "type",
-            Color = new[] { "#1890ff", "#faad14", "#f5222d" }, // Xanh biển (Normal), Cam (DueSon), Đỏ (OverDue)
+            Color = new[] { "#1890ff", "#faad14", "#f5222d" }, // Xanh biển (Normal), Cam (DueSoon), Đỏ (OverDue)
             Height = 300
         };
         #endregion Example 1

@@ -34,11 +34,12 @@
 </style>
 @{
     RenderFragment footer = @<Template>
-        <Button OnClick="@SaveAsync" Type="ButtonType.Primary">
-            Save
-        </Button>
-
-        <Button OnClick="@Close">Cancel</Button>
+            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                Save
+            </Button>
+            <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                Cancel
+            </Button>
     </Template>;
 }
 
@@ -60,8 +61,7 @@
         <Row Gutter="16">
             <Col Span="24">
                 <FormItem Label="Equipment Name" Name="EquipmentName" Required>
-                    <Input @bind-Value="EquipmentDto.EquipmentName"
-                           Placeholder="e.g., CNC Lathe CNC-1" />
+                    <Input @bind-Value="EquipmentDto.EquipmentName"/>
                 </FormItem>
             </Col>
         </Row>
@@ -69,15 +69,13 @@
         <Row Gutter="16">
             <Col Span="12">
             <FormItem Label="Equipment Code" Name="EquipmentCode">
-                <Input @bind-Value="EquipmentDto.EquipmentCode"
-                       Placeholder="e.g., FANUC α-D21MiB5" />
+                <Input @bind-Value="EquipmentDto.EquipmentCode" />
             </FormItem>
             </Col>
 
             <Col Span="12">
             <FormItem Label="Equipment Barcode" Name="EquipmentBarcode">
-                <Input @bind-Value="EquipmentDto.EquipmentBarcode"
-                       Placeholder="e.g., FNC-2023-001" />
+                <Input @bind-Value="EquipmentDto.EquipmentBarcode"/>
             </FormItem>
             </Col>
         </Row>
@@ -85,15 +83,13 @@
         <Row Gutter="16">
             <Col Span="12">
             <FormItem Label="Equipment Model" Name="EquipmentModel">
-                    <Input @bind-Value="EquipmentDto.EquipmentModel"
-                           Placeholder="e.g., FANUC α-D21MiB5" />
+                    <Input @bind-Value="EquipmentDto.EquipmentModel" />
                 </FormItem>
             </Col>
 
             <Col Span="12">
             <FormItem Label="Equipment Serial" Name="EquipmentSerial">
-                    <Input @bind-Value="EquipmentDto.EquipmentSerial"
-                           Placeholder="e.g., FNC-2023-001" />
+                    <Input @bind-Value="EquipmentDto.EquipmentSerial"/>
                 </FormItem>
             </Col>
         </Row>
@@ -101,15 +97,13 @@
         <Row Gutter="16">
             <Col Span="12">
             <FormItem Label="Equipment Description" Name="EquipmentDescription">
-                <Input @bind-Value="EquipmentDto.EquipmentDescription"
-                       Placeholder="e.g., FANUC α-D21MiB5" />
+                <Input @bind-Value="EquipmentDto.EquipmentDescription"/>
             </FormItem>
             </Col>
 
             <Col Span="12">
             <FormItem Label="Equipment Note" Name="EquipmentNote">
-                <Input @bind-Value="EquipmentDto.EquipmentNote"
-                       Placeholder="e.g., FNC-2023-001" />
+                <Input @bind-Value="EquipmentDto.EquipmentNote"/>
             </FormItem>
             </Col>
         </Row>
@@ -122,10 +116,9 @@
                 </FormItem>
             </Col>
             <Col Span="12">
-            <FormItem Label="Maintenance Circle Time" Name="MaintenanceCircleTime">
-                <AntDesign.InputNumber TValue="int?"
-                                       @bind-Value="EquipmentDto.MaintenanceCircleTime"
-                                       Style="width:100%" />
+                <FormItem Label="Maintenance Circle Time" Name="MaintenanceCircleTime" Required>
+                <AntDesign.InputNumber TValue="int?" @bind-Value="EquipmentDto.MaintenanceCircleTime"
+                                           Style="width:100%" />
             </FormItem>
             </Col>
             
@@ -180,7 +173,7 @@
             </FormItem>
             </Col>
             <Col Span="12">
-            <FormItem Label="Department" Name="DeptID">
+                <FormItem Label="Department" Name="DeptID" Required>
 
                 <Select TValue="int?"
                         @bind-Value="EquipmentDto.DeptID"

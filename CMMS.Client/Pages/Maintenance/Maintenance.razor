@@ -10,7 +10,6 @@
 @inject NavigationManager NavigationManager
 @* @inject AuthenticationStateProvider AuthStateProvider *@
 <PageTitle>Maintenance</PageTitle>
-
 <style>
     .tab-container {
         display: flex;
@@ -67,7 +66,7 @@
 <div>
 
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
             <h3>Maintenance</h3>
             <p class="text-muted">Manage equipment maintenance records</p>
@@ -86,10 +85,11 @@
             📄 History
         </div>
     </div>
+
     @if (selectedTab == "Pending")
     {
         <!-- Pending Search/Sort -->
-        <div class="card p-3 mb-4 search-card" style="border-radius:15px">
+        <div class="card p-3 mb-3 search-card" style="border-radius:15px">
             <div class="search-container" style="display:flex; gap:10px">
                 <input class="form-control search-input" style="border-radius:10px; flex:1"
                        placeholder="Search by equipment name, location, or PIC..."
@@ -105,7 +105,88 @@
         </div>
 
         <!-- Pending Lists -->
-        <div class="row">
+        <div class="card p-4 mb-4" ">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Maintenance List</h6>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@(FilteredOverDue.Count + FilteredDueSoon.Count) records total</p>
+            </div>
+            @* <div>
+                <div><h6>Maintenance List</h6></div>
+                <div>@(FilteredOverDue.Count + FilteredDueSoon.Count) records total</div>
+            </div> *@
+            <!-- Equipment Table -->
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                        <th>Technician</th>
+                        <th>Date</th>
+                        <th>Circle</th>
+                        
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (FilteredPendingCombined != null && FilteredPendingCombined.Any())
+                    {
+                        foreach (var item in FilteredPendingCombined.Skip((pendingPage - 1) * pendingPageSize).Take(pendingPageSize))
+                        {
+                            var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
+                            <tr>
+                                <td>
+                                    <div>@item.EquipmentName</div>
+                                </td>
+                                <td>
+                                    <span style="
+                                        background-color:@(maintenance.color == "red" ? "#ff4d4f" : (maintenance.color == "orange" ? "#fa8c16" : "#bfbfbf"));
+                                        color:white;
+                                        padding:4px 10px;
+                                        border-radius:12px;
+                                        font-size:12px;
+                                        font-weight:600;">
+                                        @maintenance.text
+                                    </span>
+                                </td>
+                                <td>@item.LocName</td>
+                                <td>@item.PIC</td>
+                                <td>@item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</td>
+                                <td>@item.MaintenanceCircleTime days</td>
+                                
+                                <td>
+                                    @if (IsAuthenticated)
+                                    {
+                                        @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                                        {
+                                            <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => CreatedAsync(item.EQID)" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
+                                                <Icon Type="tool" Theme="IconThemeType.Outline" /> Maintenance
+                                            </Button>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            @if (FilteredPendingCombined != null && FilteredPendingCombined.Any())
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span style="font-size:12px; color:#595959;">
+                        Showing @(((pendingPage - 1) * pendingPageSize) + 1) to @(Math.Min(pendingPage * pendingPageSize, FilteredPendingCombined.Count)) of @FilteredPendingCombined.Count records
+                    </span>
+                    <Pagination Total="FilteredPendingCombined.Count"
+                                @bind-PageSize="pendingPageSize"
+                                @bind-Current="pendingPage"
+                                PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                                ShowSizeChanger="true"
+                                OnChange="OnPendingPageChange"
+                                Size="PaginationSize.Small" />
+                </div>
+            }
+        </div>
+        @* <div class="row">
             @foreach (var item in FilteredOverDue)
             {
                 var maintenance = GetMaintenanceText(item.NextMaintenanceDate);
@@ -119,9 +200,6 @@
                         <div class="d-flex justify-content-between mb-2">
                             <h5 style="font-weight: 700; color: #1e293b; margin-bottom: 0;">@item.EquipmentName</h5>
 
-                            @* <span class="badge" style="background-color: @(maintenance.color == "red" ? "#ff4d4f" : "#bfbfbf"); color: white; font-size: 11px; font-weight: 600;">
-                                @maintenance.text
-                            </span> *@
                             <span style="
                                             background-color:@(maintenance.color == "red" ? "#ff4d4f" : "#bfbfbf");
                                             color:white;
@@ -202,13 +280,13 @@
                     </div>
                 </div>
             }
-        </div>
+        </div> *@
     }
 
     else if (selectedTab == "History")
     {
         <!-- History Search/Sort -->
-        <div class="card p-3 mb-4 search-card" style="border-radius:15px">
+        <div class="card p-3 mb-3 search-card" style="border-radius:15px">
             <div class="search-container" style="display:flex; gap:10px">
 
                 <!-- Search Input -->
@@ -235,15 +313,20 @@
 
             </div>
         </div>
-        <div class="card p-3 mb-4" style="border-radius:15px">
-            <div>
+        <div class="card p-4 mb-4" >
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Maintenance Records</h6>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredHistory.Count records total</p>
+            </div>
+            @* <div>
                 <div><h6>Maintenance Records</h6></div>
                 <div>@FilteredHistory.Count records total</div>
-            </div>
+            </div> *@
             <!-- Equipment Table -->
             <table class="table">
                 <thead>
                     <tr>
+                        <th>MTID</th>
                         <th>Equipment</th>
                         <th>Type</th>
                         <th>Description</th>
@@ -257,9 +340,10 @@
                 <tbody>
                     @if (FilteredHistory != null && FilteredHistory.Any())
                     {
-                        foreach (var item in FilteredHistory)
+                        foreach (var item in FilteredHistory.Skip((historyPage - 1) * historyPageSize).Take(historyPageSize))
                         {
                             <tr>
+                                <td>@item.MTID</td>
                                 <td>
                                     <div>@GetEquipmentName(item.EQID)</div>
                                 </td>
@@ -288,7 +372,7 @@
                                     }
                                 </td>
                                 <td>
-                                    <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => ShowDetail(item)">
+                                    <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => ShowDetail(item)" Style="border-radius: 8px; padding: 0 24px; height: 38px;">
                                         <Icon Type="eye" Theme="IconThemeType.Outline" /> Detail
                                     </Button>
                                 </td>
@@ -296,9 +380,22 @@
                         }
                     }
                 </tbody>
-
-            </table> 
-
+            </table>
+            @if (FilteredHistory != null && FilteredHistory.Any())
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span style="font-size:12px; color:#595959;">
+                        Showing @(((historyPage - 1) * historyPageSize) + 1) to @(Math.Min(historyPage * historyPageSize, FilteredHistory.Count)) of @FilteredHistory.Count records
+                    </span>
+                    <Pagination Total="FilteredHistory.Count"
+                                @bind-PageSize="historyPageSize"
+                                @bind-Current="historyPage"
+                                PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                                ShowSizeChanger="true"
+                                OnChange="OnHistoryPageChange"
+                                Size="PaginationSize.Small" />
+                </div>
+            }
         </div>
     }
 </div>

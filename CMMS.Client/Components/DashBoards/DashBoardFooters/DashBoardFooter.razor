@@ -11,9 +11,10 @@
                         <div class="desc">Equipment requiring attention (Overdue & Due Soon)</div>
                     </div>
                 </div>
-                <Button Type="ButtonType.Default" @onclick="@(() => NavigationManager.NavigateTo("maintenance"))">
+                <Button Type="ButtonType.Default" Style="border-radius: 8px; padding: 0 24px; height: 38px;" @onclick="@(() => NavigationManager.NavigateTo("maintenance"))">
                     View All <Icon Type="arrow-right" />
                 </Button>
+
             </div>
 
             <div class="card-body" style="max-height: 400px; overflow-y: auto;">
@@ -31,7 +32,7 @@
                     </div>
                 }
 
-                @foreach (var item in DueSon)
+                @foreach (var item in DueSoon)
                 {
                     var nextDate = item.LastMaintenanceDate.Value.AddDays(item.MaintenanceCircleTime.Value);
                     var diffDays = Math.Round((nextDate - DateTime.Today).TotalDays);
@@ -45,7 +46,7 @@
                     </div>
                 }
 
-                @if(!OverDue.Any() && !DueSon.Any())
+                @if(!OverDue.Any() && !DueSoon.Any())
                 {
                     <div style="text-align: center; color: #888; padding: 20px;">
                         No maintenance alerts at the moment.

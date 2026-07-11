@@ -34,12 +34,80 @@ namespace CMMS.Client.Pages.Maintenance
 
         private string selectedTab = "Pending";
 
-        private string pendingSearchText = "";
-        private string pendingSortBy = "DueDateAsc";
+        private int pendingPage = 1;
+        private int pendingPageSize = 10;
+        private int historyPage = 1;
+        private int historyPageSize = 10;
 
-        private string historySearchText = "";
-        private int historyStatusFilter = 0;
-        private string historySortBy = "DateDesc";
+        private string _pendingSearchText = "";
+        private string pendingSearchText
+        {
+            get => _pendingSearchText;
+            set
+            {
+                if (_pendingSearchText != value)
+                {
+                    _pendingSearchText = value;
+                    pendingPage = 1;
+                }
+            }
+        }
+
+        private string _pendingSortBy = "DueDateAsc";
+        private string pendingSortBy
+        {
+            get => _pendingSortBy;
+            set
+            {
+                if (_pendingSortBy != value)
+                {
+                    _pendingSortBy = value;
+                    pendingPage = 1;
+                }
+            }
+        }
+
+        private string _historySearchText = "";
+        private string historySearchText
+        {
+            get => _historySearchText;
+            set
+            {
+                if (_historySearchText != value)
+                {
+                    _historySearchText = value;
+                    historyPage = 1;
+                }
+            }
+        }
+
+        private int _historyStatusFilter = 0;
+        private int historyStatusFilter
+        {
+            get => _historyStatusFilter;
+            set
+            {
+                if (_historyStatusFilter != value)
+                {
+                    _historyStatusFilter = value;
+                    historyPage = 1;
+                }
+            }
+        }
+
+        private string _historySortBy = "DateDesc";
+        private string historySortBy
+        {
+            get => _historySortBy;
+            set
+            {
+                if (_historySortBy != value)
+                {
+                    _historySortBy = value;
+                    historyPage = 1;
+                }
+            }
+        }
 
         private string GetEquipmentName(int eqid)
         {
@@ -59,6 +127,17 @@ namespace CMMS.Client.Pages.Maintenance
 
         private List<DashBoarDto> FilteredOverDue => FilterAndSortPending(OverDue);
         private List<DashBoarDto> FilteredDueSoon => FilterAndSortPending(DueSoon);
+
+        private List<DashBoarDto> FilteredPendingCombined
+        {
+            get
+            {
+                var list = new List<DashBoarDto>();
+                list.AddRange(FilteredOverDue);
+                list.AddRange(FilteredDueSoon);
+                return list;
+            }
+        }
 
         private List<DashBoarDto> FilterAndSortPending(List<DashBoarDto> source)
         {
@@ -267,6 +346,34 @@ namespace CMMS.Client.Pages.Maintenance
                 var eqName = GetEquipmentName(record.EQID);
                 _detailModal.Show(record, eqName);
             }
+        }
+
+        private void OnPendingPageChange(PaginationEventArgs args)
+        {
+            if (pendingPageSize != args.PageSize)
+            {
+                pendingPageSize = args.PageSize;
+                pendingPage = 1; 
+            }
+            else
+            {
+                pendingPage = args.Page;
+            }
+            StateHasChanged();
+        }
+
+        private void OnHistoryPageChange(PaginationEventArgs args)
+        {
+            if (historyPageSize != args.PageSize)
+            {
+                historyPageSize = args.PageSize;
+                historyPage = 1; 
+            }
+            else
+            {
+                historyPage = args.Page;
+            }
+            StateHasChanged();
         }
     }
 }

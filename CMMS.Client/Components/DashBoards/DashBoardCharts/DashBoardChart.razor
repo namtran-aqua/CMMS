@@ -4,15 +4,15 @@
 <Row Gutter="18">
     <!-- Total Equipment -->
     <Col Xs="24" Lg="12">
-        <Card Class="dashboard-chart-card">
-              <Pie Data="data1" Config="config1" />
+        <Card Class="dashboard-chart-card" Style="border-radius:15px">
+              <Pie @ref="_pieChart" Data="data1" Config="config1" />
         </Card>
     </Col>
 
     <!-- Running -->
     <Col Xs="24" Lg="12">
-        <Card Class="dashboard-chart-card">
-            <AntDesign.Charts.Column Data="data2" Config="config2" />
+        <Card Class="dashboard-chart-card" Style="border-radius:15px">
+            <AntDesign.Charts.Column @ref="_columnChart" Data="data2" Config="config2" />
         </Card>
     </Col>
 

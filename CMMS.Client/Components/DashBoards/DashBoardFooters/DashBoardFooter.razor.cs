@@ -6,7 +6,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardFooters
     public partial class DashBoardFooter
     {
         [Parameter] public List<DashBoarDto> DashBoardData { get; set; } = new();
-        private List<DashBoarDto> DueSon { get; set; } = new();
+        private List<DashBoarDto> DueSoon { get; set; } = new();
         private List<DashBoarDto> OverDue { get; set; } = new();
 
         protected override void OnParametersSet()
@@ -15,7 +15,7 @@ namespace CMMS.Client.Components.DashBoards.DashBoardFooters
 
             var currentDate = DateTime.Today;
 
-            DueSon = DashBoardData.Where(x =>
+            DueSoon = DashBoardData.Where(x =>
             {
                 if (x.IsActive == true && x.LastMaintenanceDate.HasValue && x.MaintenanceCircleTime.HasValue)
                 {

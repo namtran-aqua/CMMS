@@ -4,6 +4,7 @@ using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.Maintenance;
 using CMMS.Shared.Dtos.Maintenance.Attachments;
 using CMMS.Shared.Dtos.User;
+using CMMS.Shared.Dtos.SpareParts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
@@ -24,6 +25,7 @@ namespace CMMS.Client.Modals.Maintenances
         [Parameter] public EventCallback OnSave { get; set; }
         private Form<MaintenanceDto> formRef = new();
         private List<AttachmentDto> Attachment = new();
+        private List<SparePartDto> SparePartsList = new();
 
         private List<StatusItem> MaintenanceStatuses = new()
         {
@@ -64,6 +66,7 @@ namespace CMMS.Client.Modals.Maintenances
             MaintenanceDto = new();
             await LoadVendorData();
             await LoadUsersData();
+            await LoadSparePartsData();
             IsModalVisible = true;
             await InvokeAsync(StateHasChanged);
         }
@@ -99,6 +102,12 @@ namespace CMMS.Client.Modals.Maintenances
                 CurrentUser = await CurrentUserClass.LoadCurrentUser();
                 MaintenanceDto.WorkDayId = CurrentUser.WorkDayId;
                 MaintenanceDto.Attachments = Attachment;
+
+                if (MaintenanceDto.SpareParts != null)
+                {
+                    MaintenanceDto.SpareParts = MaintenanceDto.SpareParts.Where(x => x.SPID > 0).ToList();
+                }
+
                 var response = await Http.PostAsJsonAsync($"api/Maintenance/create/{eqId}",MaintenanceDto);
                 if (response.IsSuccessStatusCode)
                 {
@@ -185,5 +194,66 @@ namespace CMMS.Client.Modals.Maintenances
             return true;
         }
         #endregion
+
+        private async Task LoadSparePartsData()
+        {
+            SparePartsList = await Http.GetFromJsonAsync<List<SparePartDto>>("api/SparePart/get-all") ?? new();
+        }
+
+        private void AddSparePartRow()
+        {
+            if (MaintenanceDto.SpareParts == null)
+            {
+                MaintenanceDto.SpareParts = new();
+            }
+            MaintenanceDto.SpareParts.Add(new MaintenanceSparePartDto
+            {
+                Qty = 1
+            });
+            StateHasChanged();
+        }
+
+        private void OnRowSparePartChanged(MaintenanceSparePartDto row, int selectedSpid)
+        {
+            var sp = SparePartsList.FirstOrDefault(x => x.SPID == selectedSpid);
+            if (sp != null)
+            {
+                var isDuplicate = MaintenanceDto.SpareParts.Any(x => x != row && x.SPID == selectedSpid);
+                if (isDuplicate)
+                {
+                    Message.Warning($"Phụ tùng '{sp.PartName}' đã được chọn ở dòng khác.");
+                    row.SPID = 0;
+                    row.PartCode = null;
+                    row.PartName = null;
+                    row.Unit = null;
+                    row.Inventory = null;
+                    return;
+                }
+
+                if ((sp.Inventory ?? 0) <= 0)
+                {
+                    Message.Error("Phụ tùng này đã hết hàng trong kho!");
+                    row.SPID = 0;
+                    row.PartCode = null;
+                    row.PartName = null;
+                    row.Unit = null;
+                    row.Inventory = null;
+                    return;
+                }
+
+                row.SPID = sp.SPID;
+                row.PartCode = sp.PartCode;
+                row.PartName = sp.PartName;
+                row.Unit = sp.Unit;
+                row.Inventory = sp.Inventory;
+                row.Qty = 1;
+            }
+        }
+
+        private void RemoveSparePart(MaintenanceSparePartDto sp)
+        {
+            MaintenanceDto.SpareParts.Remove(sp);
+            StateHasChanged();
+        }
     }
 }
