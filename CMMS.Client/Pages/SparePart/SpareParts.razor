@@ -248,9 +248,9 @@
                     <tr>
                         <th>Part</th>
                         <th>Type</th>
+                        <th>Movement Type</th>
                         <th>Quantity</th>
                         <th>Equipment / Note</th>
-                        <th>Ref code</th>
                         <th>Adjust By</th>
                         <th>Date</th>
                     </tr>
@@ -273,6 +273,7 @@
                                         @GetTxLabel(t.Type)
                                     </span>
                                 </td>
+                                <td>@t.MovementType</td>
                                 
                                 <td>
                                     <strong style="color:@(t.Type == "IN" ? "#52c41a" : "#fa8c16");">
@@ -280,7 +281,6 @@
                                     </strong>
                                 </td>
                                 <td>@(t.Equipment ?? t.Note)</td>
-                                <td>@t.RefCode</td>
                                 <td>@t.CreateUser</td>
                                 <td>@t.CreateDate.ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
