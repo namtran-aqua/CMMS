@@ -177,9 +177,9 @@ public class SparePartController : ControllerBase
         catch (InvalidOperationException ex) { return Conflict(ex.Message); }
     }
     [HttpDelete("supplier/delete/{spid}")]
-    public async Task<IActionResult> DeleteSupplier(int supplierid)
+    public async Task<IActionResult> DeleteSupplier(int spid)
     {
-        var success = await _service.DeleteSupplier(supplierid, await GetCurrentUserAsync());
+        var success = await _service.DeleteSupplier(spid, await GetCurrentUserAsync());
         return success ? Ok(new { message = "Xóa thành công" }) : NotFound();
     }
 }

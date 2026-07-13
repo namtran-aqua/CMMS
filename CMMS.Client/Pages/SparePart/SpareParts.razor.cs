@@ -247,6 +247,7 @@ namespace CMMS.Client.Pages.SpareParts
         {
             await LoadParts();
             await LoadHistory();
+            await LoadLookupData();
         }
 
         private async Task OnPartsPageChange(PaginationEventArgs args)
@@ -345,8 +346,16 @@ namespace CMMS.Client.Pages.SpareParts
 
         private async Task DeleteCategory(int id)
         {
-            await Http.DeleteAsync($"api/SparePart/category/delete/{id}");
-            await LoadData();
+            var response = await Http.DeleteAsync($"api/SparePart/category/delete/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Message.Success("Deleted successfully");
+                await LoadData();
+            }
+            else
+            {
+                Message.Error("Delete failed");
+            }
         }
 
         private async Task AddSupplier()
@@ -368,8 +377,16 @@ namespace CMMS.Client.Pages.SpareParts
 
         private async Task DeleteSupplier(int id)
         {
-            await Http.DeleteAsync($"api/SparePart/supplier/delete/{id}");
-            await LoadData();
+            var response = await Http.DeleteAsync($"api/SparePart/supplier/delete/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Message.Success("Deleted successfully");
+                await LoadData();
+            }
+            else
+            {
+                Message.Error("Delete failed");
+            }
         }
     }
 }
