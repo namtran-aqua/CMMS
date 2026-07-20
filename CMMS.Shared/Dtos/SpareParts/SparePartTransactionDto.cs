@@ -13,7 +13,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public int SPID { get; set; }
         public string? PartCode { get; set; }
         public string? PartName { get; set; }
-        public string Type { get; set; } // IN | OUT | MAINTENANCE
+        public string Type { get; set; } // IN | OUT 
         public int Quantity { get; set; }
         public DateTime Date { get; set; }
         public int? EQID { get; set; }
@@ -25,6 +25,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public string? RefCode { get; set; }
         public int? DeptID { get; set; }
         public string? MovementType { get; set; }
+        public int? MovementTypeID { get; set; }
 
 
         //// Aliased properties to match database columns and frontend bindings

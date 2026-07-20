@@ -1,4 +1,4 @@
-﻿using CMMS.Server.Services.UserService;
+using CMMS.Server.Services.UserService;
 using CMMS.Shared.Dtos.AuthModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,14 +39,47 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPassword request)
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
         try
         {
-            var success = await _userService.ResetPasswordAsync(request);
+            var success = await _userService.SendOtpAsync(request);
             if (success)
-                return Ok(new { message = "Password reset successfully." });
+                return Ok(new { message = "A verification code has been sent to your email." });
+            return BadRequest(new { message = "Failed to send OTP." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp(VerifyOtpRequest request)
+    {
+        try
+        {
+            var token = await _userService.VerifyOtpAsync(request);
+            return Ok(new { resetToken = token });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        try
+        {
+            var success = await _userService.ResetPasswordWithTokenAsync(request);
+            if (success)
+                return Ok(new { message = "Password has been reset successfully." });
             return BadRequest(new { message = "Password reset failed." });
         }
         catch (Exception ex)

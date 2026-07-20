@@ -1,5 +1,6 @@
 using AntDesign;
 using CMMS.Client.Common;
+using CMMS.Client.Services;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.SpareParts;
 using CMMS.Shared.Dtos.User;
@@ -14,6 +15,8 @@ namespace CMMS.Client.Modals.SpareParts
     {
         [Inject] private HttpClient Http { get; set; }
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+        [Inject] private NavigationManager Navigation { get; set; }
+        [Inject] private FactoryStateService FactoryState { get; set; }
         [Parameter] public EventCallback OnSave { get; set; }
         [Parameter] public List<SparePartCategoryDto> Categories { get; set; } = new();
         [Parameter] public List<SparePartSupplierDto> Suppliers { get; set; } = new();
@@ -30,6 +33,7 @@ namespace CMMS.Client.Modals.SpareParts
             CurrentUser.FACID.HasValue
                 ? Departments.Where(d => d.FACID == CurrentUser.FACID).ToList()
                 : Departments;
+        
         public async Task ShowModal(SparePartDto? part)
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -37,8 +41,9 @@ namespace CMMS.Client.Modals.SpareParts
 
             var CurrentUserClass = new CurrentUser(Http, AuthStateProvider);
             CurrentUser = await CurrentUserClass.LoadCurrentUser();
-            LoadDepartmentsData();
-            PartDto = part == null ? new SparePartDto { Unit = "pcs" } : new SparePartDto
+            await LoadDepartmentsData();
+
+            PartDto = part == null ? new SparePartDto {IsCoded = false } : new SparePartDto
             {
                 SPID = part.SPID,
                 PartCode = part.PartCode,
@@ -50,8 +55,12 @@ namespace CMMS.Client.Modals.SpareParts
                 MinStock = part.MinStock,
                 LocID = part.LocID,
                 SupplierID = part.SupplierID,
-                Note = part.Note
+                Note = part.Note,
+                IsCoded = part.IsCoded,
+                ImageUrl = part.ImageUrl,
+                FACID = part.FACID
             };
+
             IsModalVisible = true;
             await InvokeAsync(StateHasChanged);
         }
@@ -62,6 +71,19 @@ namespace CMMS.Client.Modals.SpareParts
             return Task.CompletedTask;
         }
 
+        private void OnImageUploadCompleted(UploadInfo fileinfo)
+        {
+            if (fileinfo.File.State == UploadState.Success)
+            {
+                var url = fileinfo.File.Response?.ToString();
+                if (!string.IsNullOrEmpty(url))
+                {
+                    PartDto.ImageUrl = url;
+                    StateHasChanged();
+                }
+            }
+        }
+
         private async Task SaveAsync()
         {
             var valid = formRef.Validate();
@@ -69,6 +91,11 @@ namespace CMMS.Client.Modals.SpareParts
 
             try
             {
+                if (PartDto.SPID == 0 && !PartDto.FACID.HasValue)
+                {
+                    PartDto.FACID = CurrentUser.FACID ?? FactoryState.SelectedFacId;
+                }
+
                 HttpResponseMessage response;
                 if (PartDto.SPID == 0)
                     response = await Http.PostAsJsonAsync("api/SparePart/create", PartDto);
@@ -92,6 +119,7 @@ namespace CMMS.Client.Modals.SpareParts
                 Message.Error($"Error: {ex.Message}");
             }
         }
+
         private async Task LoadDepartmentsData()
         {
             if (Departments != null && Departments.Any()) return;

@@ -34,10 +34,10 @@
 </style>
 @{
     RenderFragment footer = @<Template>
-            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Class="btn-custom">
                 Save
             </Button>
-            <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+        <Button OnClick="@Close" Class="btn-custom">
                 Cancel
             </Button>
     </Template>;

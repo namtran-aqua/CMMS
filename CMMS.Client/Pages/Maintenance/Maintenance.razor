@@ -159,7 +159,7 @@
                                     {
                                         @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
                                         {
-                                            <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => CreatedAsync(item.EQID)" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                                            <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => CreatedAsync(item.EQID)" Class="btn-custom">
                                                 <Icon Type="tool" Theme="IconThemeType.Outline" /> Maintenance
                                             </Button>
                                         }
@@ -372,7 +372,7 @@
                                     }
                                 </td>
                                 <td>
-                                    <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => ShowDetail(item)" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                                    <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => ShowDetail(item)" Class="btn-custom">
                                         <Icon Type="eye" Theme="IconThemeType.Outline" /> Detail
                                     </Button>
                                 </td>

@@ -1,0 +1,328 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Client.Common
+@using System.IO
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Export Orders (Xuất kho)</h3>
+        <p class="text-muted">Dispatch spare parts, record machinery destinations, and manage logs</p>
+    </div>
+    @if (IsAuthenticated)
+    {
+        <div>
+            <Button Type="@ButtonType.Primary" OnClick="OpenCreateExportModal" Class="btn-custom">
+                <Icon Type="plus" /> Create Export Order
+            </Button>
+        </div>
+    }
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3 search-card" style="border-radius:15px">
+    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" @onclick="() => isCatalogSearchPanelCollapsed = !isCatalogSearchPanelCollapsed">
+        <div style="font-weight:700; color:#1e293b; font-size:14px;">
+            <Icon Type="search" Style="margin-right:8px;" /> Advanced Search Filters
+        </div>
+        <div>
+            <Icon Type="@(isCatalogSearchPanelCollapsed ? "down" : "up")" />
+        </div>
+    </div>
+
+    @if (!isCatalogSearchPanelCollapsed)
+    {
+        <div class="row" style="gap:12px 0;">
+            <div class="col-md-4">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Export Code</label>
+                <Input placeholder="EXP-..." @bind-Value="exportCodeSearch" Class="form-control" />
+            </div>
+            @* <div class="col-md-4">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Movement Type</label>
+                <Select TValue="int?" @bind-Value="exportMovementTypeFilter" DataSource="MovementTypes" ValueName="MovementTypeID" LabelName="MovementTypeName" Placeholder="All movement types" AllowClear Style="width:100%" />
+            </div> *@
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Supplier</label>
+                <select class="form-select" @bind="exportMovementTypeFilter" style="height:38px; border-radius:8px;">
+                    <option value="0">All Movement Types</option>
+                    @foreach (var c in MovementTypes)
+                    {
+                        <option value="@c.MovementTypeID">@c.MovementTypeName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end" style="gap:8px;">
+                <Button Type="@ButtonType.Primary" OnClick="ApplyFilters" Class="btn-custom">Query</Button>
+                <Button Type="@ButtonType.Default" OnClick="ResetFilters" Class="btn-custom">Reset</Button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Grid card -->
+<div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Exports Register</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredExportOrders.Count orders found</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Export Code</th>
+                <th>Movement Type</th>
+                <th>Export Date</th>
+                <th>Created By</th>
+                <th>File Đính Kèm</th>
+                <th>Status</th>
+                <th style="width: 120px;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (FilteredExportOrders != null && FilteredExportOrders.Any())
+            {
+                foreach (var exp in FilteredExportOrders.Skip((exportPage - 1) * exportPageSize).Take(exportPageSize))
+                {
+                    <tr>
+                        <td><strong>@exp.ExportCode</strong></td>
+                        <td>@exp.MovementTypeName</td>
+                        <td>@exp.ExportDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@exp.CreateUser</td>
+                        <td>
+                            @if (exp.AttachmentUrls != null && exp.AttachmentUrls.Any())
+                            {
+                                <div>
+                                    @foreach (var url in exp.AttachmentUrls)
+                                    {
+                                        var fileName = System.IO.Path.GetFileName(url);
+                                        var resolvedUrl = url.StartsWith("/") || url.StartsWith("http") ? url : "/" + url;
+                                        <div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:2px;">
+                                            <Icon Type="file" Theme="IconThemeType.Outline" Style="color:#1677ff;font-size:12px;" />
+                                            <a href="@resolvedUrl" target="_blank" title="@fileName">@fileName</a>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <span class="status-badge badge-@exp.Status.ToLower()">@exp.Status</span>
+                        </td>
+                        <td>
+                            <Button Size="ButtonSize.Small" Class="btn-custom" OnClick="() => ShowExportDetail(exp.ExportID)"><Icon Type="eye" /> Details</Button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:30px; color:#94a3b8;">Không có lệnh xuất nào.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (FilteredExportOrders != null && FilteredExportOrders.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span style="font-size:12px; color:#595959;">
+                Showing @(((exportPage - 1) * exportPageSize) + 1) to @(Math.Min(exportPage * exportPageSize, FilteredExportOrders.Count)) of @FilteredExportOrders.Count orders
+            </span>
+            <Pagination Total="FilteredExportOrders.Count"
+                        @bind-PageSize="exportPageSize"
+                        @bind-Current="exportPage"
+                        PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                        ShowSizeChanger="true"
+                        OnChange="OnExportPageChange"
+                        Size="PaginationSize.Small" />
+        </div>
+    }
+</div>
+
+<!-- Export Order Details Modal -->
+<Modal @bind-Visible="isExportDetailVisible" Title="Lệnh Xuất Kho Chi Tiết" Width="1000" Footer="null" Style="z-index:9999;">
+    @if (selectedExportOrder != null)
+    {
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="row">
+                <div class="col-6"><strong>Export Code:</strong> @selectedExportOrder.ExportCode</div>
+                <div class="col-6"><strong>Movement Type:</strong> @selectedExportOrder.MovementTypeName</div>
+                <div class="col-6"><strong>Date:</strong> @selectedExportOrder.ExportDate.ToString("yyyy-MM-dd HH:mm")</div>
+                <div class="col-6"><strong>Created By:</strong> @selectedExportOrder.CreateUser</div>
+                <div class="col-6">
+                    <strong>Status:</strong>
+                    <span class="status-badge badge-@selectedExportOrder.Status.ToLower()">@selectedExportOrder.Status</span>
+                </div>
+            </div>
+
+            <h6 style="font-weight:700; margin-top:12px;">List export Spare Part</h6>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>IsCode</th>
+                        <th>Serial Code</th>
+                        <th>Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in selectedExportOrder.Details)
+                    {
+                        <tr>
+                            <td>@d.PartCode</td>
+                            <td>@d.PartName</td>
+                            <td>@(d.HasCode ? "Coded" : "No Code")</td>
+                            <td>@d.SerialCode</td>
+                            <td>@d.Quantity</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (selectedExportOrder.AttachmentUrls != null && selectedExportOrder.AttachmentUrls.Any())
+            {
+                <div style="margin-top:12px;">
+                    <strong>Tệp đính kèm:</strong>
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                        @foreach (var url in selectedExportOrder.AttachmentUrls)
+                        {
+                            <a href="@url" target="_blank" style="font-size:12px; color:#3b82f6;"><Icon Type="paper-clip" /> @Path.GetFileName(url)</a>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (selectedExportOrder.Status != "Reversed" && IsAuthenticated)
+            {
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; border-top:1px solid #f1f5f9; padding-top:12px;">
+                    <Button Danger OnClick="() => ReverseExport(selectedExportOrder.ExportID)">
+                        <Icon Type="rollback" /> Reverse (Đảo ngược)
+                    </Button>
+                </div>
+            }
+        </div>
+    }
+</Modal>
+
+<!-- Create Export Order Modal -->
+<Modal @bind-Visible="isExportCreateVisible" Title="Tạo đơn Xuất Kho" Width="1000" Footer="null" Style="z-index:9999;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Header Info -->
+        <div class="row">
+            <div class="col-md-6">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Hình thức xuất (Movement Type)</label>
+                <Select TValue="int?" @bind-Value="newExportOrder.MovementTypeID" DataSource="MovementTypes" ValueName="MovementTypeID" LabelName="MovementTypeName" Placeholder="Chọn hình thức xuất" Style="width:100%" />
+            </div>
+            <div class="col-md-6">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Ngày Xuất</label>
+                <DatePicker TValue="DateTime" @bind-Value="newExportOrder.ExportDate" Style="width:100%; height:38px;" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <label style="font-size:12px; font-weight:600; color:#64748b; display:block;">Đính kèm tài liệu</label>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <Upload Action="@($"{Navigation.BaseUri}api/Common/upload-file-suport")"
+                            Name="file"
+                            Accept=".jpg,.jpeg,.png,.pdf,.docx,.xlsx"
+                            ShowUploadList="false"
+                            OnSingleCompleted="OnExportAttachmentUploaded">
+                        <Button Icon="upload">Tải lên</Button>
+                    </Upload>
+                    @if (newExportOrder.AttachmentUrls.Any())
+                    {
+                        <div style="font-size:12px; color:#10b981;">Đã tải lên @newExportOrder.AttachmentUrls.Count tệp</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <hr style="margin:8px 0;" />
+
+        <!-- Detail Sub-Form -->
+        <h6 style="font-weight:700; color:#0f172a; margin:0;">Thêm phụ tùng xuất</h6>
+        <div class="row align-items-end" style="gap:12px 0;">
+            <div class="col-md-6">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Chọn Phụ Tùng</label>
+                <Select TValue="int"
+                        @bind-Value="selectedExportPartId"
+                        DataSource="exportPartsSearchList"
+                        ValueName="SPID"
+                        LabelName="PartName"
+                        Placeholder="Nhập tên/mã..."
+                        ShowSearch
+                        EnableSearch
+                        OnSearch="SearchPartsForExport"
+                        Style="width:100%" />
+            </div>
+
+            @if (tempExportDetail.HasCode)
+            {
+                <div class="col-md-4">
+                    <label style="font-size:12px; font-weight:600; color:#64748b;">Chọn Serial Code (Trong Kho)</label>
+                    <Select TValue="string"
+                            DataSource="availableCodedItemsForSelectedPart"
+                            ValueName="SerialCode"
+                            LabelName="SerialCode"
+                            Placeholder="Chọn serial..."
+                            @bind-Value="tempExportDetail.SerialCode"
+                            Style="width:100%" />
+                </div>
+            }
+            else
+            {
+                <div class="col-md-4">
+                    <label style="font-size:12px; font-weight:600; color:#64748b;">Số Lượng Xuất (FIFO Tự Động)</label>
+                    <AntDesign.InputNumber TValue="int" @bind-Value="tempExportDetail.Quantity" Min="1" Style="width:100%" />
+                </div>
+            }
+
+            <div class="col-md-2">
+                <Button Type="@ButtonType.Default" OnClick="AddItemToNewExport" Style="width:100%; height:38px; border-radius:8px;">Thêm</Button>
+            </div>
+        </div>
+
+        <!-- Detail Listing -->
+        <table class="table table-striped" style="margin-top:12px;">
+            <thead>
+                <tr>
+                    <th>Mã Phụ Tùng</th>
+                    <th>Tên Phụ Tùng</th>
+                    <th>Serial Code</th>
+                    <th>Số Lượng</th>
+                    <th style="width: 50px;">Xóa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (newExportOrder.Details.Any())
+                {
+                    foreach (var det in newExportOrder.Details)
+                    {
+                        <tr>
+                            <td>@det.PartCode</td>
+                            <td>@det.PartName</td>
+                            <td>@(det.HasCode ? det.SerialCode : "FIFO Tự Động")</td>
+                            <td>@det.Quantity</td>
+                            <td>
+                                <Button Danger Size="ButtonSize.Small" OnClick="() => RemoveExportDetail(det)"><Icon Type="delete" /></Button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" style="text-align:center; color:#94a3b8;">Chưa có phụ tùng nào được thêm.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Actions -->
+        <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #f1f5f9; padding-top:12px; margin-top:12px;">
+            <Button OnClick="() => isExportCreateVisible = false" Style="border-radius:8px;">Hủy</Button>
+            <Button Type="@ButtonType.Primary" OnClick="SaveNewExportOrder" Style="border-radius:8px;">Lưu Phiếu</Button>
+        </div>
+    </div>
+</Modal>

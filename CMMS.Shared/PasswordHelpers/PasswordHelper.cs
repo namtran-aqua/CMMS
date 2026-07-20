@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +20,20 @@ namespace CMMS.Shared.PasswordHelpers
             var hasher = new PasswordHasher<object>();
             var result = hasher.VerifyHashedPassword(null, hashedPassword, inputPassword);
             return result == PasswordVerificationResult.Success;
+        }
+
+        public static string ComputeSha256Hash(string input)
+        {
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                var sb = new StringBuilder();
+                foreach (var b in bytes)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+                return sb.ToString();
+            }
         }
     }
 }

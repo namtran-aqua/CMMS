@@ -1,4 +1,4 @@
-﻿using Blazored.SessionStorage;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using System.Net;
 using System.Net.Http.Headers;
@@ -25,11 +25,15 @@ public class AuthMessageHandler : DelegatingHandler
 
         var response = await base.SendAsync(request, cancellationToken);
 
-        // Nếu bị 401 thì chuyển hướng logout
+        // Nếu bị 401 thì chuyển hướng logout (ngoại trừ khi gọi API login)
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            await _sessionStorage.RemoveItemAsync("authToken");
-            _navigation.NavigateTo("/logout", forceLoad: true); // Redirect để xóa token và chuyển về login
+            var requestPath = request.RequestUri?.AbsolutePath ?? "";
+            if (!requestPath.Contains("/api/auth/login", StringComparison.OrdinalIgnoreCase))
+            {
+                await _sessionStorage.RemoveItemAsync("authToken");
+                _navigation.NavigateTo("/logout", forceLoad: true); // Redirect để xóa token và chuyển về login
+            }
         }
 
         return response;

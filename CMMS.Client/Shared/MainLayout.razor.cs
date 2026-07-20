@@ -27,6 +27,12 @@ namespace CMMS.Client.Shared
         {
             await LoadCurrentUser();
             await LoadFactories();
+
+            if (CurrentUser != null && CurrentUser.FACID.HasValue && !FactoryState.SelectedFacId.HasValue)
+            {
+                var fac = FactoryState.Factories.FirstOrDefault(f => f.FacId == CurrentUser.FACID.Value);
+                FactoryState.SetFactory(CurrentUser.FACID.Value, fac?.FacName ?? "");
+            }
         }
 
 

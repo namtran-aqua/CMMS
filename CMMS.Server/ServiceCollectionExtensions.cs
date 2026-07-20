@@ -1,4 +1,4 @@
-﻿using AntDesign;
+using AntDesign;
 using CMMS.Data.Connection;
 using CMMS.Server.Services.DailyJobService;
 using CMMS.Server.Services.DashBoardService;
@@ -10,6 +10,7 @@ using CMMS.Server.Services.StatusUsingService;
 using CMMS.Server.Services.UserService;
 using CMMS.Server.Services.VendorService;
 using CMMS.Server.Services.SparePartService;
+using CMMS.Server.Services.EmailService;
 
 namespace CMMS.Server
 {
@@ -32,6 +33,7 @@ namespace CMMS.Server
             services.AddScoped<IDailyJobService, DailyJobService>();
             services.AddScoped<ILocationService, LocationService>();
             services.AddScoped<ISparePartService, SparePartService>();
+            services.AddScoped<IEmailService, EmailService>();
             return services;
         }
     }

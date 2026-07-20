@@ -25,6 +25,8 @@ namespace CMMS.Shared.Dtos.SpareParts
         public DateTime? UpdateDate { get; set; }
         public Guid? CreateBy { get; set; }
         public Guid? UpdateBy { get; set; }
+        public bool IsCoded { get; set; }
+        public string? ImageUrl { get; set; }
 
         // Aliased properties to map database columns and frontend bindings
         public string? Code { get => PartCode; set => PartCode = value; }

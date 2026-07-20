@@ -1,0 +1,117 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@inject NavigationManager Navigation
+
+<!-- Dashboard Stats Grid -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Warehouse Dashboard</h3>
+        <p class="text-muted">Real-time inventory statistics, values, and audit status</p>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="kpi-card" style="border-left: 4px solid #10b981;">
+        <span class="kpi-title">Total SKU Catalog</span>
+        <span class="kpi-value">@DashboardData.TotalSKU</span>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
+        <span class="kpi-title">In-Stock Quantity</span>
+        <span class="kpi-value">@DashboardData.CurrentInventory</span>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
+        <span class="kpi-title">Inventory Net Value</span>
+        <span class="kpi-value">@String.Format("{0:N0} VND", DashboardData.InventoryValue)</span>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+        <span class="kpi-title">Import (This Month)</span>
+        <span class="kpi-value">@DashboardData.ImportThisMonth pcs</span>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid #ec4899;">
+        <span class="kpi-title">Export (This Month)</span>
+        <span class="kpi-value">@DashboardData.ExportThisMonth pcs</span>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid #ef4444;">
+        <span class="kpi-title">Low Stock SKUs</span>
+        <span class="kpi-value" style="color:#ef4444;">@DashboardData.LowStockSKU</span>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid #000000;">
+        <span class="kpi-title">Zero Stock SKUs</span>
+        <span class="kpi-value" style="color:#ef4444;">@DashboardData.ZeroStockSKU</span>
+    </div>
+</div>
+
+<!-- Analytics Rows -->
+<div class="row mx-0">
+    <!-- Top Used Parts -->
+    <div class="col-md-4 mb-4">
+        <div class="card p-4 h-100" style="border-radius: 15px;">
+            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 16px;">🔥 Top Used Parts (Month)</h6>
+            @if (DashboardData.TopUsedParts != null && DashboardData.TopUsedParts.Any())
+            {
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    @foreach (var item in DashboardData.TopUsedParts)
+                    {
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+                            <div>
+                                <div style="font-weight:600; color:#334155; font-size:13px;">@item.PartName</div>
+                                <small style="color:#94a3b8;">Code: @item.PartCode</small>
+                            </div>
+                            <span class="badge" style="background:#f1f5f9; color:#0f172a; font-weight:700;">@item.QuantityUsed pcs</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color:#94a3b8; font-size:13px;">No data recorded this month.</p>
+            }
+        </div>
+    </div>
+
+    <!-- Aging Stock Distribution -->
+    <div class="col-md-4 mb-4">
+        <div class="card p-4 h-100" style="border-radius: 15px;">
+            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 16px;">⏳ Stock Aging Distribution</h6>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                @foreach (var aging in DashboardData.AgingDistribution)
+                {
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">
+                            <span>@aging.Range</span>
+                            <span>@aging.Quantity pcs (@String.Format("{0:N0} VND", aging.Value))</span>
+                        </div>
+                        <div style="background:#e2e8f0; height:8px; border-radius:4px; overflow:hidden;">
+                            <div style="background:#8b5cf6; height:100%; width:@(DashboardData.CurrentInventory > 0 ? (aging.Quantity * 100 / DashboardData.CurrentInventory) : 0)%;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Vendors -->
+    <div class="col-md-4 mb-4">
+        <div class="card p-4 h-100" style="border-radius: 15px;">
+            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 16px;">🏢 Top Vendors Valuation</h6>
+            @if (DashboardData.TopVendors != null && DashboardData.TopVendors.Any())
+            {
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    @foreach (var v in DashboardData.TopVendors)
+                    {
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+                            <div>
+                                <div style="font-weight:600; color:#334155; font-size:13px;">@v.VendorName</div>
+                                <small style="color:#94a3b8;">Orders count: @v.TransactionsCount</small>
+                            </div>
+                            <span style="font-weight:700; color:#10b981; font-size:13px;">@String.Format("{0:N0} VND", v.TotalValue)</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color:#94a3b8; font-size:13px;">No data recorded this month.</p>
+            }
+        </div>
+    </div>
+</div>

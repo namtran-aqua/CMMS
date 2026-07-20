@@ -1,0 +1,123 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Client.Common
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Serial/Coded Parts Tracking</h3>
+        <p class="text-muted">Audit specific coded spare part items and their active storage status</p>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="card p-3 mb-3 search-card" style="border-radius:15px">
+    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" @onclick="() => isSearchPanelCollapsed = !isSearchPanelCollapsed">
+        <div style="font-weight:700; color:#1e293b; font-size:14px;">
+            <Icon Type="search" Style="margin-right:8px;" /> Advanced Search Filters
+        </div>
+        <div>
+            <Icon Type="@(isSearchPanelCollapsed ? "down" : "up")" />
+        </div>
+    </div>
+
+    @if (!isSearchPanelCollapsed)
+    {
+        <div class="row mt-3" style="gap:12px 0;">
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Serial Code</label>
+                <Input placeholder="Serial code..." @bind-Value="codedSerialSearch" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Part Code</label>
+                <Input placeholder="Part code..." @bind-Value="codedPartCodeSearch" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Part Name</label>
+                <Input placeholder="Part name..." @bind-Value="codedPartNameSearch" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Status</label>
+                <select class="form-select" @bind="codedStatusFilter" style="height:38px; border-radius:8px;">
+                    <option value="">All Statuses</option>
+                    <option value="Available">Available</option>
+                    <option value="Reserved">Reserved</option>
+                    <option value="Installed">Installed</option>
+                    <option value="Scrapped">Scrapped</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Lost">Lost</option>
+                </select>
+            </div>
+            <div class="col-md-12 d-flex justify-content-end" style="gap:8px; margin-top:8px;">
+                <Button Type="@ButtonType.Primary" OnClick="ApplyFilters" Class="btn-custom">Query</Button>
+                <Button Type="@ButtonType.Default" OnClick="ResetFilters" Class="btn-custom">Reset</Button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Grids Card -->
+<div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Coded Units List</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredCodedItems.Count items tracked</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Serial Code</th>
+                <th>Part Code</th>
+                <th>Part Name</th>
+                <th>Supplier</th>
+                <th>Import Date</th>
+                <th>Price</th>
+                <th>Age (Days)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (FilteredCodedItems != null && FilteredCodedItems.Any())
+            {
+                foreach (var item in FilteredCodedItems.Skip((codedPage - 1) * codedPageSize).Take(codedPageSize))
+                {
+                    <tr>
+                        <td><strong style="color:#0f172a;">@item.SerialCode</strong></td>
+                        <td>@item.PartCode</td>
+                        <td>@item.PartName</td>
+                        <td>@item.SupplierName</td>
+                        <td>@item.ImportDate.ToString("yyyy-MM-dd")</td>
+                        <td>@String.Format("{0:N0} VND", item.Price)</td>
+                        <td>
+                            <span class="badge" style="background:#f1f5f9; color:#475569;">@item.DaysInStock days</span>
+                        </td>
+                        <td>
+                            <span class="status-badge badge-@item.Status.ToLower()">@item.Status</span>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" style="text-align:center; padding:30px; color:#94a3b8;">Không có mặt hàng nào phù hợp.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (FilteredCodedItems != null && FilteredCodedItems.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span style="font-size:12px; color:#595959;">
+                Showing @(((codedPage - 1) * codedPageSize) + 1) to @(Math.Min(codedPage * codedPageSize, FilteredCodedItems.Count)) of @FilteredCodedItems.Count items
+            </span>
+            <Pagination Total="FilteredCodedItems.Count"
+                        @bind-PageSize="codedPageSize"
+                        @bind-Current="codedPage"
+                        PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                        ShowSizeChanger="true"
+                        OnChange="OnCodedPageChange"
+                        Size="PaginationSize.Small" />
+        </div>
+    }
+</div>

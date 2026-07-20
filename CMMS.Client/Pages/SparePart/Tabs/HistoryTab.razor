@@ -1,0 +1,120 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Client.Common
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Transactions &amp; Movement Log</h3>
+        <p class="text-muted">Comprehensive list of all spare part movements (IN, OUT, REVERSAL)</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3 search-card" style="border-radius:15px">
+    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" @onclick="() => isCatalogSearchPanelCollapsed = !isCatalogSearchPanelCollapsed">
+        <div style="font-weight:700; color:#1e293b; font-size:14px;">
+            <Icon Type="search" Style="margin-right:8px;" /> Advanced Search Filters
+        </div>
+        <div>
+            <Icon Type="@(isCatalogSearchPanelCollapsed ? "down" : "up")" />
+        </div>
+    </div>
+
+    @if (!isCatalogSearchPanelCollapsed)
+    {
+        <div class="row" style="gap:12px 0;">
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Date From</label>
+                <DatePicker TValue="DateTime?" @bind-Value="historyFromDate" Style="width:100%; height:38px;" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Date To</label>
+                <DatePicker TValue="DateTime?" @bind-Value="historyToDate" Style="width:100%; height:38px;" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Type</label>
+                <select class="form-select" @bind="historyTypeFilter" style="height:38px; border-radius:8px;">
+                    <option value="">All Movements</option>
+                    <option value="IN">IN (Imports/Adjustments)</option>
+                    <option value="OUT">OUT (Exports/Maintenance)</option>
+                    <option value="REVERSAL">REVERSAL</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Keyword</label>
+                <Input placeholder="Code, Name, Ref..." @bind-Value="historySearchText" Class="form-control" />
+            </div>
+            <div class="col-md-12 d-flex justify-content-end" style="gap:8px; margin-top:8px;">
+                <Button Type="@ButtonType.Primary" OnClick="ApplyFilters" Class="btn-custom">Query</Button>
+                <Button Type="@ButtonType.Default" OnClick="ResetFilters" Class="btn-custom">Reset</Button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Grid card -->
+<div class="card p-4 mb-4" style="border-radius:15px;border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.01); padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;font-size: 16px;">Transactions Log</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500;margin-bottom: 0;">@FilteredTransactions.Count movements recorded</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Ref Code</th>
+                <th>Movement Type</th>
+                <th>Created By</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (FilteredTransactions != null && FilteredTransactions.Any())
+            {
+                foreach (var tx in FilteredTransactions.Skip((historyPage - 1) * historyPageSize).Take(historyPageSize))
+                {
+                    <tr>
+                        <td>@tx.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><strong>@tx.PartCode</strong></td>
+                        <td>@tx.PartName</td>
+                        <td>
+                            <span class="status-badge" style="background:@GetTxColor(tx.Type); color:#ffffff;">@GetTxLabel(tx.Type)</span>
+                        </td>
+                        <td><strong>@tx.Quantity</strong></td>
+                        <td>@tx.RefCode</td>
+                        <td>@tx.MovementType</td>
+                        <td>@tx.CreateUser</td>
+                        <td>@tx.Note</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" style="text-align:center; padding:30px; color:#94a3b8;">Không có giao dịch nào.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (FilteredTransactions != null && FilteredTransactions.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span style="font-size:12px; color:#595959;">
+                Showing @(((historyPage - 1) * historyPageSize) + 1) to @(Math.Min(historyPage * historyPageSize, FilteredTransactions.Count)) of @FilteredTransactions.Count movements
+            </span>
+            <Pagination Total="FilteredTransactions.Count"
+                        @bind-PageSize="historyPageSize"
+                        @bind-Current="historyPage"
+                        PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                        ShowSizeChanger="true"
+                        OnChange="OnHistoryPageChange"
+                        Size="PaginationSize.Small" />
+        </div>
+    }
+</div>

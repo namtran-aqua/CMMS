@@ -5,10 +5,10 @@
 
 @{
     RenderFragment footer = @<Template>
-        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Disabled="@(!CanSubmit)" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Disabled="@(!CanSubmit)" Class="btn-custom">
             Confirm
         </Button>
-        <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+        <Button OnClick="@Close" Class="btn-custom">
             Cancel
         </Button>
     </Template>;

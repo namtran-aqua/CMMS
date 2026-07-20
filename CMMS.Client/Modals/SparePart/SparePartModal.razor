@@ -35,10 +35,10 @@
 
 @{
     RenderFragment footer = @<Template>
-        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+        <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Class="btn-custom">
             Save
         </Button>
-        <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+        <Button OnClick="@Close" Class="btn-custom">
             Cancel
         </Button>
     </Template>;
@@ -88,33 +88,16 @@
 
         <Row Gutter="16">
             <Col Span="12">
+                <FormItem Label="Price" Name="Price">
+                    <AntDesign.InputNumber TValue="decimal?" @bind-Value="PartDto.Price" Style="width:100%; height:38px" Min="0" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
                 <FormItem Label="Unit" Name="Unit">
                     <Input @bind-Value="PartDto.Unit" />
                 </FormItem>
             </Col>
-            <Col Span="12">
-                <FormItem Label="Price" Name="Price">
-                    <AntDesign.InputNumber TValue="decimal?" @bind-Value="PartDto.Price" Style="width:100%" Min="0" />
-                </FormItem>
-            </Col>
-            
         </Row>
-
-        <Row Gutter="16">
-            @if (PartDto.SPID == 0)
-            {
-                <AntDesign.Col Span="12">
-                    <FormItem Label="Quantity" Name="Inventory">
-                        <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.Inventory" Style="width:100%" Min="0" />
-                    </FormItem>
-                </AntDesign.Col>
-            }
-            <Col Span="12">
-                <FormItem Label="Min stock" Name="MinStock">
-                    <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.MinStock" Style="width:100%" Min="0" />
-                </FormItem>
-            </Col>
-            </Row>
         <Row Gutter="16">
             <Col Span="12">
                 <FormItem Label="Location" Name="LocID">
@@ -129,7 +112,6 @@
             </Col>
             <Col Span="12">
                 <FormItem Label="Department" Name="DeptID">
-
                     <Select TValue="int?"
                             @bind-Value="PartDto.DeptID"
                             DataSource="FilteredDepartments"
@@ -139,12 +121,59 @@
                             ShowSearch
                             AllowClear>
                     </Select>
-
                 </FormItem>
-
-
             </Col>
         </Row>
+
+        <Row Gutter="16">
+            @* @if (PartDto.SPID == 0)
+            {
+                <AntDesign.Col Span="8">
+                    <FormItem Label="Initial Qty" Name="Inventory">
+                        <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.Inventory" Style="width:100%" Min="0" Disabled="@PartDto.IsCoded" />
+                    </FormItem>
+                </AntDesign.Col>
+            } *@
+            <Col Span="12">
+                <FormItem Label="Min Stock" Name="MinStock">
+                    <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.MinStock" Style="width:100%; height: 38px;" Min="0" />
+                </FormItem>
+            </Col>
+
+            <Col Span="4">
+                <FormItem Label="IsCoded" Name="IsCoded">
+                    <Switch @bind-Value="PartDto.IsCoded" CheckedChildren="Coded" UnCheckedChildren="None" />
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Spare Part Image">
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <Upload Action="@($"{Navigation.BaseUri}api/Common/upload-file-suport")"
+                                Name="file"
+                                Accept=".jpg,.jpeg,.png"
+                                ShowUploadList="false"
+                                OnSingleCompleted="OnImageUploadCompleted"
+                                Style="width: 100%;">
+                            <Button Icon="upload" Style="border-radius: 8px; height: 38px; width: 100%;">Upload Image</Button>
+                        </Upload>
+                        @if (!string.IsNullOrEmpty(PartDto.ImageUrl))
+                        {
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <img src="@PartDto.ImageUrl" style="width:38px; height:38px; object-fit:cover; border-radius:4px; border:1px solid #d9d9d9;" />
+                                <Button Type="ButtonType.Link" Danger OnClick="@(() => PartDto.ImageUrl = null)" Style="padding: 0;">Remove</Button>
+                            </div>
+                        }
+                    </div>
+                </FormItem>
+            </Col>
+        </Row>
+
+        
+
+        @* <Row Gutter="16">
+            
+            
+        </Row> *@
 
         <FormItem Label="Note" Name="Note">
             <TextArea @bind-Value="PartDto.Note" Rows="2" />
