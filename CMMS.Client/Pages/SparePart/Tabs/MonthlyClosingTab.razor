@@ -1,0 +1,122 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Client.Common
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Monthly Period Closing &amp; Auditing</h3>
+        <p class="text-muted">Calculate opening balances, closings, period imports, and adjust inventory valuations</p>
+    </div>
+    @if (IsAuthenticated)
+    {
+        <div>
+            <Button Type="@ButtonType.Primary" OnClick="() => isClosingCreateVisible = true" Class="btn-custom">
+                <Icon Type="calculator" /> Close Monthly Period
+            </Button>
+        </div>
+    }
+</div>
+
+<!-- Grid card -->
+<div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Closed Periods</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredMonthlyPeriods.Count records closed</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Period (Month/Year)</th>
+                <th>Part Code</th>
+                <th>Part Name</th>
+                <th>Opening Qty</th>
+                <th>Opening Value</th>
+                <th>Import Qty</th>
+                <th>Export Qty</th>
+                <th>Manual Adjust</th>
+                <th>Closing Qty</th>
+                <th>Closing Value</th>
+                <th>Closing Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (FilteredMonthlyPeriods != null && FilteredMonthlyPeriods.Any())
+            {
+                foreach (var p in FilteredMonthlyPeriods.Skip((closingPage - 1) * closingPageSize).Take(closingPageSize))
+                {
+                    <tr>
+                        <td><strong>@p.Month/@p.Year</strong></td>
+                        <td>@p.PartCode</td>
+                        <td>@p.PartName</td>
+                        <td>@p.OpeningQty</td>
+                        <td>@String.Format("{0:N0}", p.OpeningValue)</td>
+                        <td>@p.ImportQty</td>
+                        <td>@p.ExportQty</td>
+                        <td style="color:@(p.AdjustmentQty < 0 ? "#ff4d4f" : (p.AdjustmentQty > 0 ? "#52c41a" : "#0f172a")); font-weight:700;">
+                            @p.AdjustmentQty
+                        </td>
+                        <td><strong>@p.ClosingQty</strong></td>
+                        <td><strong>@String.Format("{0:N0} VND", p.ClosingValue)</strong></td>
+                        <td>@p.ClosingDate.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="11" style="text-align:center; padding:30px; color:#94a3b8;">Chưa có kỳ chốt sổ nào.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (FilteredMonthlyPeriods != null && FilteredMonthlyPeriods.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span style="font-size:12px; color:#595959;">
+                Showing @(((closingPage - 1) * closingPageSize) + 1) to @(Math.Min(closingPage * closingPageSize, FilteredMonthlyPeriods.Count)) of @FilteredMonthlyPeriods.Count periods
+            </span>
+            <Pagination Total="FilteredMonthlyPeriods.Count"
+                        @bind-PageSize="closingPageSize"
+                        @bind-Current="closingPage"
+                        PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                        ShowSizeChanger="true"
+                        OnChange="OnClosingPageChange"
+                        Size="PaginationSize.Small" />
+        </div>
+    }
+</div>
+
+<!-- Close Period Modal -->
+<Modal @bind-Visible="isClosingCreateVisible" Title="Chốt Sổ Kỳ Kế Toán" Width="400" Footer="null" Style="z-index:9999;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <p style="color:#64748b; font-size:13px; margin:0;">
+            Việc chốt sổ sẽ tự động tính toán Số Dư Đầu Kỳ (Opening), Số Lượng Nhập (Import), Số Lượng Xuất (Export), Số Lượng Điều Chỉnh (Adjustment) và Số Dư Cuối Kỳ (Closing) kèm giá trị tồn kho cho tất cả các loại phụ tùng.
+        </p>
+        <div class="row">
+            <div class="col-6">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Năm</label>
+                <select class="form-select" @bind="closeYear">
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+            <div class="col-6">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Tháng</label>
+                <select class="form-select" @bind="closeMonth">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m">Tháng @m</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #f1f5f9; padding-top:12px; margin-top:12px;">
+            <Button OnClick="() => isClosingCreateVisible = false" Style="border-radius:8px;">Hủy</Button>
+            <Button Type="@ButtonType.Primary" OnClick="SavePeriodClosing" Style="border-radius:8px;">Thực Hiện</Button>
+        </div>
+    </div>
+</Modal>

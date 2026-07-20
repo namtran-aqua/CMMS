@@ -18,11 +18,13 @@ namespace CMMS.Server.Services.MaintenanceService
     {
         private readonly IConfiguration _config;
         private readonly ISqlConnectionFactory _connectionFactory;
+        private readonly SparePartService.ISparePartService _sparePartService;
 
-        public MaintenanceService(IConfiguration config, ISqlConnectionFactory connectionFactory)
+        public MaintenanceService(IConfiguration config, ISqlConnectionFactory connectionFactory, SparePartService.ISparePartService sparePartService)
         {
             _config = config;
             _connectionFactory = connectionFactory;
+            _sparePartService = sparePartService;
         }
         public async Task<List<MaintenanceDto>> GetAllAsync()
         {
@@ -58,14 +60,16 @@ namespace CMMS.Server.Services.MaintenanceService
                 },
                 splitOn: "Id");
 
+            var maintTypeId = await _sparePartService.GetMovementTypeIdByNameAsync(CMMS.Shared.Dtos.SpareParts.MovementTypeConstants.Maintenance);
+
             var sparePartsSql = @"
                 SELECT 
                     t.MTID, t.SPID, t.Quantity AS Qty, p.PartCode, p.PartName, p.Unit
                 FROM dbo.Tbl_Transactions t
                 JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
-                WHERE t.MovementType = 'MAINTENANCE' AND t.MTID IS NOT NULL";
+                WHERE t.MovementTypeID = @MaintId AND t.MTID IS NOT NULL";
 
-            var sparePartsList = await connection.QueryAsync<MaintenanceSparePartDtoHelper>(sparePartsSql);
+            var sparePartsList = await connection.QueryAsync<MaintenanceSparePartDtoHelper>(sparePartsSql, new { MaintId = maintTypeId });
             var sparePartsGrouped = sparePartsList.GroupBy(x => x.MTID);
 
             foreach (var group in sparePartsGrouped)
@@ -89,7 +93,7 @@ namespace CMMS.Server.Services.MaintenanceService
         {
             using var checkConnection = _connectionFactory.CreateConnection();
             var original = await checkConnection.QueryFirstOrDefaultAsync<EquipmentDto>(
-                "SELECT FACID, PICID FROM dbo.vw_EquipmentInfo WHERE EQID = @EQID",
+                "SELECT FACID, PICID, EquipmentName FROM dbo.vw_EquipmentInfo WHERE EQID = @EQID",
                 new { EQID = ID });
 
             if (original == null)
@@ -130,111 +134,92 @@ namespace CMMS.Server.Services.MaintenanceService
                 int newMTID;
                 await using (var cmd = new SqlCommand(sqlInsert, con, (SqlTransaction)tran))
                 {
-                    cmd.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
-                    cmd.Parameters.Add("@UpdateBy", SqlDbType.NVarChar, 50).Value = (object?)maintenance.WorkDayId ?? DBNull.Value;
-                    cmd.Parameters.Add("@UpdateTime", SqlDbType.DateTime).Value = DateTime.Now;
+                     cmd.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
+                     cmd.Parameters.Add("@UpdateBy", SqlDbType.NVarChar, 50).Value = (object?)maintenance.WorkDayId ?? DBNull.Value;
+                     cmd.Parameters.Add("@UpdateTime", SqlDbType.DateTime).Value = DateTime.Now;
 
-                    cmd.Parameters.Add("@StsMainID", SqlDbType.Int).Value = (object?)maintenance.StsMainID ?? DBNull.Value;
-                    cmd.Parameters.Add("@MaintDate", SqlDbType.DateTime).Value = (object?)maintenance.MaintDate ?? DBNull.Value;
-                    cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)maintenance.VendorID ?? DBNull.Value;
-                    cmd.Parameters.Add("@PICID", SqlDbType.NVarChar).Value = (object?)maintenance.PICID ?? DBNull.Value;
+                     cmd.Parameters.Add("@StsMainID", SqlDbType.Int).Value = (object?)maintenance.StsMainID ?? DBNull.Value;
+                     cmd.Parameters.Add("@MaintDate", SqlDbType.DateTime).Value = (object?)maintenance.MaintDate ?? DBNull.Value;
+                     cmd.Parameters.Add("@VendorID", SqlDbType.Int).Value = (object?)maintenance.VendorID ?? DBNull.Value;
+                     cmd.Parameters.Add("@PICID", SqlDbType.NVarChar).Value = (object?)maintenance.PICID ?? DBNull.Value;
 
-                    var priceParam = cmd.Parameters.Add("@MaintPrice", SqlDbType.Decimal);
-                    priceParam.Precision = 18;
-                    priceParam.Scale = 2;
-                    priceParam.Value = (object?)maintenance.MaintPrice ?? DBNull.Value;
+                     var priceParam = cmd.Parameters.Add("@MaintPrice", SqlDbType.Decimal);
+                     priceParam.Precision = 18;
+                     priceParam.Scale = 2;
+                     priceParam.Value = (object?)maintenance.MaintPrice ?? DBNull.Value;
 
-                    cmd.Parameters.Add("@MaintPIC", SqlDbType.NVarChar, 50).Value = (object?)maintenance.MaintPIC ?? DBNull.Value;
-                    cmd.Parameters.Add("@MaintDescription", SqlDbType.NVarChar, 255).Value = (object?)maintenance.MaintDescription ?? DBNull.Value;
-                    cmd.Parameters.Add("@MaintNote", SqlDbType.NVarChar, 255).Value = (object?)maintenance.MaintNote ?? DBNull.Value;
-                    cmd.Parameters.Add("@IsEQActive", SqlDbType.Bit).Value = (object?)maintenance.IsEQActive ?? DBNull.Value;
-                    //await cmd.ExecuteNonQueryAsync();
-                    // ExecuteScalar để lấy SCOPE_IDENTITY()
-                    var result = await cmd.ExecuteScalarAsync();
-                    newMTID = Convert.ToInt32(result);
+                     cmd.Parameters.Add("@MaintPIC", SqlDbType.NVarChar, 50).Value = (object?)maintenance.MaintPIC ?? DBNull.Value;
+                     cmd.Parameters.Add("@MaintDescription", SqlDbType.NVarChar, 255).Value = (object?)maintenance.MaintDescription ?? DBNull.Value;
+                     cmd.Parameters.Add("@MaintNote", SqlDbType.NVarChar, 255).Value = (object?)maintenance.MaintNote ?? DBNull.Value;
+                     cmd.Parameters.Add("@IsEQActive", SqlDbType.Bit).Value = (object?)maintenance.IsEQActive ?? DBNull.Value;
+                     
+                     var result = await cmd.ExecuteScalarAsync();
+                     newMTID = Convert.ToInt32(result);
                 }
 
                 await using (var cmd2 = new SqlCommand(sqlUpdateEquipment, con, (SqlTransaction)tran))
                 {
-                    cmd2.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
-                    cmd2.Parameters.Add("@MaintDate", SqlDbType.DateTime).Value = (object?)maintenance.MaintDate ?? DBNull.Value;
-                    cmd2.Parameters.Add("@IsActive", SqlDbType.Bit).Value = (object?)maintenance.IsEQActive ?? DBNull.Value; // Giả sử sau bảo trì thì thiết bị không còn hoạt động
+                     cmd2.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
+                     cmd2.Parameters.Add("@MaintDate", SqlDbType.DateTime).Value = (object?)maintenance.MaintDate ?? DBNull.Value;
+                     cmd2.Parameters.Add("@IsActive", SqlDbType.Bit).Value = (object?)maintenance.IsEQActive ?? DBNull.Value;
 
-                    await cmd2.ExecuteNonQueryAsync();
+                     await cmd2.ExecuteNonQueryAsync();
                 }
 
                 if (maintenance.Attachments != null && maintenance.Attachments.Any())
                 {
-                    foreach (var attachment in maintenance.Attachments)
-                    {
-                        await using var cmd3 = new SqlCommand(sqlUploadImage, con, (SqlTransaction)tran);
-                        cmd3.Parameters.Add("@Id", SqlDbType.UniqueIdentifier).Value = attachment.Id == Guid.Empty ? Guid.NewGuid() : attachment.Id;
-                        cmd3.Parameters.Add("@FilePath", SqlDbType.NVarChar, 500).Value = (object?)attachment.FilePath ?? DBNull.Value;
-                        cmd3.Parameters.Add("@FileExtend", SqlDbType.NVarChar, 50).Value = (object?)attachment.FileExtend ?? DBNull.Value;
-                        cmd3.Parameters.Add("@FileName", SqlDbType.NVarChar, 255).Value = (object?)attachment.FileName ?? DBNull.Value;
-                        cmd3.Parameters.Add("@CreatedTime", SqlDbType.DateTime2).Value = attachment.CreatedTime == default ? DateTime.Now : attachment.CreatedTime;
-                        cmd3.Parameters.Add("@FileSize", SqlDbType.BigInt).Value = attachment.FileSize;
-                        cmd3.Parameters.Add("@MTID", SqlDbType.BigInt).Value = newMTID;
-                        await cmd3.ExecuteNonQueryAsync();
-                    }
+                     foreach (var attachment in maintenance.Attachments)
+                     {
+                         await using var cmd3 = new SqlCommand(sqlUploadImage, con, (SqlTransaction)tran);
+                         cmd3.Parameters.Add("@Id", SqlDbType.UniqueIdentifier).Value = attachment.Id == Guid.Empty ? Guid.NewGuid() : attachment.Id;
+                         cmd3.Parameters.Add("@FilePath", SqlDbType.NVarChar, 500).Value = (object?)attachment.FilePath ?? DBNull.Value;
+                         cmd3.Parameters.Add("@FileExtend", SqlDbType.NVarChar, 50).Value = (object?)attachment.FileExtend ?? DBNull.Value;
+                         cmd3.Parameters.Add("@FileName", SqlDbType.NVarChar, 255).Value = (object?)attachment.FileName ?? DBNull.Value;
+                         cmd3.Parameters.Add("@CreatedTime", SqlDbType.DateTime2).Value = attachment.CreatedTime == default ? DateTime.Now : attachment.CreatedTime;
+                         cmd3.Parameters.Add("@FileSize", SqlDbType.BigInt).Value = attachment.FileSize;
+                         cmd3.Parameters.Add("@MTID", SqlDbType.BigInt).Value = newMTID;
+                         await cmd3.ExecuteNonQueryAsync();
+                     }
                 }
 
-                if (maintenance.SpareParts != null && maintenance.SpareParts.Any())
+                if (maintenance.SpareParts != null && maintenance.SpareParts.Any(sp => sp.Qty > 0))
                 {
-                    foreach (var sp in maintenance.SpareParts)
-                    {
-                        if (sp.Qty <= 0) continue;
+                     var movementTypeId = await con.QueryFirstOrDefaultAsync<int?>(
+                         "SELECT TOP 1 MovementTypeID FROM dbo.Tbl_MovementType WHERE MovementTypeName = @Name",
+                         new { Name = CMMS.Shared.Dtos.SpareParts.MovementTypeConstants.Maintenance },
+                         transaction: tran);
 
-                        // 1. Lock and check inventory
-                        const string sqlLock = "SELECT Inventory FROM dbo.Tbl_SparePart WITH (UPDLOCK, ROWLOCK) WHERE SPID = @SPID";
-                        int currentStock;
-                        await using (var cmdLock = new SqlCommand(sqlLock, con, (SqlTransaction)tran))
-                        {
-                            cmdLock.Parameters.Add("@SPID", SqlDbType.Int).Value = sp.SPID;
-                            var stockResult = await cmdLock.ExecuteScalarAsync();
-                            if (stockResult == null)
-                                throw new KeyNotFoundException($"Không tìm thấy phụ tùng SPID = {sp.SPID}.");
-                            currentStock = Convert.ToInt32(stockResult);
-                        }
+                     var exportDto = new CMMS.Shared.Dtos.SpareParts.ExportOrderDto
+                     {
+                         ExportDate = maintenance.MaintDate ?? DateTime.Now,
+                         FACID = original.FACID,
+                         Status = "Completed",
+                         CreateBy = currentUser?.Id,
+                         CreateAt = DateTime.Now,
+                         MovementTypeID = movementTypeId ?? 1,
+                         Details = maintenance.SpareParts.Where(sp => sp.Qty > 0).Select(sp => new CMMS.Shared.Dtos.SpareParts.ExportOrderDetailDto
+                         {
+                             SPID = sp.SPID,
+                             PartCode = sp.PartCode,
+                             PartName = sp.PartName,
+                             HasCode = sp.HasCode,
+                             SerialCode = sp.SerialCode,
+                             Quantity = sp.Qty
+                         }).ToList()
+                     };
 
-                        var newStock = currentStock - sp.Qty;
-                        if (newStock < 0)
-                            throw new InvalidOperationException($"Phụ tùng SPID = {sp.SPID} ({sp.PartName}) không đủ tồn kho (còn {currentStock}, cần {sp.Qty}).");
+                     var createdExport = await _sparePartService.CreateExportOrderInternalAsync(con, (SqlTransaction)tran, exportDto, currentUser);
 
-                        // 2. Update stock
-                        const string sqlUpdateStock = "UPDATE dbo.Tbl_SparePart SET Inventory = @Inventory, UpdateDate = @UpdateDate WHERE SPID = @SPID";
-                        await using (var cmdUpdate = new SqlCommand(sqlUpdateStock, con, (SqlTransaction)tran))
-                        {
-                            cmdUpdate.Parameters.Add("@Inventory", SqlDbType.Int).Value = newStock;
-                            cmdUpdate.Parameters.Add("@UpdateDate", SqlDbType.DateTime).Value = DateTime.Now;
-                            cmdUpdate.Parameters.Add("@SPID", SqlDbType.Int).Value = sp.SPID;
-                            await cmdUpdate.ExecuteNonQueryAsync();
-                        }
-
-                        // 3. Insert transaction
-                        const string sqlInsertTx = @"
-                            INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, EQID, MTID, Note, CreateBy, CreateDate, MovementType)
-                            VALUES (@SPID, 'OUT', @Qty, @Date, @EQID, @MTID, @Note, @CreateBy, @CreateDate, 'MAINTENANCE')";
-                        
-                        var noteText = $"Xuất cho bảo trì MTID: {newMTID}";
-                        if (!string.IsNullOrWhiteSpace(maintenance.MaintDescription))
-                        {
-                            noteText += $" - {maintenance.MaintDescription}";
-                        }
-
-                        await using (var cmdTx = new SqlCommand(sqlInsertTx, con, (SqlTransaction)tran))
-                        {
-                            cmdTx.Parameters.Add("@SPID", SqlDbType.Int).Value = sp.SPID;
-                            cmdTx.Parameters.Add("@Qty", SqlDbType.Int).Value = sp.Qty;
-                            cmdTx.Parameters.Add("@Date", SqlDbType.DateTime).Value = DateTime.Now;
-                            cmdTx.Parameters.Add("@EQID", SqlDbType.Int).Value = ID;
-                            cmdTx.Parameters.Add("@MTID", SqlDbType.BigInt).Value = newMTID;
-                            cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = noteText;
-                            cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
-                            cmdTx.Parameters.Add("@CreateDate", SqlDbType.DateTime).Value = DateTime.Now;
-                            await cmdTx.ExecuteNonQueryAsync();
-                        }
-                    }
+                     const string sqlUpdateTxMaint = @"
+                         UPDATE dbo.Tbl_Transactions 
+                         SET MTID = @MTID, EQID = @EQID, Equipment = @Equipment 
+                         WHERE RefCode = @RefCode";
+                     await con.ExecuteAsync(sqlUpdateTxMaint, new {
+                         MTID = newMTID,
+                         EQID = ID,
+                         Equipment = original.EquipmentName ?? "",
+                         RefCode = createdExport.ExportCode
+                     }, transaction: tran);
                 }
 
                 await tran.CommitAsync();

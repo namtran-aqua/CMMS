@@ -41,41 +41,6 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Run DB migrations/updates on startup
-using (var scope = app.Services.CreateScope())
-{
-    var connectionFactory = scope.ServiceProvider.GetRequiredService<CMMS.Data.Connection.ISqlConnectionFactory>();
-    try
-    {
-        using var connection = connectionFactory.CreateConnection();
-        // Ensure MovementType column exists (self-healing)
-        connection.Execute(@"
-            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Tbl_Transactions') AND name = 'MovementType')
-            BEGIN
-                ALTER TABLE dbo.Tbl_Transactions ADD MovementType NVARCHAR(50) NULL;
-            END
-        ");
-
-        // Migrate existing MAINTENANCE transactions to OUT and set MovementType
-        connection.Execute(@"
-            UPDATE dbo.Tbl_Transactions
-            SET Type = 'OUT', MovementType = 'MAINTENANCE'
-            WHERE Type = 'MAINTENANCE';
-
-            UPDATE dbo.Tbl_Transactions
-            SET MovementType = 'ADJUST'
-            WHERE Type = 'IN' AND MovementType IS NULL;
-
-            UPDATE dbo.Tbl_Transactions
-            SET MovementType = 'ADJUST'
-            WHERE Type = 'OUT' AND MovementType IS NULL;
-        ");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error running startup migration: {ex.Message}");
-    }
-}
 
 app.UseSwagger();
 

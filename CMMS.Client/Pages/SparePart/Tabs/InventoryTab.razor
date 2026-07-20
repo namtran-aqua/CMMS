@@ -1,0 +1,351 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Shared.Authorization
+@using CMMS.Client.Common
+@using CMMS.Client.Modals.SpareParts
+@using CMMS.Client.Components
+@using System.IO
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Spare Parts Inventory Stock</h3>
+        <p class="text-muted">View spare parts inventory and retrieve report data.</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <Button Type="@ButtonType.Default" OnClick="TriggerExcelExport" Class="btn-custom">
+            <Icon Type="download" /> Export Excel
+        </Button>
+    </div>
+</div>
+
+<!-- Search Panel -->
+<div class="card p-3 mb-3 search-card" style="border-radius:15px">
+    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" @onclick="() => isSearchPanelCollapsed = !isSearchPanelCollapsed">
+        <div style="font-weight:700; color:#1e293b; font-size:14px;">
+            <Icon Type="search" Style="margin-right:8px;" /> Advanced Search Filters
+        </div>
+        <div>
+            <Icon Type="@(isSearchPanelCollapsed ? "down" : "up")" />
+        </div>
+    </div>
+
+    @if (!isSearchPanelCollapsed)
+    {
+        <div class="row mt-3" style="gap: 12px 0;">
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Keyword Search</label>
+                <Input placeholder="Search all fields..." @bind-Value="searchText" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Part Code</label>
+                <Input placeholder="Part code..." @bind-Value="partCodeFilter" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Part Name</label>
+                <Input placeholder="Part name..." @bind-Value="partNameFilter" Class="form-control" />
+            </div>
+            @* <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Supplier</label>
+                <Select TValue="int?" @bind-Value="supplierFilter" DataSource="Suppliers" ValueName="SupplierID" LabelName="SupplierName" Placeholder="All suppliers" AllowClear Style="width:100%;" />
+            </div> *@
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Supplier</label>
+                <select class="form-select" @bind="supplierFilter" style="height:38px; border-radius:8px;">
+                    <option value="0">All Suppliers</option>
+                    @foreach (var c in Suppliers)
+                    {
+                        <option value="@c.SupplierID">@c.SupplierName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Category</label>
+                <select class="form-select" @bind="categoryFilter" style="height:38px; border-radius:8px;">
+                    <option value="0">All Categories</option>
+                    @foreach (var c in Categories)
+                    {
+                        <option value="@c.CategoryID">@c.CategoryName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Stock Status</label>
+                <select class="form-select" @bind="stockFilter" style="height:38px; border-radius:8px;">
+                    <option value="All">All stock levels</option>
+                    <option value="Low">Low stock warning</option>
+                    <option value="InStock">Normal stock</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Sort By</label>
+                <select class="form-select" @bind="sortBy" style="height:38px; border-radius:8px;">
+                    <option value="NameAsc">Name (A-Z)</option>
+                    <option value="NameDesc">Name (Z-A)</option>
+                    <option value="CodeAsc">Code (A-Z)</option>
+                    <option value="PriceAsc">Price (Low to High)</option>
+                    <option value="PriceDesc">Price (High to Low)</option>
+                    <option value="StockAsc">Quantity (Low to High)</option>
+                    <option value="StockDesc">Quantity (High to Low)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end" style="gap:8px;">
+                <Button Type="@ButtonType.Primary" OnClick="ApplyFilters" Class="btn-custom">Query</Button>
+                <Button Type="@ButtonType.Default" OnClick="ResetFilters" Class="btn-custom">Reset</Button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Table Card -->
+<div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Spare Parts Stock</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredParts.Count spare parts total</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 50px;">Image</th>
+                <th>Part Code</th>
+                <th>Part Name</th>
+                <th>Inventory</th>
+                <th>Unit</th>
+                <th>Price</th>
+                <th>Track Code</th>
+                <th>Location</th>
+                <th style="width: 100px; text-align: center;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (FilteredParts != null && FilteredParts.Any())
+            {
+                foreach (var p in FilteredParts.Skip((partsPage - 1) * partsPageSize).Take(partsPageSize))
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(p.ImageUrl))
+                            {
+                                <img src="@p.ImageUrl" style="width:34px; height:34px; object-fit:cover; border-radius:4px; border:1px solid #e2e8f0;" />
+                            }
+                            else
+                            {
+                                <div style="width:34px; height:34px; border-radius:4px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8;">
+                                    <Icon Type="picture" />
+                                </div>
+                            }
+                        </td>
+                        <td><strong>@p.PartCode</strong></td>
+                        <td>@p.PartName</td>
+                        <td>
+                            <div style="color:@(p.IsLowStock ? "#ff4d4f" : "#0f172a"); font-weight:@(p.IsLowStock ? "700" : "400");">
+                                @p.Inventory
+                                @if (p.IsLowStock)
+                                {
+                                    <Icon Type="warning" Theme="IconThemeType.Fill" Style="color:#ff4d4f;margin-left:4px;" />
+                                }
+                            </div>
+                        </td>
+                        <td>@p.Unit</td>
+                        <td>@String.Format("{0:N0}", p.Price)</td>
+                        <td>
+                            @if (p.IsCoded)
+                            {
+                                <div style="color:#3b82f6; font-weight:700;">[Coded]</div>
+                            }
+                            else
+                            {
+                                <div style="color:#94a3b8;">None</div>
+                            }
+                        </td>
+                        <td>@p.Location</td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <Tooltip Title="@("View Detail")">
+                                    <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowPartDetail(p)"><Icon Type="eye" /></Button>
+                                </Tooltip>
+                                <Tooltip Title="@("History")">
+                                    <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowPartHistory(p)"><Icon Type="history" /></Button>
+                                </Tooltip>
+                            </div>
+                            @* <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
+                                <ChildContent>
+                                    <Button Icon="menu" Size="ButtonSize.Small" Class="btn-without-title" />
+                                </ChildContent>
+                                <ContentTemplate>
+                                    <div style="display: flex; flex-direction: column; gap: 4px; padding: 4px; min-width: 140px;">
+                                        <Button Type="@ButtonType.Text" OnClick="() => ShowPartDetail(p)" Style="text-align: left; height: 32px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                                            <Icon Type="eye" /> View Detail
+                                        </Button>
+                                        <Button Type="@ButtonType.Text" OnClick="() => ShowPartHistory(p)" Style="text-align: left; height: 32px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                                            <Icon Type="history" /> History
+                                        </Button>
+                                    </div>
+                                </ContentTemplate>
+                            </Popover> *@
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" style="text-align:center; padding:30px; color:#94a3b8;">Không tìm thấy phụ tùng phù hợp.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (FilteredParts != null && FilteredParts.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span style="font-size:12px; color:#595959;">
+                Showing @(((partsPage - 1) * partsPageSize) + 1) to @(Math.Min(partsPage * partsPageSize, FilteredParts.Count)) of @FilteredParts.Count parts
+            </span>
+            <Pagination Total="FilteredParts.Count"
+                        @bind-PageSize="partsPageSize"
+                        @bind-Current="partsPage"
+                        PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                        ShowSizeChanger="true"
+                        OnChange="OnPartsPageChange"
+                        Size="PaginationSize.Small" />
+        </div>
+    }
+</div>
+
+<!-- Spare Part Detail Modal -->
+<Modal @bind-Visible="isPartDetailModalVisible" Title="Spare Part Details" Width="600" Footer="null" Style="z-index:9999;">
+    @if (selectedPartForDetail != null)
+    {
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; gap:20px; align-items:flex-start;">
+                @if (!string.IsNullOrEmpty(selectedPartForDetail.ImageUrl))
+                {
+                    <img src="@selectedPartForDetail.ImageUrl" style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;" />
+                }
+                else
+                {
+                    <div style="width:120px; height:120px; border-radius:8px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:32px;">
+                        <Icon Type="picture" />
+                    </div>
+                }
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <h4 style="margin:0; font-weight:700; color:#0f172a;">@selectedPartForDetail.PartName</h4>
+                    <span style="font-size:14px; color:#64748b;">Code: <strong>@selectedPartForDetail.PartCode</strong></span>
+                    <div>
+                        @if (selectedPartForDetail.IsCoded)
+                        {
+                            <span class="badge bg-primary text-white" style="font-weight:600; padding:4px 8px; border-radius:6px;">Serial Tracking (Coded)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary text-white" style="font-weight:600; padding:4px 8px; border-radius:6px;">No Serial Tracking</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <hr style="margin:8px 0; border-top:1px solid #f1f5f9;" />
+
+            <div class="row" style="row-gap:12px;">
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Category</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.CategoryName ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Supplier</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.SupplierName ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Unit</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.Unit ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Price</small>
+                    <div style="font-size:14px; font-weight:500;">@String.Format("{0:N0} VND", selectedPartForDetail.Price)</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Location</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.Location ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Min Stock Level</small>
+                    <div style="font-size:14px; font-weight:500;">@selectedPartForDetail.MinStock @selectedPartForDetail.Unit</div>
+                </div>
+                <div class="col-12">
+                    <small style="color:#64748b; font-weight:600;">Note</small>
+                    <div style="font-size:14px; color:#334155; white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(selectedPartForDetail.Note) ? "No note recorded." : selectedPartForDetail.Note)</div>
+                </div>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                <Button Type="@ButtonType.Default" OnClick="() => isPartDetailModalVisible = false" Class="btn-custom">Close</Button>
+            </div>
+        </div>
+    }
+</Modal>
+
+<!-- Spare Part History Modal -->
+<Modal @bind-Visible="isPartHistoryModalVisible" Title="Spare Part Transaction Log" Width="1000" Footer="null" Style="z-index:9999;">
+    @if (selectedPartForHistory != null)
+    {
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+                <h6 style="margin:0 0 4px 0; font-weight:700;">@selectedPartForHistory.PartName</h6>
+                <small style="color:#64748b;">Code: @selectedPartForHistory.PartCode</small>
+            </div>
+            
+            <div style="max-height:350px; overflow-y:auto;">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Ref Code</th>
+                            <th>User</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (partMovementHistory != null && partMovementHistory.Any())
+                        {
+                            foreach (var h in partMovementHistory)
+                            {
+                                <tr>
+                                    <td>@h.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <span class="status-badge" style="background:@GetTxColor(h.Type); color:#ffffff; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:700;">@GetTxLabel(h.Type)</span>
+                                    </td>
+                                    <td>
+                                        <strong style="color:@(h.Type == "IN" || h.Type.Contains("Import") ? "#10b981" : "#ef4444");">
+                                            @(h.Type == "IN" || h.Type.Contains("Import") ? "+" : "-")@h.Quantity
+                                        </strong>
+                                    </td>
+                                    <td>@h.RefCode</td>
+                                    <td>@h.CreateUser</td>
+                                    <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@h.Note">@h.Note</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">No transaction history found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end;">
+                <Button Type="@ButtonType.Default" OnClick="() => isPartHistoryModalVisible = false" Class="btn-custom">Close</Button>
+            </div>
+        </div>
+    }
+</Modal>
+
+<SparePartModal @ref="_partModal" OnSave="LoadParts" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
+<AdjustStockModal @ref="_adjustModal" OnSave="LoadParts" />
+<ImportModal @ref="_importModal" Title="Import Spare Parts" UploadUrl="api/SparePart/import" TemplateUrl="api/SparePart/import-template" OnSave="LoadParts" />

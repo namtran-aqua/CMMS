@@ -1,0 +1,403 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Client.Common
+@using System.IO
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Stock Adjustments (Điều chỉnh tồn kho)</h3>
+        <p class="text-muted">Record inventory balance discrepancies and update stock items after audits.</p>
+    </div>
+    @if (IsAuthenticated)
+    {
+        <div>
+            <Button Type="@ButtonType.Primary" OnClick="OpenCreateAdjustModal" Class="btn-custom">
+                <Icon Type="plus" /> Create Adjust Order
+            </Button>
+        </div>
+    }
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3 search-card" style="border-radius: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" @onclick="() => isSearchPanelCollapsed = !isSearchPanelCollapsed">
+        <div style="font-weight: 700; color: #1e293b; font-size: 14px;">
+            <Icon Type="search" Style="margin-right: 8px;" /> Advanced Search Filters
+        </div>
+        <div>
+            <Icon Type="@(isSearchPanelCollapsed ? "down" : "up")" />
+        </div>
+    </div>
+
+    @if (!isSearchPanelCollapsed)
+    {
+        <div class="row mt-3" style="gap: 12px 0;">
+            <div class="col-md-3">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b;">Adjust Code</label>
+                <Input placeholder="AD-..." @bind-Value="adjustCodeSearch" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b;">From Date</label>
+                <DatePicker TValue="DateTime?" @bind-Value="adjustFromDate" Format="yyyy-MM-dd" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b;">To Date</label>
+                <DatePicker TValue="DateTime?" @bind-Value="adjustToDate" Format="yyyy-MM-dd" Class="form-control" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end" style="gap:8px;">
+                <Button Type="@ButtonType.Primary" OnClick="ApplyFilters" Class="btn-custom">Query</Button>
+                <Button Type="@ButtonType.Default" OnClick="ResetFilters" Class="btn-custom">Reset</Button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Grid Card -->
+<div class="card p-4 mb-4" style="border-radius: 15px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.01); padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b; font-size: 16px;">Adjustments Register</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500; margin-bottom: 0;">@FilteredAdjustOrders.Count orders found</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table" style="vertical-align: middle;">
+            <thead>
+                <tr style="color: #64748b; font-weight: 600; border-bottom: 2px solid #f1f5f9;">
+                    <th>Adjust Code</th>
+                    <th>Adjust Date</th>
+                    <th style="text-align: center;">Total Lines</th>
+                    @* <th style="text-align: center;">Net Adjustment</th> *@
+                    <th>Created By</th>
+                    <th>Files</th>
+                    <th>Status</th>
+                    <th style="width: 120px; text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (FilteredAdjustOrders != null && FilteredAdjustOrders.Any())
+                {
+                    foreach (var adj in FilteredAdjustOrders.Skip((adjustPage - 1) * adjustPageSize).Take(adjustPageSize))
+                    {
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td><strong style="color: #0f172a;">@adj.AdjustCode</strong></td>
+                            <td>@adj.AdjustDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td style="text-align: center; font-weight: 600;">@adj.TotalLines</td>
+                            @* <td style="text-align: center;">
+                                @if (adj.NetAdjustment > 0)
+                                {
+                                    <span class="badge" style="background: #e2fbe8; color: #1e7e34; padding: 6px 12px; border-radius: 20px; font-weight: 700;">+@adj.NetAdjustment</span>
+                                }
+                                else if (adj.NetAdjustment < 0)
+                                {
+                                    <span class="badge" style="background: #f8d7da; color: #721c24; padding: 6px 12px; border-radius: 20px; font-weight: 700;">@adj.NetAdjustment</span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background: #e2e8f0; color: #475569; padding: 6px 12px; border-radius: 20px; font-weight: 700;">0</span>
+                                }
+                            </td> *@
+                            <td>@adj.CreateUser</td>
+                            <td>
+                                @if (adj.AttachmentUrls != null && adj.AttachmentUrls.Any())
+                                {
+                                    <div class="d-flex align-items-center" style="gap: 4px;">
+                                        <Icon Type="paper-clip" Style="color: #1677ff;" />
+                                        <span class="text-muted" style="font-size: 12px;">@adj.AttachmentUrls.Count files</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="font-size: 12px;">None</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge badge-completed">@adj.Status</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <Button Type="@ButtonType.Link" OnClick="() => ShowAdjustDetail(adj.AdjustID)" Style="padding: 0; font-weight: 600;">
+                                    Details
+                                </Button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #94a3b8;">
+                            No adjustments records found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (FilteredAdjustOrders != null && FilteredAdjustOrders.Any())
+        {
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span style="font-size:12px; color:#595959;">
+                    Showing @(((adjustPage - 1) * adjustPageSize) + 1) to @(Math.Min(adjustPage * adjustPageSize, FilteredAdjustOrders.Count)) of @FilteredAdjustOrders.Count movements
+                </span>
+                <Pagination Total="FilteredAdjustOrders.Count"
+                            @bind-PageSize="adjustPageSize"
+                            @bind-Current="adjustPage"
+                            PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                            ShowSizeChanger="true"
+                            OnChange="OnAdjustPageChange"
+                            Size="PaginationSize.Small" />
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Drawer Detail -->
+<Drawer Title='"Adjustment Order Details"'
+        Width="1000"
+        Visible="isAdjustDetailVisible"
+        OnClose="() => isAdjustDetailVisible = false">
+    @if (selectedAdjustOrder != null)
+    {
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Header section -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <span class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Adjust Code</span>
+                    <h5 style="margin: 2px 0 0 0; font-weight: 700; color: #0f172a;">@selectedAdjustOrder.AdjustCode</h5>
+                </div>
+                <div>
+                    <span class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Adjust Date</span>
+                    <h5 style="margin: 2px 0 0 0; font-weight: 600; color: #0f172a;">@selectedAdjustOrder.AdjustDate.ToString("yyyy-MM-dd HH:mm")</h5>
+                </div>
+                <div>
+                    <span class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Created By</span>
+                    <p style="margin: 2px 0 0 0; font-weight: 500;">@selectedAdjustOrder.CreateUser</p>
+                </div>
+                <div>
+                    <span class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Status</span>
+                    <div style="margin-top: 4px;"><span class="status-badge badge-completed">@selectedAdjustOrder.Status</span></div>
+                </div>
+                <div style="grid-column: span 2;">
+                    <span class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Notes</span>
+                    <p style="margin: 2px 0 0 0; font-size: 13px;">@(string.IsNullOrWhiteSpace(selectedAdjustOrder.Note) ? "No notes available." : selectedAdjustOrder.Note)</p>
+                </div>
+            </div>
+
+            <!-- Attachments -->
+            @if (selectedAdjustOrder.AttachmentUrls != null && selectedAdjustOrder.AttachmentUrls.Any())
+            {
+                <div>
+                    <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">Attachments</h6>
+                    <div class="d-flex flex-wrap" style="gap: 8px;">
+                        @foreach (var url in selectedAdjustOrder.AttachmentUrls)
+                        {
+                            var fileName = Path.GetFileName(url);
+                            var resolvedUrl = url.StartsWith("/") || url.StartsWith("http") ? url : "/" + url;
+                            <a href="@resolvedUrl" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center" style="gap: 6px; border-radius: 8px; padding: 6px 12px; font-size: 12px; text-decoration: none; border: 1px solid #cbd5e1; color: #475569;">
+                                <Icon Type="file" /> @fileName
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Lines detail -->
+            <div>
+                <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 12px;">Adjusted Line Items</h6>
+                <table class="table" style="font-size: 13px;">
+                    <thead>
+                        <tr style="color: #64748b; font-weight: 600; background: #f8fafc;">
+                            <th>Part Code / Name</th>
+                            <th style="text-align: center;">Type</th>
+                            <th>Serial Code</th>
+                            <th style="text-align: center;">Qty</th>
+                            <th style="text-align: center;">Before</th>
+                            <th style="text-align: center;">After</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in selectedAdjustOrder.Lines)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@line.PartCode</strong><br />
+                                    <span class="text-muted" style="font-size: 11px;">@line.PartName</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    @if (line.Type == "IN")
+                                    {
+                                        <div style="color: #1e7e34; font-weight: 700;"><Icon Type="arrow-up" /> IN</div>
+                                    }
+                                    else
+                                    {
+                                        <div style="color: #721c24; font-weight: 700;"><Icon Type="arrow-down" /> OUT</div>
+                                    }
+                                </td>
+                                <td>@(line.HasCode ? line.SerialCode : "—")</td>
+                                <td style="text-align: center; font-weight: 600;">@line.Quantity</td>
+                                <td style="text-align: center; color: #64748b;">@line.BeforeQty</td>
+                                <td style="text-align: center; font-weight: 600; color: #0f172a;">@line.AfterQty</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</Drawer>
+
+<!-- Drawer Create -->
+<Drawer Title='"Create Stock Adjustment Order"'
+        Width="1000"
+        Visible="isAdjustCreateVisible"
+        OnClose="() => isAdjustCreateVisible = false">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Header Config -->
+        <div class="row">
+            <div class="col-md-6">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Adjustment Date</label>
+                <DatePicker TValue="DateTime" @bind-Value="newAdjustOrder.AdjustDate" Format="yyyy-MM-dd HH:mm" Style="width:100%; border-radius: 8px; height: 38px;" />
+            </div>
+            <div class="col-md-6">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Upload Audit File (Optional)</label>
+                <Upload Action="api/Upload/file" Name="file" OnChange="OnAdjustAttachmentUploaded" Style="width: 100%;">
+                    <Button Type="@ButtonType.Default" Style="width:100%; height:38px; border-radius:8px; border:1px dashed #cbd5e1;">
+                        <Icon Type="upload" /> Click to Upload Report / Image
+                    </Button>
+                </Upload>
+            </div>
+            <div class="col-md-12 mt-3">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">Notes / Audit Reason</label>
+                <TextArea placeholder="Ví dụ: Kiểm kê chênh lệch cuối tháng..." @bind-Value="newAdjustOrder.Note" Rows="2" Style="border-radius: 8px;" />
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 5px 0;" />
+
+        <!-- Detail Line Subform -->
+        <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;">
+            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 12px;">Add Part to Adjust</h6>
+            <div class="row" style="gap: 12px 0;">
+                <!-- Part Select -->
+                <div class="col-md-12">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b;">Select Spare Part</label>
+                    <Select TValue="int"
+                            @bind-Value="selectedAdjustPartId"
+                            DataSource="adjustPartsSearchList"
+                            ValueName="SPID"
+                            LabelName="DisplayName"
+                            SearchName="DisplayName"
+                            Placeholder="Type part code or name to search..."
+                            EnableSearch
+                            OnSearch="SearchPartsForAdjust"
+                            Style="width: 100%; border-radius: 8px;" />
+                </div>
+
+                <!-- Adjustment Type -->
+                <div class="col-md-4">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b;">Adjustment Type</label>
+                    <select class="form-select" value="@tempAdjustDetail.Type" @onchange='(e) => OnAdjustTypeChanged(e.Value?.ToString() ?? "IN")' style="height:38px; border-radius:8px; font-size: 13px;">
+                        <option value="IN">Tăng tồn kho (IN)</option>
+                        <option value="OUT">Giảm tồn kho (OUT)</option>
+                    </select>
+                </div>
+
+                <!-- Quantities & Serial Codes -->
+                @if (tempAdjustDetail.HasCode)
+                {
+                    <div class="col-md-8">
+                        @if (tempAdjustDetail.Type == "IN")
+                        {
+                            <label style="font-size: 11px; font-weight: 600; color: #64748b;">New Serial Number (Số lượng cố định = 1)</label>
+                            <Input placeholder="Enter new serial code..." @bind-Value="tempAdjustDetail.SerialCode" Class="form-control" Style="border-radius: 8px;" />
+                        }
+                        else
+                        {
+                            <label style="font-size: 11px; font-weight: 600; color: #64748b;">Select Serial from Stock (Số lượng cố định = 1)</label>
+                            <select class="form-select" @bind="tempAdjustDetail.SerialCode" style="height:38px; border-radius:8px; font-size: 13px;">
+                                <option value="">-- Choose Serial --</option>
+                                @foreach (var item in availableCodedItemsForSelectedPart)
+                                {
+                                    <option value="@item.SerialCode">@item.SerialCode</option>
+                                }
+                            </select>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="col-md-4">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b;">Adjustment Quantity</label>
+                        <AntDesign.InputNumber TValue="int" Min="1" @bind-Value="tempAdjustDetail.Quantity" Style="width:100%; border-radius: 8px; height: 38px;" />
+                    </div>
+                }
+
+                <div class="col-md-12 d-flex justify-content-end mt-2">
+                    <Button Type="@ButtonType.Primary" OnClick="AddItemToNewAdjust" Class="btn-custom" Style="border-radius: 8px;">
+                        Add Item
+                    </Button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Added lines list -->
+        <div>
+            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">Adjustment Line Items</h6>
+            <table class="table" style="font-size: 13px;">
+                <thead>
+                    <tr style="color: #64748b; font-weight: 600; background: #f8fafc;">
+                        <th>Part Details</th>
+                        <th style="text-align: center;">Type</th>
+                        <th>Serial Code</th>
+                        <th style="text-align: center;">Quantity</th>
+                        <th style="width: 60px; text-align: center;">Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (newAdjustOrder.Lines != null && newAdjustOrder.Lines.Any())
+                    {
+                        foreach (var item in newAdjustOrder.Lines)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.PartCode</strong><br />
+                                    <span class="text-muted" style="font-size: 11px;">@item.PartName</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    @if (item.Type == "IN")
+                                    {
+                                        <div style="color: #1e7e34; font-weight: 700;"><Icon Type="arrow-up" /> IN</div>
+                                    }
+                                    else
+                                    {
+                                        <div style="color: #721c24; font-weight: 700;"><Icon Type="arrow-down" /> OUT</div>
+                                    }
+                                </td>
+                                <td>@(item.HasCode ? item.SerialCode : "—")</td>
+                                <td style="text-align: center; font-weight: 600;">@item.Quantity</td>
+                                <td style="text-align: center;">
+                                    <Button Type="@ButtonType.Link" Danger OnClick="() => RemoveAdjustDetail(item)" Style="padding: 0;">
+                                        <Icon Type="delete" />
+                                    </Button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #94a3b8;">
+                                No items added yet. Use the subform above.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Submit button -->
+        <div class="d-flex justify-content-end" style="gap: 8px; margin-top: 15px;">
+            <Button Type="@ButtonType.Default" OnClick="() => isAdjustCreateVisible = false" Style="border-radius: 8px; height: 38px;">Cancel</Button>
+            <Button Type="@ButtonType.Primary" OnClick="SaveNewAdjustOrder" Style="border-radius: 8px; height: 38px;">Save Adjust Order</Button>
+        </div>
+    </div>
+</Drawer>

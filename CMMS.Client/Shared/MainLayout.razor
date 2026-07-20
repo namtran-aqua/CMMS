@@ -42,12 +42,70 @@
                 </NavLink>
             </MenuItem>
 
-            <MenuItem>
-                <NavLink href="@GetLink("/spare-parts")" class="menu-link">
-                    <i class="fa-solid fa-box menu-icon"></i>
-                    <span>Spare Parts</span>
-                </NavLink>
-            </MenuItem> 
+            <SubMenu Key="spare-parts">
+                <TitleTemplate>
+                    <div class="menu-link" >
+                        <i class="fa-solid fa-box menu-icon"></i>
+                        <span>Spare Parts</span>
+                    </div>
+                </TitleTemplate>
+                <ChildContent>
+                    @* <MenuItem Key="sp-dashboard">
+                        <NavLink href="@GetLink("/spare-parts/dashboard")" class="menu-link">
+                            <i class="fa-solid fa-gauge menu-icon"></i>
+                            <span>Dashboard</span>
+                        </NavLink>
+                    </MenuItem> *@
+                    <MenuItem Key="sp-catalog">
+                        <NavLink href="@GetLink("/spare-parts/catalog")" class="menu-link">
+                            <i class="fa-solid fa-folder-open menu-icon"></i>
+                            <span>Master Data</span>
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem Key="sp-inventory">
+                        <NavLink href="@GetLink("/spare-parts/inventory")" class="menu-link">
+                            <i class="fa-solid fa-boxes-stacked menu-icon"></i>
+                            <span>Inventory Stock</span>
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem Key="sp-coded">
+                        <NavLink href="@GetLink("/spare-parts/coded-parts")" class="menu-link">
+                            <i class="fa-solid fa-barcode menu-icon"></i>
+                            <span>Coded Parts</span>
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem Key="sp-imports">
+                        <NavLink href="@GetLink("/spare-parts/imports")" class="menu-link">
+                            <i class="fa-solid fa-file-import menu-icon"></i>
+                            <span>Import Orders</span>
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem Key="sp-exports">
+                        <NavLink href="@GetLink("/spare-parts/exports")" class="menu-link">
+                            <i class="fa-solid fa-file-export menu-icon"></i>
+                            <span>Export Orders</span>
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem Key="sp-adjustments">
+                        <NavLink href="@GetLink("/spare-parts/adjustments")" class="menu-link">
+                            <i class="fa-solid fa-scale-balanced menu-icon"></i>
+                            <span>Stock Adjustments</span>
+                        </NavLink>
+                    </MenuItem>
+                    @* <MenuItem Key="sp-monthly">
+                        <NavLink href="@GetLink("/spare-parts/monthly-closing")" class="menu-link">
+                            <i class="fa-solid fa-calendar-check menu-icon"></i>
+                            <span>Monthly Closed</span>
+                        </NavLink>
+                    </MenuItem> *@
+                    <MenuItem Key="sp-history">
+                        <NavLink href="@GetLink("/spare-parts/history")" class="menu-link">
+                            <i class="fa-solid fa-clock-rotate-left menu-icon"></i>
+                            <span>Transactions Log</span>
+                        </NavLink>
+                    </MenuItem>
+                </ChildContent>
+            </SubMenu> 
 
         </Menu>
     </aside>

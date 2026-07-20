@@ -161,13 +161,71 @@ a, .btn-link {
         overflow: hidden;
     }
 
+    /* SubMenu Toggle Style - match margins, padding:0, and heights of standard menu items */
+    .custom-menu .ant-menu-submenu-title {
+        height: auto !important;
+        margin: 6px 12px !important;
+        padding: 0 !important; /* MATCH ant-menu-item padding: 0 */
+        border-radius: 16px !important; /* MATCH ant-menu-item border-radius */
+        background: transparent !important;
+        line-height: normal !important;
+        width: auto !important;
+        overflow: hidden;
+        display: block !important;
+    }
+
+    /* Hover effect for the SubMenu toggle card's inner menu-link */
+    .custom-menu .ant-menu-submenu-title:hover .menu-link {
+        background: #f3f3f3 !important;
+        color: #1890ff !important;
+    }
+
+    .custom-menu .ant-menu-submenu-title:hover .menu-icon {
+        color: #111 !important;
+    }
+
+    /* Reset background colors on various AntDesign active/selected submenu container states */
+    .custom-menu .ant-menu-submenu,
+    .custom-menu .ant-menu-submenu-open,
+    .custom-menu .ant-menu-submenu-active,
+    .custom-menu .ant-menu-submenu-selected {
+        background: transparent !important;
+    }
+
+    /* Align the built-in submenu arrow caret position and color */
+    .custom-menu .ant-menu-submenu-arrow {
+        color: #999 !important;
+        right: 16px !important; /* Align to right padding edge of the title bar */
+        transition: color 0.2s;
+    }
+
+    .custom-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow {
+        color: #111 !important;
+    }
+
+    .custom-menu .ant-menu-sub {
+        background: transparent !important;
+        padding: 0 !important;
+    }
+
+    /* Nested menu items styling under SubMenu container */
+    .custom-menu .ant-menu-sub .ant-menu-item {
+        height: auto !important;
+        margin: 4px 12px 4px 28px !important; /* Left indentation spacing */
+        border-radius: 14px !important;
+        padding: 0 !important;
+        width: auto !important;
+        overflow: hidden;
+        background: transparent !important;
+    }
+
 /* ===== LINK ===== */
 .menu-link {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    color: #777;
+    color: rgba(0, 0, 0, 0.85);
     font-weight: 500;
     border-radius: 14px;
     transition: 0.2s;
@@ -349,4 +407,17 @@ li {
 
 .btn-dark:active {
     transform: translateY(0);
+}
+
+/* Custom button style for consistent UI dimensions */
+.btn-custom {
+    border-radius: 8px !important;
+    padding: 0 12px !important;
+    height: 38px !important;
+}
+
+.btn-without-title {
+    border-radius: 8px !important;
+    padding: 0 6px !important;
+    height: 30px !important;
 }

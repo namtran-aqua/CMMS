@@ -5,6 +5,7 @@ using CMMS.Shared.Dtos.Maintenance;
 using CMMS.Shared.Dtos.Maintenance.Attachments;
 using CMMS.Shared.Dtos.User;
 using CMMS.Shared.Dtos.SpareParts;
+using CMMS.Shared.Dtos.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
@@ -252,7 +253,7 @@ namespace CMMS.Client.Modals.Maintenances
             StateHasChanged();
         }
 
-        private void OnRowSparePartChanged(MaintenanceSparePartDto row, int selectedSpid)
+        private async Task OnRowSparePartChanged(MaintenanceSparePartDto row, int selectedSpid)
         {
             var sp = SparePartsList.FirstOrDefault(x => x.SPID == selectedSpid);
             if (sp != null)
@@ -285,7 +286,29 @@ namespace CMMS.Client.Modals.Maintenances
                 row.PartName = sp.PartName;
                 row.Unit = sp.Unit;
                 row.Inventory = sp.Inventory;
-                row.Qty = 1;
+                row.HasCode = sp.IsCoded;
+
+                if (row.HasCode)
+                {
+                    row.Qty = 1;
+                    try
+                    {
+                        var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/coded-items?page=1&pageSize=100&partCode={sp.PartCode}&status=Available");
+                        if (itemsRes != null)
+                        {
+                            row.AvailableSerials = itemsRes.Items ?? new();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Message.Error("Lỗi khi tải danh sách mã Serial/Code: " + ex.Message);
+                    }
+                }
+                else
+                {
+                    row.Qty = 1;
+                    row.AvailableSerials = new();
+                }
             }
         }
 

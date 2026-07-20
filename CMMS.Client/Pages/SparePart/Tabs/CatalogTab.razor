@@ -1,0 +1,343 @@
+@namespace CMMS.Client.Pages.SpareParts.Tabs
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Shared.Authorization
+@using CMMS.Client.Common
+@using CMMS.Client.Modals.SpareParts
+@using CMMS.Client.Components
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h3>Spare Part Catalog</h3>
+        <p class="text-muted">Create and manage the master data of new spare parts in the system.</p>
+    </div>
+    @if (IsAuthenticated)
+        {
+            <div style="display:flex; gap:8px;">
+                <Button Type="@ButtonType.Default" OnClick="ShowImportModal" Class="btn-custom">
+                    <Icon Type="import" /> Import Excel
+                </Button>
+                <Button Type="@ButtonType.Primary" OnClick="() => ShowPartModal(null)" Class="btn-custom">
+                    <Icon Type="plus" /> Add Spare Part
+                </Button>
+            </div>
+        }
+</div>
+
+<!-- Search Panel -->
+<div class="card p-3 mb-3 search-card" style="border-radius:15px">
+    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" @onclick="() => isCatalogSearchPanelCollapsed = !isCatalogSearchPanelCollapsed">
+        <div style="font-weight:700; color:#1e293b; font-size:14px;">
+            <Icon Type="search" Style="margin-right:8px;" /> Advanced Search Filters
+        </div>
+        <div>
+            <Icon Type="@(isCatalogSearchPanelCollapsed ? "down" : "up")" />
+        </div>
+    </div>
+
+    @if (!isCatalogSearchPanelCollapsed)
+    {
+        <div class="row mt-3" style="gap: 12px 0;">
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Keyword Search</label>
+                <Input placeholder="Search all fields..." @bind-Value="catalogSearchText" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Part Code</label>
+                <Input placeholder="Part code..." @bind-Value="catalogPartCodeFilter" Class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Part Name</label>
+                <Input placeholder="Part name..." @bind-Value="catalogPartNameFilter" Class="form-control" />
+            </div>
+            @* <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Supplier</label>
+                <Select TValue="int?" @bind-Value="catalogSupplierFilter" DataSource="Suppliers" ValueName="SupplierID" LabelName="SupplierName" Placeholder="All suppliers" AllowClear Style="width:100%;" />
+            </div> *@
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Supplier</label>
+                <select class="form-select" @bind="catalogSupplierFilter" style="height:38px; border-radius:8px;">
+                    <option value="0">All Suppliers</option>
+                    @foreach (var c in Suppliers)
+                    {
+                        <option value="@c.SupplierID">@c.SupplierName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Category</label>
+                <select class="form-select" @bind="catalogCategoryFilter" style="height:38px; border-radius:8px;">
+                    <option value="0">All Categories</option>
+                    @foreach (var c in Categories)
+                    {
+                        <option value="@c.CategoryID">@c.CategoryName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Sort By</label>
+                <select class="form-select" @bind="catalogSortBy" style="height:38px; border-radius:8px;">
+                    <option value="NameAsc">Name (A-Z)</option>
+                    <option value="NameDesc">Name (Z-A)</option>
+                    <option value="CodeAsc">Code (A-Z)</option>
+                    <option value="PriceAsc">Price (Low to High)</option>
+                    <option value="PriceDesc">Price (High to Low)</option>
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end" style="gap:8px;">
+                <Button Type="@ButtonType.Primary" OnClick="ApplyFilters" Class="btn-custom">Query</Button>
+                <Button Type="@ButtonType.Default" OnClick="ResetFilters" Class="btn-custom">Reset</Button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Table Card -->
+<div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3"> 
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Catalog Spare Parts</h6>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredCatalogParts.Count spare parts declared</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 50px;">Image</th>
+                <th>Part Code</th>
+                <th>Part Name</th>
+                <th>Supplier</th>
+                <th>Min Stock</th>
+                <th>Unit</th>
+                <th>Serial Tracking</th>
+                <th>Note</th>
+                <th style="width: 150px;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (FilteredCatalogParts != null && FilteredCatalogParts.Any())
+            {
+                foreach (var p in FilteredCatalogParts.Skip((catalogPage - 1) * catalogPageSize).Take(catalogPageSize))
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(p.ImageUrl))
+                            {
+                                <img src="@p.ImageUrl" style="width:34px; height:34px; object-fit:cover; border-radius:4px; border:1px solid #e2e8f0;" />
+                            }
+                            else
+                            {
+                                <div style="width:34px; height:34px; border-radius:4px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8;">
+                                    <Icon Type="picture" />
+                                </div>
+                            }
+                        </td>
+                        <td><strong>@p.PartCode</strong></td>
+                        <td>@p.PartName</td>
+                        <td>@p.SupplierName</td>
+                        <td>@p.MinStock</td>
+                        <td>@p.Unit</td>
+                        <td>
+                            @if (p.IsCoded)
+                            {
+                                <div style="color:#3b82f6; font-weight:700;">[Coded]</div>
+                            }
+                            else
+                            {
+                                <div style="color:#94a3b8;">None</div>
+                            }
+                        </td>
+                        <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@p.Note">@p.Note</td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <Tooltip Title="@("Details")">
+                                    <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowPartDetail(p)"><Icon Type="eye" /></Button>
+                                </Tooltip>
+                                @if (IsAuthenticated && AuthorizationHelper.CanManageSparePart(CurrentUser, p.FACID))
+                                {
+                                    <Tooltip Title="@("Edit")">
+                                        <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowPartModal(p)"><Icon Type="edit"/></Button>
+                                    </Tooltip>
+                                    <Tooltip Title="@("Delete")">
+                                        <Button Size="ButtonSize.Small" Class="btn-without-title" Danger OnClick="() => DeletePart(p)"><Icon Type="delete" /></Button>
+                                    </Tooltip>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" style="text-align:center; padding:30px; color:#94a3b8;">Không tìm thấy phụ tùng phù hợp.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (FilteredCatalogParts != null && FilteredCatalogParts.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span style="font-size:12px; color:#595959;">
+                Showing @(((catalogPage - 1) * catalogPageSize) + 1) to @(Math.Min(catalogPage * catalogPageSize, FilteredCatalogParts.Count)) of @FilteredCatalogParts.Count parts
+            </span>
+            <Pagination Total="FilteredCatalogParts.Count"
+                        @bind-PageSize="catalogPageSize"
+                        @bind-Current="catalogPage"
+                        PageSizeOptions="new[] { 10, 20, 50, 100 }"
+                        ShowSizeChanger="true"
+                        OnChange="OnCatalogPageChange"
+                        Size="PaginationSize.Small" />
+        </div>
+    }
+</div>
+
+<!-- Double Column Categories & Suppliers Management -->
+<div class="row">
+    <!-- Categories Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card p-4" style="border-radius:15px; min-height: 380px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 style="font-weight: 700; color: #1e293b;">Categories List</h6>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@Categories.Count categories total</p>
+            </div>
+            @if (IsAuthenticated)
+            {
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                    <Input placeholder="New category name..." @bind-Value="newCategoryName" style="border-radius:8px; height:38px;" />
+                    <Button Type="@ButtonType.Primary" OnClick="AddCategory" Style="border-radius:8px; height:38px; width:44px; display:flex; align-items:center; justify-content:center;">
+                        <Icon Type="plus" />
+                    </Button>
+                </div>
+            }
+            <div style="max-height: 240px; overflow-y: auto; padding-right: 4px;">
+                @foreach (var c in Categories)
+                {
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                        <span style="font-weight: 500; color: #334155;">@c.CategoryName</span>
+                        @if (IsAuthenticated)
+                        {
+                            <Button Type="@ButtonType.Link" Danger="true" Size="ButtonSize.Small" OnClick="() => DeleteCategory(c.CategoryID)">
+                                <Icon Type="delete" />
+                            </Button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Suppliers Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card p-4" style="border-radius:15px; min-height: 380px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 style="font-weight: 700; color: #1e293b;">Suppliers List</h6>
+                <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@Suppliers.Count suppliers total</p>
+            </div>
+            @if (IsAuthenticated)
+            {
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                    <Input placeholder="Supplier name..." @bind-Value="newSupplier.SupplierName" style="border-radius:8px; height:38px;" />
+                    <div style="display:flex; gap:8px;">
+                        <Input placeholder="Phone number..." @bind-Value="newSupplier.Phone" style="border-radius:8px; height:38px;" />
+                        <Input placeholder="Email..." @bind-Value="newSupplier.Email" style="border-radius:8px; height:38px;" />
+                    </div>
+                    <Button Type="@ButtonType.Primary" OnClick="AddSupplier" Style="border-radius:8px; height:38px; align-self: flex-start; display:flex; align-items:center; gap:6px;">
+                        <Icon Type="plus" /> Add Supplier
+                    </Button>
+                </div>
+            }
+            <div style="max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                @foreach (var s in Suppliers)
+                {
+                    <div style="padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight: 500; color: #334155;">@s.SupplierName</span>
+                            @if (IsAuthenticated)
+                            {
+                                <Button Type="@ButtonType.Link" Danger="true" Size="ButtonSize.Small" OnClick="() => DeleteSupplier(s.SupplierID)">
+                                    <Icon Type="delete" />
+                                </Button>
+                            }
+                        </div>
+                        <div class="text-muted" style="font-size:12px; margin-top:2px;">@s.Phone · @s.Email</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Spare Part Detail Modal -->
+<Modal @bind-Visible="isPartDetailModalVisible" Title="Spare Part Details" Width="600" Footer="null" Style="z-index:9999;">
+    @if (selectedPartForDetail != null)
+    {
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; gap:20px; align-items:flex-start;">
+                @if (!string.IsNullOrEmpty(selectedPartForDetail.ImageUrl))
+                {
+                    <img src="@selectedPartForDetail.ImageUrl" style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;" />
+                }
+                else
+                {
+                    <div style="width:120px; height:120px; border-radius:8px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:32px;">
+                        <Icon Type="picture" />
+                    </div>
+                }
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <h4 style="margin:0; font-weight:700; color:#0f172a;">@selectedPartForDetail.PartName</h4>
+                    <span style="font-size:14px; color:#64748b;">Code: <strong>@selectedPartForDetail.PartCode</strong></span>
+                    <div>
+                        @if (selectedPartForDetail.IsCoded)
+                        {
+                            <span class="badge bg-primary text-white" style="font-weight:600; padding:4px 8px; border-radius:6px;">Serial Tracking (Coded)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary text-white" style="font-weight:600; padding:4px 8px; border-radius:6px;">No Serial Tracking</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <hr style="margin:8px 0; border-top:1px solid #f1f5f9;" />
+
+            <div class="row" style="row-gap:12px;">
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Category</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.CategoryName ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Supplier</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.SupplierName ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Unit</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.Unit ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Price</small>
+                    <div style="font-size:14px; font-weight:500;">@String.Format("{0:N0} VND", selectedPartForDetail.Price)</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Location</small>
+                    <div style="font-size:14px; font-weight:500;">@(selectedPartForDetail.Location ?? "N/A")</div>
+                </div>
+                <div class="col-6">
+                    <small style="color:#64748b; font-weight:600;">Min Stock Level</small>
+                    <div style="font-size:14px; font-weight:500;">@selectedPartForDetail.MinStock @selectedPartForDetail.Unit</div>
+                </div>
+                <div class="col-12">
+                    <small style="color:#64748b; font-weight:600;">Note</small>
+                    <div style="font-size:14px; color:#334155; white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(selectedPartForDetail.Note) ? "No note recorded." : selectedPartForDetail.Note)</div>
+                </div>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                <Button Type="@ButtonType.Default" OnClick="() => isPartDetailModalVisible = false" Class="btn-custom">Close</Button>
+            </div>
+        </div>
+    }
+</Modal>
+
+<SparePartModal @ref="_partModal" OnSave="LoadCatalogParts" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
+<ImportModal @ref="_importModal" Title="Import Spare Parts" UploadUrl="api/SparePart/import" TemplateUrl="api/SparePart/import-template" OnSave="LoadCatalogParts" />

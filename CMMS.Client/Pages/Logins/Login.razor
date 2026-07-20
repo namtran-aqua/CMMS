@@ -1,4 +1,4 @@
-﻿@page "/login"
+@page "/login"
 
 @layout LoginLayout
 @using AntDesign
@@ -69,21 +69,101 @@
         <div class="login-logo">
             <img src="https://hrmsaquavietnam.com:6969/images/Aqua-Smart%20Home%20-%20blue.png" alt="AQUA smart home" />
         </div>
-        <h4>Account Login</h4>
 
-        <input class="form-control" placeholder="WorkDay"
-               @bind="username" @onkeyup="HandleKeyUp" />
+        @if (currentScreenState == LoginScreenState.Login)
+        {
+            <h4>Account Login</h4>
 
-        <div style="position: relative;">
-            <input class="form-control" placeholder="Password"
-                   type="@(showPassword ? "text" : "password")"
-                   @bind="password" @onkeyup="HandleKeyUp" />
-            <span @onclick="TogglePassword"
-                  style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
-                @(showPassword ? "🙉" : "🙈")
-            </span>
-        </div>
+            <input class="form-control" placeholder="WorkDay"
+                   @bind="username" @onkeyup="HandleKeyUp" disabled="@loading" />
 
-        <button class="btn btn-primary" @onclick="DoLogin">Login</button>
+            <div style="position: relative;">
+                <input class="form-control" placeholder="Password"
+                       type="@(showPassword ? "text" : "password")"
+                       @bind="password" @onkeyup="HandleKeyUp" disabled="@loading" />
+                <span @onclick="TogglePassword"
+                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
+                    @(showPassword ? "🙉" : "🙈")
+                </span>
+            </div>
+
+            <button class="btn btn-primary" @onclick="DoLogin" disabled="@loading">
+                Login
+            </button>
+
+            <div style="text-align: right; margin-top: 15px;">
+                <a href="javascript:void(0)" @onclick="GoToForgotPassword" style="color: #1677ff; font-size: 14px;">Forgot Password?</a>
+            </div>
+        }
+        else if (currentScreenState == LoginScreenState.ForgotPassword)
+        {
+            <h4>Forgot Password</h4>
+            <div style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #555;">
+                Enter your WorkDay ID and registered Email to receive a 6-digit OTP code.
+            </div>
+
+            <input class="form-control" placeholder="WorkDay ID"
+                   @bind="forgotWorkDayId" @onkeyup="HandleKeyUp" disabled="@loading" />
+
+            <input class="form-control" placeholder="Email"
+                   @bind="forgotEmail" @onkeyup="HandleKeyUp" disabled="@loading" />
+
+            <button class="btn btn-primary" @onclick="SendOtp" disabled="@loading" style="margin-top: 10px;">
+                Send OTP
+            </button>
+
+            <div style="margin-top: 15px; text-align: center;">
+                <a href="javascript:void(0)" @onclick="GoToLogin" style="color: #1677ff; font-size: 14px;">Back to Login</a>
+            </div>
+        }
+        else if (currentScreenState == LoginScreenState.VerifyOtp)
+        {
+            <h4>Verify OTP</h4>
+            <div style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #555;">
+                A verification code has been sent to your email. Please enter it below.
+            </div>
+
+            <input class="form-control" placeholder="6-digit OTP"
+                   @bind="otpCode" @onkeyup="HandleKeyUp" disabled="@loading" maxlength="6" />
+
+            <button class="btn btn-primary" @onclick="VerifyOtp" disabled="@loading" style="margin-top: 10px;">
+                Verify
+            </button>
+
+            <div style="margin-top: 15px; text-align: center;">
+                <a href="javascript:void(0)" @onclick="GoToForgotPassword" style="color: #1677ff; font-size: 14px;">Back</a>
+            </div>
+        }
+        else if (currentScreenState == LoginScreenState.ResetPassword)
+        {
+            <h4>Reset Password</h4>
+            <div style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #555;">
+                Enter your new password below.
+            </div>
+
+            <div style="position: relative;">
+                <input class="form-control" placeholder="New Password"
+                       type="@(showNewPassword ? "text" : "password")"
+                       @bind="newPassword" @onkeyup="HandleKeyUp" disabled="@loading" />
+                <span @onclick="ToggleNewPassword"
+                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
+                    @(showNewPassword ? "🙉" : "🙈")
+                </span>
+            </div>
+
+            <div style="position: relative;">
+                <input class="form-control" placeholder="Confirm Password"
+                       type="@(showConfirmPassword ? "text" : "password")"
+                       @bind="confirmPassword" @onkeyup="HandleKeyUp" disabled="@loading" />
+                <span @onclick="ToggleConfirmPassword"
+                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
+                    @(showConfirmPassword ? "🙉" : "🙈")
+                </span>
+            </div>
+
+            <button class="btn btn-primary" @onclick="ResetPassword" disabled="@loading" style="margin-top: 10px;">
+                Save
+            </button>
+        }
     </div>
 </div>

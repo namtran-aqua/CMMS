@@ -14,5 +14,8 @@ namespace CMMS.Shared.Dtos.Maintenance
         public string? Unit { get; set; }
         public int Qty { get; set; }
         public int? Inventory { get; set; }
+        public bool HasCode { get; set; }
+        public string? SerialCode { get; set; }
+        public List<SpareParts.SparePartItemDto> AvailableSerials { get; set; } = new();
     }
 }

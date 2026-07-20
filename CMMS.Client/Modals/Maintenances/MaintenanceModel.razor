@@ -72,10 +72,10 @@
 </style>
 @{
     RenderFragment footer = @<Template>
-            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+            <Button OnClick="@SaveAsync" Type="ButtonType.Primary" Class="btn-custom">
                 Save
             </Button>
-            <Button OnClick="@Close" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+            <Button OnClick="@Close" Class="btn-custom">
             Cancel
             </Button>
     </Template>;
@@ -174,7 +174,7 @@
                     <Icon Type="tool" Theme="IconThemeType.Outline" Style="font-size:12px;" />
                     Spare Parts Used
                 </div>
-                <Button Type="@ButtonType.Primary" Size="ButtonSize.Small" OnClick="AddSparePartRow" Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                <Button Type="@ButtonType.Primary" Size="ButtonSize.Small" OnClick="AddSparePartRow" Class="btn-custom">
                     <Icon Type="plus" Theme="IconThemeType.Outline" /> Add Part
                 </Button>
             </div>
@@ -202,18 +202,43 @@
                                               Style="width: 100%;">
                             </AntDesign.Select>
                         </Column>
+                        <Column Title="Mã Serial/Code" TData="string">
+                            @if (sp.HasCode)
+                            {
+                                <AntDesign.Select TItemValue="string"
+                                                  TItem="SparePartItemDto"
+                                                  DataSource="sp.AvailableSerials"
+                                                  ValueName="SerialCode"
+                                                  LabelName="SerialCode"
+                                                  @bind-Value="sp.SerialCode"
+                                                  Placeholder="Chọn Serial..."
+                                                  Style="width: 100%;">
+                                </AntDesign.Select>
+                            }
+                            else
+                            {
+                                <span style="font-size:12px;color:#8c8c8c;font-style:italic;">FIFO Tự Động</span>
+                            }
+                        </Column>
                         <Column Title="In Stock" Width="100" TData="int?">
                             <span style="font-size:12px;color:#595959;">@(sp.Inventory != null ? $"{sp.Inventory} {sp.Unit}" : "-")</span>
                         </Column>
                         <Column Title="Qty" Width="120" TData="int">
                             @if (sp.SPID > 0)
                             {
-                                <AntDesign.InputNumber TValue="int"
-                                                       Min="1"
-                                                       Max="@(sp.Inventory ?? 999999)"
-                                                       @bind-Value="sp.Qty"
-                                                       Size="InputSize.Small"
-                                                       Style="width: 80px;" />
+                                @if (sp.HasCode)
+                                {
+                                    <span style="font-size:12px;color:#595959;font-weight:bold;">1</span>
+                                }
+                                else
+                                {
+                                    <AntDesign.InputNumber TValue="int"
+                                                           Min="1"
+                                                           Max="@(sp.Inventory ?? 999999)"
+                                                           @bind-Value="sp.Qty"
+                                                           Size="InputSize.Small"
+                                                           Style="width: 80px;" />
+                                }
                             }
                         </Column>
                         <ActionColumn Width="50">
@@ -250,7 +275,7 @@
                     <Button Shape="ButtonShape.Round"
                             Size="ButtonSize.Small"
                             Icon="upload"
-                            Style="border-radius: 8px; padding: 0 12px; height: 38px;">
+                            Class="btn-custom">
                         Upload file
                     </Button>
                 </Upload>
