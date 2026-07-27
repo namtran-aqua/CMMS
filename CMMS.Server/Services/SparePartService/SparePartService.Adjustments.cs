@@ -120,7 +120,7 @@ namespace CMMS.Server.Services.SparePartService
                 var countToday = await con.ExecuteScalarAsync<int>(
                     "SELECT COUNT(1) FROM dbo.Tbl_AdjustOrder WHERE CAST(CreateAt AS DATE) = CAST(GETDATE() AS DATE)",
                     transaction: (SqlTransaction)tran);
-                var adjustCode = $"ADJ-{DateTime.Now:yyMMdd}-{(countToday + 1):D4}";
+                var adjustCode = $"ADJ{DateTime.Now:yyMMdd}{(countToday + 1):D4}";
                 // 1. Insert AdjustOrder header
                 const string sqlHeader = @"
                     INSERT INTO dbo.Tbl_AdjustOrder (AdjustCode, AdjustDate, FACID, Status, Note, CreateBy, CreateAt)

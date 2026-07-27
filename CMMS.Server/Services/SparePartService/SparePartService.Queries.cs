@@ -53,6 +53,9 @@ namespace CMMS.Server.Services.SparePartService
             var conditions = new List<string>();
             var parameters = new DynamicParameters();
 
+            //// Chỉ hiển thị các spare part có qty > 0
+            conditions.Add("p.Inventory > 0");
+
             if (factoryId.HasValue)
             {
                 conditions.Add("(p.FACID = @FactoryId OR l.FACID = @FactoryId OR d.FACID = @FactoryId)");
@@ -520,20 +523,25 @@ namespace CMMS.Server.Services.SparePartService
             return result;
         }
 
-        public async Task<PagedResultDto<SparePartItemDto>> GetCodedSparePartsPagedAsync(
+        public async Task<PagedResultDto<SparePartItemDto>> GetSparePartItemsPagedAsync(
             int page, 
             int pageSize, 
             string? serialCode, 
             string? partCode, 
             string? partName, 
             string? status, 
-            int? factoryId)
+            int? factoryId,
+            bool? isCoded)
         {
             using var connection = _connectionFactory.CreateConnection();
             var conditions = new List<string>();
             var parameters = new DynamicParameters();
 
-            conditions.Add("i.HasCode = 1");
+            if (isCoded.HasValue)
+            {
+                conditions.Add("p.IsCoded = @IsCoded");
+                parameters.Add("IsCoded", isCoded.Value ? 1 : 0);
+            }
 
             if (factoryId.HasValue && factoryId.Value > 0)
             {
@@ -578,11 +586,12 @@ namespace CMMS.Server.Services.SparePartService
             var sql = $@"
                 SELECT i.ItemID, i.SPID, i.ImportID, i.ImportDetailID, i.HasCode, i.SerialCode, i.Quantity, i.RemainingQuantity, i.ImportDate, i.Status, i.CreateAt,
                        i.FACID, i.DeptID,
-                       p.PartCode, p.PartName
+                       p.PartCode, p.PartName,
+                       DATEDIFF(day, i.ImportDate, GETDATE()) AS DaysInStock
                 FROM dbo.Tbl_SparePartItem i
                 JOIN dbo.Tbl_SparePart p ON p.SPID = i.SPID
                 {whereClause}
-                ORDER BY i.ImportDate DESC, i.ItemID DESC
+                ORDER BY i.ImportDate ASC, i.ItemID ASC
                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
             var items = (await connection.QueryAsync<SparePartItemDto>(sql, parameters)).ToList();

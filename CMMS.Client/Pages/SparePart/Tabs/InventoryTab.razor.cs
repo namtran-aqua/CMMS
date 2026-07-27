@@ -48,6 +48,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             get
             {
                 var result = _allParts.AsEnumerable();
+                result = result.Where(x => x.Inventory > 0);
 
                 // Filter by Factory
                 if (FactoryState.SelectedFacId.HasValue)

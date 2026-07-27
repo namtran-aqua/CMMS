@@ -15,29 +15,32 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace CMMS.Client.Pages.SpareParts.Tabs
 {
-    public partial class CodedPartsTab : ComponentBase, IDisposable
+    public partial class SparePartItemsTab : ComponentBase, IDisposable
     {
         [Inject] private HttpClient Http { get; set; }
         [Inject] private FactoryStateService FactoryState { get; set; }
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
 
+        [Parameter]
+        public bool? IsCoded { get; set; }
+
         private bool IsAuthenticated { get; set; } = false;
         private UserDto CurrentUser { get; set; } = new();
 
-        private List<SparePartItemDto> _allCodedItems = new();
-        private int codedPage = 1;
-        private int codedPageSize = 10;
-        private string codedSerialSearch = "";
-        private string codedPartCodeSearch = "";
-        private string codedPartNameSearch = "";
-        private string codedStatusFilter = "";
+        private List<SparePartItemDto> _allItems = new();
+        private int currentPage = 1;
+        private int pageSize = 10;
+        private string serialSearch = "";
+        private string partCodeSearch = "";
+        private string partNameSearch = "";
+        private string statusFilter = "";
         private bool isSearchPanelCollapsed = true;
 
-        private List<SparePartItemDto> FilteredCodedItems
+        private List<SparePartItemDto> FilteredItems
         {
             get
             {
-                var result = _allCodedItems.AsEnumerable();
+                var result = _allItems.AsEnumerable();
 
                 // Filter by Factory
                 if (FactoryState.SelectedFacId.HasValue)
@@ -46,30 +49,30 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 }
 
                 // Filter by serial code search
-                if (!string.IsNullOrWhiteSpace(codedSerialSearch))
+                if (!string.IsNullOrWhiteSpace(serialSearch))
                 {
-                    var search = codedSerialSearch.Trim().ToLower();
+                    var search = serialSearch.Trim().ToLower();
                     result = result.Where(x => x.SerialCode != null && x.SerialCode.ToLower().Contains(search));
                 }
 
                 // Filter by part code search
-                if (!string.IsNullOrWhiteSpace(codedPartCodeSearch))
+                if (!string.IsNullOrWhiteSpace(partCodeSearch))
                 {
-                    var search = codedPartCodeSearch.Trim().ToLower();
+                    var search = partCodeSearch.Trim().ToLower();
                     result = result.Where(x => x.PartCode != null && x.PartCode.ToLower().Contains(search));
                 }
 
                 // Filter by part name search
-                if (!string.IsNullOrWhiteSpace(codedPartNameSearch))
+                if (!string.IsNullOrWhiteSpace(partNameSearch))
                 {
-                    var search = codedPartNameSearch.Trim().ToLower();
+                    var search = partNameSearch.Trim().ToLower();
                     result = result.Where(x => x.PartName != null && x.PartName.ToLower().Contains(search));
                 }
 
                 // Filter by status
-                if (!string.IsNullOrWhiteSpace(codedStatusFilter))
+                if (!string.IsNullOrWhiteSpace(statusFilter))
                 {
-                    result = result.Where(x => string.Equals(x.Status, codedStatusFilter, StringComparison.OrdinalIgnoreCase));
+                    result = result.Where(x => string.Equals(x.Status, statusFilter, StringComparison.OrdinalIgnoreCase));
                 }
 
                 return result.ToList();
@@ -85,13 +88,18 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             CurrentUser = await CurrentUserClass.LoadCurrentUser();
 
             FactoryState.OnChange += OnFactoryChanged;
-            await LoadCodedParts();
+            await LoadItems();
+        }
+
+        protected override async Task OnParametersSetAsync()
+        {
+            await LoadItems();
         }
 
         private async void OnFactoryChanged()
         {
-            codedPage = 1;
-            await LoadCodedParts();
+            currentPage = 1;
+            await LoadItems();
             await InvokeAsync(StateHasChanged);
         }
 
@@ -100,50 +108,57 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             FactoryState.OnChange -= OnFactoryChanged;
         }
 
-        private async Task LoadCodedParts()
+        private async Task LoadItems()
         {
             try
             {
-                var facId = FactoryState.SelectedFacId;
-                var url = "api/SparePart/coded-items-all";
-                if (facId.HasValue) url += $"?factoryId={facId.Value}";
+                var url = "api/SparePart/items-all?";
+                
+                var queryParams = new List<string>();
+                if (FactoryState.SelectedFacId.HasValue)
+                    queryParams.Add($"factoryId={FactoryState.SelectedFacId.Value}");
+                
+                if (IsCoded.HasValue)
+                    queryParams.Add($"isCoded={IsCoded.Value.ToString().ToLower()}");
 
-                _allCodedItems = await Http.GetFromJsonAsync<List<SparePartItemDto>>(url) ?? new();
-                codedPage = 1;
+                url += string.Join("&", queryParams);
+
+                _allItems = await Http.GetFromJsonAsync<List<SparePartItemDto>>(url) ?? new();
+                currentPage = 1;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading coded parts: {ex.Message}");
+                Console.WriteLine($"Error loading items: {ex.Message}");
             }
         }
 
         private void ApplyFilters()
         {
-            codedPage = 1;
+            currentPage = 1;
             StateHasChanged();
         }
 
-        private void OnCodedPageChange(PaginationEventArgs args)
+        private void OnPageChange(PaginationEventArgs args)
         {
-            if (codedPageSize != args.PageSize)
+            if (pageSize != args.PageSize)
             {
-                codedPageSize = args.PageSize;
-                codedPage = 1;
+                pageSize = args.PageSize;
+                currentPage = 1;
             }
             else
             {
-                codedPage = args.Page;
+                currentPage = args.Page;
             }
             StateHasChanged();
         }
 
         private void ResetFilters()
         {
-            codedSerialSearch = "";
-            codedPartCodeSearch = "";
-            codedPartNameSearch = "";
-            codedStatusFilter = "";
-            codedPage = 1;
+            serialSearch = "";
+            partCodeSearch = "";
+            partNameSearch = "";
+            statusFilter = "";
+            currentPage = 1;
             StateHasChanged();
         }
     }

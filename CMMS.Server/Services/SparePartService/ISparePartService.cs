@@ -39,7 +39,7 @@ namespace CMMS.Server.Services.SparePartService
         Task<ExportOrderDto?> GetExportOrderDetailAsync(int exportId);
 
         Task<List<MovementTypeDto>> GetMovementTypesAsync(int? factoryId);
-        Task<PagedResultDto<SparePartItemDto>> GetCodedSparePartsPagedAsync(int page, int pageSize, string? serialCode, string? partCode, string? partName, string? status, int? factoryId);
+        Task<PagedResultDto<SparePartItemDto>> GetSparePartItemsPagedAsync(int page, int pageSize, string? serialCode, string? partCode, string? partName, string? status, int? factoryId, bool? isCoded);
         Task<List<SparePartTransactionDto>> GetSparePartMovementHistoryAsync(int spid);
         Task<int?> GetMovementTypeIdByNameAsync(string name);
         
@@ -50,7 +50,7 @@ namespace CMMS.Server.Services.SparePartService
 
         Task<List<ImportOrderDto>> GetImportOrdersAllAsync(int? factoryId = null);
         Task<List<ExportOrderDto>> GetExportOrdersAllAsync(int? factoryId = null);
-        Task<List<SparePartItemDto>> GetCodedSparePartsAllAsync(int? factoryId = null);
+        Task<List<SparePartItemDto>> GetSparePartItemsAllAsync(int? factoryId = null, bool? isCoded = null);
         Task<List<SparePartMonthlyPeriodDto>> GetMonthlyPeriodsAllAsync(int? factoryId = null);
 
         // Stock Adjustments

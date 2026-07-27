@@ -20,6 +20,7 @@ namespace CMMS.Client.Pages.SpareParts
                     "catalog" => "Catalog",
                     "inventory" => "Inventory",
                     "coded-parts" => "CodedParts",
+                    "non-coded" => "NonCodedParts",
                     "imports" => "Imports",
                     "exports" => "Exports",
                     "adjustments" => "Adjustments",

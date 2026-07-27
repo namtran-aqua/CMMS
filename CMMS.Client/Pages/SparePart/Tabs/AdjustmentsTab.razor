@@ -36,7 +36,7 @@
         <div class="row mt-3" style="gap: 12px 0;">
             <div class="col-md-3">
                 <label style="font-size: 12px; font-weight: 600; color: #64748b;">Adjust Code</label>
-                <Input placeholder="AD-..." @bind-Value="adjustCodeSearch" Class="form-control" />
+                <Input placeholder="ADJ..." @bind-Value="adjustCodeSearch" Class="form-control" />
             </div>
             <div class="col-md-3">
                 <label style="font-size: 12px; font-weight: 600; color: #64748b;">From Date</label>
@@ -67,11 +67,10 @@
                     <th>Adjust Code</th>
                     <th>Adjust Date</th>
                     <th style="text-align: center;">Total Lines</th>
-                    @* <th style="text-align: center;">Net Adjustment</th> *@
                     <th>Created By</th>
                     <th>Files</th>
                     <th>Status</th>
-                    <th style="width: 120px; text-align: center;">Action</th>
+                    <th class="sticky-action" style="width: 120px; text-align: center;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -83,20 +82,6 @@
                             <td><strong style="color: #0f172a;">@adj.AdjustCode</strong></td>
                             <td>@adj.AdjustDate.ToString("yyyy-MM-dd HH:mm")</td>
                             <td style="text-align: center; font-weight: 600;">@adj.TotalLines</td>
-                            @* <td style="text-align: center;">
-                                @if (adj.NetAdjustment > 0)
-                                {
-                                    <span class="badge" style="background: #e2fbe8; color: #1e7e34; padding: 6px 12px; border-radius: 20px; font-weight: 700;">+@adj.NetAdjustment</span>
-                                }
-                                else if (adj.NetAdjustment < 0)
-                                {
-                                    <span class="badge" style="background: #f8d7da; color: #721c24; padding: 6px 12px; border-radius: 20px; font-weight: 700;">@adj.NetAdjustment</span>
-                                }
-                                else
-                                {
-                                    <span class="badge" style="background: #e2e8f0; color: #475569; padding: 6px 12px; border-radius: 20px; font-weight: 700;">0</span>
-                                }
-                            </td> *@
                             <td>@adj.CreateUser</td>
                             <td>
                                 @if (adj.AttachmentUrls != null && adj.AttachmentUrls.Any())
@@ -112,11 +97,11 @@
                                 }
                             </td>
                             <td>
-                                <span class="status-badge badge-completed">@adj.Status</span>
+                                <span class="status-badge badge-@adj.Status.ToLower()">@adj.Status</span>
                             </td>
-                            <td style="text-align: center;">
-                                <Button Type="@ButtonType.Link" OnClick="() => ShowAdjustDetail(adj.AdjustID)" Style="padding: 0; font-weight: 600;">
-                                    Details
+                            <td class="sticky-action" style="text-align: center;">
+                                <Button Size="ButtonSize.Small" Class="btn-custom" OnClick="() => ShowAdjustDetail(adj.AdjustID)">
+                                    <Icon Type="eye" /> Details
                                 </Button>
                             </td>
                         </tr>
