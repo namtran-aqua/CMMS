@@ -115,18 +115,19 @@
                 <div>@(FilteredOverDue.Count + FilteredDueSoon.Count) records total</div>
             </div> *@
             <!-- Equipment Table -->
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Equipment</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                        <th>Technician</th>
-                        <th>Date</th>
-                        <th>Circle</th>
-                        
-                        <th>Action</th>
-                    </tr>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Technician</th>
+                            <th>Date</th>
+                            <th>Circle</th>
+                            
+                            <th class="sticky-action" style="width: 130px; text-align: center;">Action</th>
+                        </tr>
                 </thead>
                 <tbody>
                     @if (FilteredPendingCombined != null && FilteredPendingCombined.Any())
@@ -154,7 +155,7 @@
                                 <td>@item.NextMaintenanceDate?.ToString("MMM dd, yyyy")</td>
                                 <td>@item.MaintenanceCircleTime days</td>
                                 
-                                <td>
+                                <td class="sticky-action" style="text-align: center;">
                                     @if (IsAuthenticated)
                                     {
                                         @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
@@ -169,7 +170,8 @@
                         }
                     }
                 </tbody>
-            </table>
+                </table>
+            </div>
             @if (FilteredPendingCombined != null && FilteredPendingCombined.Any())
             {
                 <div class="d-flex justify-content-between align-items-center mt-3">
@@ -323,7 +325,8 @@
                 <div>@FilteredHistory.Count records total</div>
             </div> *@
             <!-- Equipment Table -->
-            <table class="table">
+            <div class="table-responsive">
+                <table class="table">
                 <thead>
                     <tr>
                         <th>MTID</th>
@@ -334,7 +337,7 @@
                         <th>Date</th>
                         <th>Cost</th>
                         <th>Attachment</th>
-                        <th>Action</th>
+                        <th class="sticky-action" style="width: 100px; text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -371,7 +374,7 @@
                                         </div>
                                     }
                                 </td>
-                                <td>
+                                <td class="sticky-action" style="text-align: center;">
                                     <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => ShowDetail(item)" Class="btn-custom">
                                         <Icon Type="eye" Theme="IconThemeType.Outline" /> Detail
                                     </Button>
@@ -380,7 +383,8 @@
                         }
                     }
                 </tbody>
-            </table>
+                </table>
+            </div>
             @if (FilteredHistory != null && FilteredHistory.Any())
             {
                 <div class="d-flex justify-content-between align-items-center mt-3">

@@ -342,6 +342,12 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
 
         private async Task SaveNewImportOrder()
         {
+            if (string.IsNullOrWhiteSpace(newImportOrder.PONumber))
+            {
+                Message.Error("Số PO là trường bắt buộc phải nhập.");
+                return;
+            }
+
             if (!newImportOrder.Details.Any())
             {
                 Message.Error("Lệnh nhập kho phải chứa ít nhất một phụ tùng.");

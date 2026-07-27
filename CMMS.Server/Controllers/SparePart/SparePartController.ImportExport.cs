@@ -170,17 +170,18 @@ namespace CMMS.Server.Controllers.SparePart
             return Ok(await _service.GetMovementTypesAsync(factoryId));
         }
 
-        [HttpGet("coded-items")]
-        public async Task<ActionResult<PagedResultDto<SparePartItemDto>>> GetCodedSpareParts(
+        [HttpGet("items")]
+        public async Task<ActionResult<PagedResultDto<SparePartItemDto>>> GetSparePartItems(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? serialCode = null,
             [FromQuery] string? partCode = null,
             [FromQuery] string? partName = null,
             [FromQuery] string? status = null,
-            [FromQuery] int? factoryId = null)
+            [FromQuery] int? factoryId = null,
+            [FromQuery] bool? isCoded = null)
         {
-            return Ok(await _service.GetCodedSparePartsPagedAsync(page, pageSize, serialCode, partCode, partName, status, factoryId));
+            return Ok(await _service.GetSparePartItemsPagedAsync(page, pageSize, serialCode, partCode, partName, status, factoryId, isCoded));
         }
 
         [HttpGet("item-history/{spid}")]
@@ -201,10 +202,10 @@ namespace CMMS.Server.Controllers.SparePart
             return Ok(await _service.GetExportOrdersAllAsync(factoryId));
         }
 
-        [HttpGet("coded-items-all")]
-        public async Task<ActionResult<List<SparePartItemDto>>> GetCodedSparePartsAll([FromQuery] int? factoryId = null)
+        [HttpGet("items-all")]
+        public async Task<ActionResult<List<SparePartItemDto>>> GetSparePartItemsAll([FromQuery] int? factoryId = null, [FromQuery] bool? isCoded = null)
         {
-            return Ok(await _service.GetCodedSparePartsAllAsync(factoryId));
+            return Ok(await _service.GetSparePartItemsAllAsync(factoryId, isCoded)); 
         }
     }
 }

@@ -25,7 +25,7 @@ namespace CMMS.Server.Services.SparePartService
                 var countToday = await connection.ExecuteScalarAsync<int>(
                     "SELECT COUNT(1) FROM dbo.Tbl_ImportOrder WHERE CAST(CreateAt AS DATE) = CAST(GETDATE() AS DATE)",
                     transaction: transaction);
-                dto.ImportCode = $"IMP-{DateTime.Now:yyMMdd}-{(countToday + 1):D4}";
+                dto.ImportCode = $"IMP{DateTime.Now:yyMMdd}{(countToday + 1):D4}";
                 dto.Status = "Completed";
                 dto.CreateBy = currentUser?.Id;
                 dto.CreateAt = DateTime.Now;
@@ -366,7 +366,7 @@ namespace CMMS.Server.Services.SparePartService
             var countToday = await connection.ExecuteScalarAsync<int>(
                 "SELECT COUNT(1) FROM dbo.Tbl_ExportOrder WHERE CAST(CreateAt AS DATE) = CAST(GETDATE() AS DATE)",
                 transaction: transaction);
-            dto.ExportCode = $"EXP-{DateTime.Now:yyMMdd}-{(countToday + 1):D4}";
+            dto.ExportCode = $"EXP{DateTime.Now:yyMMdd}{(countToday + 1):D4}";
             dto.Status = "Completed";
             dto.CreateBy = currentUser?.Id;
             dto.CreateAt = DateTime.Now;
@@ -778,25 +778,40 @@ namespace CMMS.Server.Services.SparePartService
             return items;
         }
 
-        public async Task<List<SparePartItemDto>> GetCodedSparePartsAllAsync(int? factoryId = null)
+        public async Task<List<SparePartItemDto>> GetSparePartItemsAllAsync(int? factoryId = null, bool? isCoded = null)
         {
             using var connection = _connectionFactory.CreateConnection();
-            var sql = @"
+            var conditions = new List<string>();
+            var parameters = new DynamicParameters();
+
+            if (isCoded.HasValue)
+            {
+                conditions.Add("p.IsCoded = @IsCoded");
+                parameters.Add("IsCoded", isCoded.Value ? 1 : 0);
+            }
+
+            if (factoryId.HasValue && factoryId.Value > 0)
+            {
+                conditions.Add("i.FACID = @FactoryId");
+                parameters.Add("FactoryId", factoryId.Value);
+            }
+
+            conditions.Add("i.RemainingQuantity > 0");
+
+            var whereClause = conditions.Any() ? "WHERE " + string.Join(" AND ", conditions) : "";
+
+            var sql = $@"
                 SELECT i.ItemID, i.SPID, i.ImportID, i.ImportDetailID, i.HasCode, i.SerialCode, i.Quantity, i.RemainingQuantity, i.ImportDate, i.Status, i.CreateAt,
                        i.FACID, i.DeptID,
                        p.PartCode, p.PartName,
-                       s.DaysInStock 
+                       s.DaysInStock
                 FROM dbo.Tbl_SparePartItem i
                 JOIN dbo.Tbl_SparePart p ON p.SPID = i.SPID
-                JOIN dbo.vw_SparePartStockDetail s ON i.ItemID = s.ItemID
-                WHERE i.HasCode = 1";
-            if (factoryId.HasValue)
-            {
-                sql += " AND i.FACID = @FactoryId";
-            }
-            sql += " ORDER BY i.ImportDate DESC, i.ItemID DESC";
+                LEFT JOIN dbo.vw_SparePartStockDetail s ON i.ItemID = s.ItemID
+                {whereClause}
+                ORDER BY i.ImportDate ASC, i.ItemID ASC";
 
-            return (await connection.QueryAsync<SparePartItemDto>(sql, new { FactoryId = factoryId })).ToList();
+            return (await connection.QueryAsync<SparePartItemDto>(sql, parameters)).ToList();
         }
     }
 }

@@ -84,18 +84,17 @@
             <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredEquipments.Count equipment total</p>
         </div>
         <!-- Equipment Table -->
-        <table class="table" >
+        <div class="table-responsive">
+            <table class="table" >
             <thead>
                 <tr>
-                    <th> 
-                        
-                    </th>
                     <th>Name</th>
                     <th>Model</th>
                     <th>Serial</th>
                     <th>LocName</th>
                     <th>Status</th>
                     <th>Next Maintanance</th>
+                    <th class="sticky-action" style="width: 80px; text-align: center;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,30 +103,7 @@
                     foreach (var item in FilteredEquipments.Skip((currentPage - 1) * pageSize).Take(pageSize))
                     {
                         <tr>
-                            <td> 
-                                @if (IsAuthenticated)
-                                {
-                                    <Template>
-                                        <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
-                                            <ChildContent>
-                                                <Button Icon="menu" />
-                                            </ChildContent>
-                                            <ContentTemplate>
-                                                <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
 
-                                                    @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
-                                                    {
-                                                        <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
-                                                            <Icon Type="edit" /> Edit
-                                                        </Button>
-                                                    }
-
-                                                </div>
-                                            </ContentTemplate>
-                                        </Popover>
-                                    </Template>
-                                }
-                            </td>
                             <td>
                                 <div>@item.EquipmentName</div>
                                 <div class="text-muted">@item.EquipmentCode</div>
@@ -153,13 +129,35 @@
                                     @maintenance.text
                                 </div>
                             </td>
+                            <td class="sticky-action" style="text-align: center;"> 
+                                @if (IsAuthenticated)
+                                {
+                                    <Template>
+                                        <Popover Title="Actions" Trigger="new Trigger[] { Trigger.Click }" Placement="Placement.Bottom">
+                                            <ChildContent>
+                                                <Button Icon="menu" />
+                                            </ChildContent>
+                                            <ContentTemplate>
+                                                <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
+                                                    @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                                                    {
+                                                        <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
+                                                            <Icon Type="edit" /> Edit
+                                                        </Button>
+                                                    }
+                                                </div>
+                                            </ContentTemplate>
+                                        </Popover>
+                                    </Template>
+                                }
+                            </td>
                             
                         </tr>
                     }
                 }
             </tbody>
-
         </table>
+        </div>
         @if (FilteredEquipments != null && FilteredEquipments.Any())
         {
             <div class="d-flex justify-content-between align-items-center mt-3">

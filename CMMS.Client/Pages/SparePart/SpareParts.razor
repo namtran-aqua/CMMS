@@ -68,7 +68,16 @@
         <InventoryTab />
     </div>
     <div style="@(selectedTab == "CodedParts" ? "" : "display:none;")">
-        <CodedPartsTab />
+        @if (selectedTab == "CodedParts")
+        {
+            <SparePartItemsTab IsCoded="true" />
+        }
+    </div>
+    <div style="@(selectedTab == "NonCodedParts" ? "" : "display:none;")">
+        @if (selectedTab == "NonCodedParts")
+        {
+            <SparePartItemsTab IsCoded="false" />
+        }
     </div>
     <div style="@(selectedTab == "Imports" ? "" : "display:none;")">
         <ImportsTab />

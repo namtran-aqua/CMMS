@@ -329,6 +329,7 @@ li {
     padding: 14px 18px !important;
     border-bottom: 2px solid #e2e8f0 !important;
     border-top: none !important;
+    white-space: nowrap !important;
 }
 
 .table td {
@@ -338,9 +339,29 @@ li {
     color: #334155 !important;
     border-bottom: 1px solid #f1f5f9 !important;
     transition: background-color 0.2s ease;
+    white-space: nowrap !important;
 }
 
 .table tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Sticky Action Column */
+.table th.sticky-action,
+.table td.sticky-action {
+    position: sticky !important;
+    right: 0 !important;
+    background-color: #ffffff !important;
+    z-index: 1;
+    box-shadow: -4px 0 8px -4px rgba(0,0,0,0.05); /* shadow for separation */
+}
+
+.table th.sticky-action {
+    background-color: #f8fafc !important;
+    z-index: 2;
+}
+
+.table tr:hover td.sticky-action {
     background-color: #f8fafc !important;
 }
 

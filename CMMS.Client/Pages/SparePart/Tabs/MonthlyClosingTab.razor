@@ -25,7 +25,8 @@
         <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Closed Periods</h6>
         <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredMonthlyPeriods.Count records closed</p>
     </div>
-    <table class="table">
+    <div class="table-responsive">
+        <table class="table">
         <thead>
             <tr>
                 <th>Period (Month/Year)</th>
@@ -70,7 +71,8 @@
                 </tr>
             }
         </tbody>
-    </table>
+        </table>
+    </div>
     @if (FilteredMonthlyPeriods != null && FilteredMonthlyPeriods.Any())
     {
         <div class="d-flex justify-content-between align-items-center mt-3">

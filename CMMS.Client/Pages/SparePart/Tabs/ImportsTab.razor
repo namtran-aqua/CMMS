@@ -36,7 +36,7 @@
         <div class="row" style="gap:12px 0;">
             <div class="col-md-3">
                 <label style="font-size:12px; font-weight:600; color:#64748b;">Import Code</label>
-                <Input placeholder="IMP-..." @bind-Value="importCodeSearch" Class="form-control" />
+                <Input placeholder="IMP..." @bind-Value="importCodeSearch" Class="form-control" />
             </div>
             <div class="col-md-3">
                 <label style="font-size:12px; font-weight:600; color:#64748b;">PO Number</label>
@@ -70,7 +70,8 @@
         <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Imports Register</h6>
         <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredImportOrders.Count orders found</p>
     </div>
-    <table class="table">
+    <div class="table-responsive">
+        <table class="table">
         <thead>
             <tr>
                 <th>Import Code</th>
@@ -80,7 +81,7 @@
                 <th>Created By</th>
                 <th>File Đính Kèm</th>
                 <th>Status</th>
-                <th style="width: 120px;">Action</th>
+                <th class="sticky-action" style="width: 120px; text-align: center;">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -113,7 +114,7 @@
                         <td>
                             <span class="status-badge badge-@imp.Status.ToLower()">@imp.Status</span>
                         </td>
-                        <td>
+                        <td class="sticky-action" style="text-align: center;">
                             <Button Size="ButtonSize.Small" Class="btn-custom" OnClick="() => ShowImportDetail(imp.ImportID)"><Icon Type="eye" /> Details</Button>
                         </td>
                     </tr>
@@ -126,7 +127,8 @@
                 </tr>
             }
         </tbody>
-    </table>
+        </table>
+    </div>
     @if (FilteredImportOrders != null && FilteredImportOrders.Any())
     {
         <div class="d-flex justify-content-between align-items-center mt-3">
@@ -206,7 +208,7 @@
             @if (selectedImportOrder.Status != "Reversed" && IsAuthenticated)
             {
                 <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; border-top:1px solid #f1f5f9; padding-top:12px;">
-                    <Button Danger OnClick="() => ReverseImport(selectedImportOrder.ImportID)">
+                    <Button Danger OnClick="() => ReverseImport(selectedImportOrder.ImportID)" Class="btn-custom">
                         <Icon Type="rollback" /> Reverse
                     </Button>
                 </div>
@@ -221,7 +223,7 @@
         <!-- Header Info -->
         <div class="row">
             <div class="col-md-4">
-                <label style="font-size:12px; font-weight:600; color:#64748b;">Số PO</label>
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Số PO <span style="color:red">*</span></label>
                 <Input placeholder="Nhập số PO..." @bind-Value="newImportOrder.PONumber" />
             </div>
             <div class="col-md-4">
@@ -229,7 +231,7 @@
                 <Select TValue="int" @bind-Value="newImportOrder.VendorID" DataSource="Vendors" ValueName="VendorID" LabelName="VendorName" Placeholder="Chọn NCC" Style="width:100%;" />
             </div>
             <div class="col-md-4">
-                <label style="font-size:12px; font-weight:600; color:#64748b;">Ngày Nhập</label>
+                <label style="font-size:12px; font-weight:600; color:#64748b;">Ngày PO</label>
                 <DatePicker TValue="DateTime" @bind-Value="newImportOrder.ImportDate" Style="width:100%; height:38px;" />
             </div>
         </div>
@@ -293,7 +295,7 @@
             </div>
 
             <div class="col-md-2">
-                <Button Type="@ButtonType.Default" OnClick="AddItemToNewImport" Style="width:100%; height:38px; border-radius:8px;">Thêm</Button>
+                <Button Type="@ButtonType.Default" OnClick="AddItemToNewImport" Class="btn-custom">Thêm</Button>
             </div>
         </div>
 
@@ -323,7 +325,7 @@
                             <td>@String.Format("{0:N0} VND", det.Price)</td>
                             <td><strong>@String.Format("{0:N0} VND", det.Quantity * det.Price)</strong></td>
                             <td>
-                                <Button Danger Size="ButtonSize.Small" OnClick="() => RemoveImportDetail(det)"><Icon Type="delete" /></Button>
+                                <Button Danger Size="ButtonSize.Small" OnClick="() => RemoveImportDetail(det)" Class="btn-custom"><Icon Type="delete" /></Button>
                             </td>
                         </tr>
                     }
@@ -339,8 +341,8 @@
 
         <!-- Actions -->
         <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #f1f5f9; padding-top:12px; margin-top:12px;">
-            <Button OnClick="() => isImportCreateVisible = false" Style="border-radius:8px;">Hủy</Button>
-            <Button Type="@ButtonType.Primary" OnClick="SaveNewImportOrder" Style="border-radius:8px;">Lưu Phiếu</Button>
+            <Button OnClick="() => isImportCreateVisible = false" Class="btn-custom">Hủy</Button>
+            <Button Type="@ButtonType.Primary" OnClick="SaveNewImportOrder" Class="btn-custom">Lưu Phiếu</Button>
         </div>
     </div>
 </Modal>
