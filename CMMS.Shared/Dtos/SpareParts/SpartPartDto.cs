@@ -41,7 +41,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public string? DeptName { get; set; }
         public int? FACID { get; set; }
         public bool IsLowStock => Inventory <= MinStock;
-        public string DisplayName => $"{PartCode} — {PartName}";
+        public string DisplayName => $"{PartCode} - {PartName}";
 
     }
 }

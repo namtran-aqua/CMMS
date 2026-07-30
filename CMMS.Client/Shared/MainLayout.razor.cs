@@ -75,7 +75,7 @@ namespace CMMS.Client.Shared
             {
                 authProvider.MarkUserAsLoggedOut();
             }
-            NavigationManager.NavigateTo($"{NavigationManager.BaseUri}login", forceLoad: true);
+            NavigationManager.NavigateTo($"{NavigationManager.BaseUri}dash-board", forceLoad: true);
         }
 
         private void GoToLogin()

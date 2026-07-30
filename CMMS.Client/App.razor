@@ -1,13 +1,27 @@
-﻿@using AntDesign
+@using AntDesign
+@using Microsoft.AspNetCore.Components.Authorization
 
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <h3 style="color:red">Not found</h3>
-        </LayoutView>
-    </NotFound>
-</Router>
-<AntContainer />
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <p>You are not authorized to access this resource.</p>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <h3 style="color:red">Not found</h3>
+            </LayoutView>
+        </NotFound>
+    </Router>
+    <AntContainer />
+</CascadingAuthenticationState>

@@ -2,6 +2,7 @@ using CMMS.Data.Connection;
 using CMMS.Shared.Dtos.SpareParts;
 using CMMS.Shared.Dtos.User;
 using CMMS.Shared.Dtos.Common;
+using CMMS.Server.Services.Auth;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using System;
@@ -17,17 +18,21 @@ namespace CMMS.Server.Services.SparePartService
     {
         private readonly IConfiguration _config;
         private readonly ISqlConnectionFactory _connectionFactory;
+        private readonly IDataPermissionService _dataPermissionService;
 
-        public SparePartService(IConfiguration config, ISqlConnectionFactory connectionFactory)
+        public SparePartService(IConfiguration config, ISqlConnectionFactory connectionFactory, IDataPermissionService dataPermissionService)
         {
             _config = config;
             _connectionFactory = connectionFactory;
+            _dataPermissionService = dataPermissionService;
         }
 
         public async Task<List<SparePartDto>> GetAllAsync(int? factoryId = null)
         {
+            var permission = _dataPermissionService.GetPermission();
+
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
+            string sql = @"
                 SELECT 
                     p.SPID, p.PartCode, p.PartName, p.CategoryID, c.CategoryName,
                     p.Unit, p.Price, p.Inventory, p.MinStock, p.LocID, l.LocName AS Location,
@@ -38,10 +43,20 @@ namespace CMMS.Server.Services.SparePartService
                 LEFT JOIN dbo.Tbl_SparePartSuppliers s ON s.SupplierID = p.SupplierID
                 LEFT JOIN dbo.Tbl_FactoryLocation l ON l.LocID = p.LocID
                 LEFT JOIN dbo.vw_FactoryDepartment d ON d.DeptID = p.DeptID
-                WHERE (@FactoryId IS NULL OR COALESCE(p.FACID, l.FACID, d.FACID) = @FactoryId)
-                ORDER BY p.PartName";
+                WHERE (@FactoryId IS NULL OR COALESCE(p.FACID, l.FACID, d.FACID) = @FactoryId)";
 
-            var parts = await connection.QueryAsync<SparePartDto>(sql, new { FactoryId = factoryId });
+            if (!permission.IsGlobal)
+            {
+                sql += " AND COALESCE(p.FACID, l.FACID, d.FACID) = @UserFacId AND p.DeptID = @UserDeptId";
+            }
+
+            sql += " ORDER BY p.PartName";
+
+            var parts = await connection.QueryAsync<SparePartDto>(sql, new { 
+                FactoryId = factoryId,
+                UserFacId = permission.FacId,
+                UserDeptId = permission.DeptId
+            });
             return parts.ToList();
         }
 

@@ -17,7 +17,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace CMMS.Client.Pages.SpareParts.Tabs
+namespace CMMS.Client.Pages.MasterData.Catalog
 {
     public partial class CatalogTab : ComponentBase, IDisposable
     {

@@ -32,5 +32,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public bool HasCode { get; set; }
         public string? SerialCode { get; set; }
         public int Quantity { get; set; }
+        public int? Inventory { get; set; }
+        public string? Unit { get; set; }
     }
 }

@@ -231,6 +231,13 @@ namespace CMMS.Server.Services.SparePartService
             var conditions = new List<string>();
             var parameters = new DynamicParameters();
 
+            var permission = _dataPermissionService.GetPermission();
+            if (!permission.IsGlobal)
+            {
+                conditions.Add("o.FACID = @UserFacId");
+                parameters.Add("UserFacId", permission.FacId);
+            }
+
             if (factoryId.HasValue)
             {
                 conditions.Add("o.FACID = @FactoryId");
@@ -610,6 +617,13 @@ namespace CMMS.Server.Services.SparePartService
             var conditions = new List<string>();
             var parameters = new DynamicParameters();
 
+            var permission = _dataPermissionService.GetPermission();
+            if (!permission.IsGlobal)
+            {
+                conditions.Add("o.FACID = @UserFacId");
+                parameters.Add("UserFacId", permission.FacId);
+            }
+
             if (factoryId.HasValue)
             {
                 conditions.Add("o.FACID = @FactoryId");
@@ -719,14 +733,26 @@ namespace CMMS.Server.Services.SparePartService
                        v.VendorName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ImportOrder o
                 LEFT JOIN dbo.Tbl_Vendors v ON v.VendorID = o.VendorID
-                LEFT JOIN dbo.Tbl_User u ON u.Id = o.CreateBy";
+                LEFT JOIN dbo.Tbl_User u ON u.Id = o.CreateBy
+                WHERE 1 = 1";
+            
+            var permission = _dataPermissionService.GetPermission();
+            var parameters = new DynamicParameters();
+            
+            if (!permission.IsGlobal)
+            {
+                sql += " AND o.FACID = @UserFacId";
+                parameters.Add("UserFacId", permission.FacId);
+            }
+
             if (factoryId.HasValue)
             {
-                sql += " WHERE o.FACID = @FactoryId";
+                sql += " AND o.FACID = @FactoryId";
+                parameters.Add("FactoryId", factoryId.Value);
             }
             sql += " ORDER BY o.CreateAt DESC, o.ImportID DESC";
 
-            var items = (await connection.QueryAsync<ImportOrderDto>(sql, new { FactoryId = factoryId })).ToList();
+            var items = (await connection.QueryAsync<ImportOrderDto>(sql, parameters)).ToList();
             if (items.Any())
             {
                 var importIds = items.Select(x => x.ImportID.ToString()).ToList();
@@ -754,14 +780,26 @@ namespace CMMS.Server.Services.SparePartService
                        m.MovementTypeName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ExportOrder o
                 LEFT JOIN dbo.Tbl_MovementType m ON m.MovementTypeID = o.MovementTypeID
-                LEFT JOIN dbo.Tbl_User u ON u.Id = o.CreateBy";
+                LEFT JOIN dbo.Tbl_User u ON u.Id = o.CreateBy
+                WHERE 1 = 1";
+            
+            var permission = _dataPermissionService.GetPermission();
+            var parameters = new DynamicParameters();
+
+            if (!permission.IsGlobal)
+            {
+                sql += " AND o.FACID = @UserFacId";
+                parameters.Add("UserFacId", permission.FacId);
+            }
+
             if (factoryId.HasValue)
             {
-                sql += " WHERE o.FACID = @FactoryId";
+                sql += " AND o.FACID = @FactoryId";
+                parameters.Add("FactoryId", factoryId.Value);
             }
             sql += " ORDER BY o.CreateAt DESC, o.ExportID DESC";
 
-            var items = (await connection.QueryAsync<ExportOrderDto>(sql, new { FactoryId = factoryId })).ToList();
+            var items = (await connection.QueryAsync<ExportOrderDto>(sql, parameters)).ToList();
             if (items.Any())
             {
                 foreach (var item in items)
@@ -788,6 +826,13 @@ namespace CMMS.Server.Services.SparePartService
             {
                 conditions.Add("p.IsCoded = @IsCoded");
                 parameters.Add("IsCoded", isCoded.Value ? 1 : 0);
+            }
+
+            var permission = _dataPermissionService.GetPermission();
+            if (!permission.IsGlobal)
+            {
+                conditions.Add("i.FACID = @UserFacId");
+                parameters.Add("UserFacId", permission.FacId);
             }
 
             if (factoryId.HasValue && factoryId.Value > 0)

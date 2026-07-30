@@ -16,9 +16,12 @@ namespace CMMS.Shared.Dtos.User
         public bool IsActive { get; set; }
         public string? Avatar { get; set; }
         public int? FACID { get; set; }
+        public string? FACName { get; set; }
         public int? DeptID { get; set; }
+        public string? DeptName { get; set; }
         public int? LocID { get; set; }
         public int? RoleID { get; set; }
+        public string? RoleName { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }

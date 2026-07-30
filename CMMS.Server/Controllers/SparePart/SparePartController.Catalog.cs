@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CMMS.Server.Controllers.SparePart
 {
@@ -15,6 +16,7 @@ namespace CMMS.Server.Controllers.SparePart
         public async Task<List<SparePartSupplierDto>> GetSuppliers() => await _service.GetSuppliersAsync();
 
         [HttpPost("create")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Create(SparePartDto dto)
         {
             try
@@ -26,6 +28,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPut("update")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Update(SparePartDto dto)
         {
             try
@@ -37,6 +40,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPost("category/create")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> CreateCategory(SparePartCategoryDto dto)
         {
             try
@@ -47,7 +51,20 @@ namespace CMMS.Server.Controllers.SparePart
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
         }
 
+        [HttpPut("category/update")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UpdateCategory(SparePartCategoryDto dto)
+        {
+            try
+            {
+                var success = await _service.UpdateCategory(dto, await GetCurrentUserAsync());
+                return success ? Ok(new { message = "Cập nhật thành công" }) : NotFound();
+            }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+        }
+
         [HttpDelete("category/delete/{categoryid}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DeleteCategory(int categoryid)
         {
             var success = await _service.DeleteCategory(categoryid, await GetCurrentUserAsync());
@@ -55,6 +72,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPost("supplier/create")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> CreateSupplier(SparePartSupplierDto dto)
         {
             try
@@ -65,7 +83,20 @@ namespace CMMS.Server.Controllers.SparePart
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
         }
 
+        [HttpPut("supplier/update")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UpdateSupplier(SparePartSupplierDto dto)
+        {
+            try
+            {
+                var success = await _service.UpdateSupplier(dto, await GetCurrentUserAsync());
+                return success ? Ok(new { message = "Cập nhật thành công" }) : NotFound();
+            }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+        }
+
         [HttpDelete("supplier/delete/{spid}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DeleteSupplier(int spid)
         {
             var success = await _service.DeleteSupplier(spid, await GetCurrentUserAsync());

@@ -21,8 +21,10 @@ namespace CMMS.Server.Services.SparePartService
         Task<List<SparePartTransactionDto>> GetTransactionHistoryAsync(int? factoryId = null);
         Task<PagedResultDto<SparePartTransactionDto>> GetTransactionHistoryPagedAsync(int page, int pageSize, string? searchText, string? typeFilter, int? factoryId, DateTime? fromDate = null, DateTime? toDate = null);
         Task<SparePartCategoryDto> CreateCategory(SparePartCategoryDto dto, UserDto currentUser);
+        Task<bool> UpdateCategory(SparePartCategoryDto dto, UserDto currentUser);
         Task<bool> DeleteCategory(int categoryid, UserDto currentUser);
         Task<SparePartSupplierDto> CreateSupplier(SparePartSupplierDto dto, UserDto currentUser);
+        Task<bool> UpdateSupplier(SparePartSupplierDto dto, UserDto currentUser);
         Task<bool> DeleteSupplier(int supplierid, UserDto currentUser);
         Task<ImportResultDto> ImportSparePartsAsync(Stream fileStream, string fileName, UserDto currentUser);
 

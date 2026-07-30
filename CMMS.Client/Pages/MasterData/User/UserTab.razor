@@ -1,0 +1,207 @@
+@namespace CMMS.Client.Pages.MasterData.User
+@using AntDesign
+@using CMMS.Client.Common
+@using CMMS.Shared.Dtos.User
+@using CMMS.Shared.Dtos.Equipment
+@using CMMS.Shared.Authorization
+
+<div class="user-catalog-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3>User Management</h3>
+            <p class="text-muted">View and manage users in the system.</p>
+        </div>
+        <div>
+            @if (CanCreate)
+            {
+                <Button Type="@ButtonType.Primary" OnClick="ShowAddModal" Class="btn-custom">
+                    <Icon Type="plus" />Add User
+                </Button>
+            }
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3"> 
+            <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Users List</h6>
+            <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@(Users?.Count ?? 0) users total</p>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>WorkDay ID</th>
+                        <th>Full Name</th>
+                        @* <th>Email</th> *@
+                        <th>Factory</th>
+                        <th>Department</th>
+                        <th>Role</th>
+                        @* <th>Status</th> *@
+                        <th class="sticky-action" style="width: 150px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Users != null && Users.Any())
+                    {
+                        foreach (var user in Users)
+                        {
+                            <tr>
+                                <td><strong>@user.WorkDayId</strong></td>
+                                <td>@user.FullName</td>
+                                @* <td>@user.Email</td> *@
+                                <td>@user.FACName</td>
+                                <td>@user.DeptName</td>
+                                <td>@user.RoleName</td>
+                                @* <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Disabled</span>
+                                    }
+                                </td> *@
+                                @* <td style="text-align: right">
+                                    <Space>
+                                        @if (CanEdit)
+                                        {
+                                            <SpaceItem>
+                                                <Button Type="@ButtonType.Default" Size="@ButtonSize.Small" OnClick="() => ShowEditModal(user)" Icon="edit" />
+                                            </SpaceItem>
+                                        }
+                                        @if (CanDisable && user.IsActive)
+                                        {
+                                            <SpaceItem>
+                                                <Popconfirm Title="Are you sure you want to disable this user?" OnConfirm="() => DisableUser(user.Id)" OkText="Yes" CancelText="No">
+                                                    <Button Danger Size="@ButtonSize.Small" Icon="stop" />
+                                                </Popconfirm>
+                                            </SpaceItem>
+                                        }
+                                    </Space>
+                                </td> *@
+                                <td class="sticky-action" style="text-align: center;">
+                                    <div style="display:flex; gap:6px; justify-content: center;">
+                                        @if (CanEdit)
+                                        {
+                                        <Tooltip Title="@("Edit")">
+                                                <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowEditModal(user)"><Icon Type="edit" /></Button>
+                                        </Tooltip>
+                                        }
+                                        @if (CanDisable && user.IsActive)
+                                        {
+                                            <Tooltip Title="@("Delete")">
+                                                <Popconfirm Title="Are you sure you want to disable this user?" OnConfirm="() => DisableUser(user.Id)" OkText="Yes" CancelText="No">
+                                                    <Button Size="ButtonSize.Small" Class="btn-without-title" Danger > <Icon Type="delete" /></Button>
+                                                </Popconfirm>
+                                               
+                                            </Tooltip>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:30px; color:#94a3b8;">
+                                @if (isLoading)
+                                {
+                                    <Spin />
+                                }
+                                else
+                                {
+                                    <span>No data available.</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<Modal Title="@(isEditMode ? "Edit User" : "Add User")"
+       Visible="@isModalVisible"
+       OnOk="@HandleOk"
+       OnCancel="@HandleCancel"
+       ConfirmLoading="@isSaving">
+       
+    <div class="mb-3">
+        <label class="form-label d-block">User <span class="text-danger">*</span></label>
+        <Select TItem="AquaUserDto"
+                TItemValue="Guid?"
+                DataSource="@AquaUsers"
+                @bind-Value="@selectedUserId"
+                ValueName="@nameof(AquaUserDto.Id)"
+                LabelName="@nameof(AquaUserDto.FullName)"
+                Placeholder="Search by Name, WorkDay ID or Email"
+                EnableSearch
+                OnSearch="OnUserSearch"
+                Disabled="@isEditMode"
+                Style="width: 100%">
+            <ItemTemplate>
+                <div class="d-flex justify-content-between">
+                    <span>@context.FullName</span>
+                    <span class="text-muted" style="font-size: 12px">@context.WorkDayId</span>
+                </div>
+            </ItemTemplate>
+        </Select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-block">Factory <span class="text-danger">*</span></label>
+        <Select TItem="FactoryDto"
+                TItemValue="int?"
+                DataSource="@Factories"
+                Value="@selectedFacId"
+                ValueChanged="OnFactoryChanged"
+                ValueName="@nameof(FactoryDto.FACID)"
+                LabelName="@nameof(FactoryDto.FACName)"
+                Placeholder="Select a Factory"
+                EnableSearch
+                Style="width: 100%">
+        </Select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-block">Department <span class="text-danger">*</span></label>
+        <Select TItem="DepartmentDto"
+                TItemValue="int?"
+                DataSource="@Departments"
+                @bind-Value="@selectedDeptId"
+                ValueName="@nameof(DepartmentDto.DeptID)"
+                LabelName="@nameof(DepartmentDto.DeptName)"
+                Placeholder="Select a Department"
+                EnableSearch
+                Style="width: 100%"
+                Disabled="@(selectedFacId == null)">
+        </Select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-block">Role <span class="text-danger">*</span></label>
+        <Select TItem="RoleDto"
+                TItemValue="int?"
+                DataSource="@Roles"
+                @bind-Value="@selectedRoleId"
+                ValueName="@nameof(RoleDto.Id)"
+                LabelName="@nameof(RoleDto.Name)"
+                Placeholder="Select a Role"
+                Style="width: 100%">
+        </Select>
+    </div>
+    
+    @if (isEditMode)
+    {
+        <div class="mb-3">
+            <label class="form-label me-2">Active Status:</label>
+            <Switch @bind-Value="@selectedIsActive" />
+        </div>
+    }
+</Modal>

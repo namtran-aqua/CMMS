@@ -1,0 +1,137 @@
+@namespace CMMS.Client.Pages.MasterData.Vendor
+@using AntDesign
+@using CMMS.Shared.Dtos.Equipment
+@using CMMS.Shared.Authorization
+
+<div class="vendor-catalog-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>Vendor Management</h3>
+            <p class="text-muted">Create and manage vendors in the system.</p>
+        </div>
+        @if (true) // Replace with role check if needed
+        {
+            <Button Type="@ButtonType.Primary" OnClick="ShowAddVendorModal" Class="btn-custom">
+                <Icon Type="plus" /> Add Vendor
+            </Button>
+        }
+    </div>
+
+    <!-- Table Card -->
+    <div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3"> 
+            <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Vendors List</h6>
+            <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@(Vendors?.Count ?? 0) vendors total</p>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 150px;">Vendor Code</th>
+                        <th>Vendor Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th class="sticky-action" style="width: 150px; text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Vendors != null && Vendors.Any())
+                    {
+                        foreach (var vendor in Vendors)
+                        {
+                            <tr>
+                                <td><strong>@vendor.VendorCode</strong></td>
+                                <td>@vendor.VendorName</td>
+                                <td>@vendor.VendorPhone</td>
+                                <td>@vendor.VendorEmail</td>
+                                <td class="sticky-action" style="text-align: center;">
+                                    @if (true) // Replace with role check if needed
+                                    {
+                                        <div style="display:flex; justify-content:center; gap:6px;">
+                                            <Tooltip Title="@("Edit")">
+                                                <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowEditVendorModal(vendor)">
+                                                    <Icon Type="edit" />
+                                                </Button>
+                                            </Tooltip>
+                                            <Tooltip Title="@("Delete")">
+                                                <Popconfirm Title="Are you sure you want to delete this vendor?"
+                                                            OnConfirm="() => DeleteVendor(vendor.VendorID)"
+                                                            OkText="Yes"
+                                                            CancelText="No">
+                                                    <Button Size="ButtonSize.Small" Class="btn-without-title" Danger>
+                                                        <Icon Type="delete" />
+                                                    </Button>
+                                                </Popconfirm>
+                                            </Tooltip>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Không có dữ liệu.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <Modal Title="@modalTitle"
+           Visible="@isVendorModalVisible"
+           OnOk="@HandleVendorOk"
+           OnCancel="HandleVendorCancel"
+           OkText="@("Save")"
+           CancelText="@("Cancel")"
+           Width="600">
+        <Form Model="@editingVendor" Layout="@FormLayout.Vertical">
+            <div class="row">
+                <div class="col-md-6">
+                    <FormItem Label="Vendor Code">
+                        <Input @bind-Value="@editingVendor.VendorCode" />
+                    </FormItem>
+                </div>
+                <div class="col-md-6">
+                    <FormItem Label="Vendor Name">
+                        <Input @bind-Value="@editingVendor.VendorName" />
+                    </FormItem>
+                </div>
+                <div class="col-md-6">
+                    <FormItem Label="Phone">
+                        <Input @bind-Value="@editingVendor.VendorPhone" />
+                    </FormItem>
+                </div>
+                <div class="col-md-6">
+                    <FormItem Label="Email">
+                        <Input @bind-Value="@editingVendor.VendorEmail" />
+                    </FormItem>
+                </div>
+                <div class="col-md-12">
+                    <FormItem Label="Address">
+                        <Input @bind-Value="@editingVendor.VendorAddress" />
+                    </FormItem>
+                </div>
+                <div class="col-md-6">
+                    <FormItem Label="Contact Person">
+                        <Input @bind-Value="@editingVendor.VendorContact" />
+                    </FormItem>
+                </div>
+                <div class="col-md-6">
+                    <FormItem Label="Bank Name">
+                        <Input @bind-Value="@editingVendor.VendorBankName" />
+                    </FormItem>
+                </div>
+                <div class="col-md-12">
+                    <FormItem Label="Note">
+                        <TextArea @bind-Value="@editingVendor.VendorNote" />
+                    </FormItem>
+                </div>
+            </div>
+        </Form>
+    </Modal>
+</div>

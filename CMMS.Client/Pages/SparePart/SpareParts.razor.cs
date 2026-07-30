@@ -17,7 +17,6 @@ namespace CMMS.Client.Pages.SpareParts
                 selectedTab = SubPath.ToLower() switch
                 {
                     "dashboard" => "Dashboard",
-                    "catalog" => "Catalog",
                     "inventory" => "Inventory",
                     "coded-parts" => "CodedParts",
                     "non-coded" => "NonCodedParts",

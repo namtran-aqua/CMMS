@@ -7,8 +7,8 @@
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center">
     <div>
-        <h3>Import Orders (Nhập kho)</h3>
-        <p class="text-muted">Register new stocks, batch codes, and document attachments</p>
+        <h3>Inbound</h3>
+        <p class="text-muted">Import spare parts from PO</p>
     </div>
     @if (IsAuthenticated)
     {
@@ -261,7 +261,13 @@
         <h6 style="font-weight:700; color:#0f172a; margin:0;">Thêm phụ tùng vào danh sách</h6>
         <div class="row align-items-end" style="gap:12px 0;">
             <div class="col-md-5">
-                <label style="font-size:12px; font-weight:600; color:#64748b;">Chọn Phụ Tùng</label>
+                <label style="font-size:12px; font-weight:600; color:#64748b;">
+                    Chọn Phụ Tùng
+                    @if (tempImportDetail.SPID > 0)
+                    {
+                        <span style="color:#10b981; font-weight:normal; margin-left:4px;">(Tồn: @(tempImportDetail.Inventory ?? 0) @tempImportDetail.Unit)</span>
+                    }
+                </label>
                 <Select TValue="int"
                         @bind-Value="selectedImportPartId"
                         DataSource="importPartsSearchList"
@@ -278,7 +284,9 @@
             {
                 <div class="col-md-4">
                     <label style="font-size:12px; font-weight:600; color:#64748b;">Mã Serial/Code (Chỉ 1 con)</label>
-                    <Input placeholder="Nhập mã serial duy nhất..." @bind-Value="tempImportDetail.SerialCode" />
+                    <AutoComplete @bind-Value="tempImportDetail.SerialCode"
+                                  Options="availableCodedItemsForSelectedPart"
+                                  Placeholder="Nhập hoặc chọn mã serial..." />
                 </div>
             }
             else

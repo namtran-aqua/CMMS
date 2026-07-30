@@ -318,12 +318,12 @@ namespace CMMS.Server.Services.SparePartService
                 int colName = headers.FindIndex(h => h.Equals("PartName", StringComparison.OrdinalIgnoreCase));
                 int colUnit = headers.FindIndex(h => h.Equals("Unit", StringComparison.OrdinalIgnoreCase));
                 int colPrice = headers.FindIndex(h => h.Equals("Price", StringComparison.OrdinalIgnoreCase));
-                int colInventory = headers.FindIndex(h => h.Equals("Inventory", StringComparison.OrdinalIgnoreCase));
                 int colMinStock = headers.FindIndex(h => h.Equals("MinStock", StringComparison.OrdinalIgnoreCase));
                 int colCategory = headers.FindIndex(h => h.Equals("CategoryName", StringComparison.OrdinalIgnoreCase));
                 int colSupplier = headers.FindIndex(h => h.Equals("SupplierName", StringComparison.OrdinalIgnoreCase));
                 int colLoc = headers.FindIndex(h => h.Equals("LocName", StringComparison.OrdinalIgnoreCase));
                 int colDept = headers.FindIndex(h => h.Equals("DeptCode", StringComparison.OrdinalIgnoreCase));
+                int colIsCoded = headers.FindIndex(h => h.Equals("IsCoded", StringComparison.OrdinalIgnoreCase));
                 int colNote = headers.FindIndex(h => h.Equals("Note", StringComparison.OrdinalIgnoreCase));
 
                 if (colCode == -1 || colName == -1)
@@ -341,166 +341,174 @@ namespace CMMS.Server.Services.SparePartService
                 var locations = (await connection.QueryAsync<LocationDto>("SELECT LocID, LocName FROM dbo.Tbl_FactoryLocation")).ToList();
                 var departments = (await connection.QueryAsync<DepartmentDto>("SELECT DeptID, DeptCode FROM dbo.vw_FactoryDepartment")).ToList();
 
+                // Phase 1: Validate all lines
                 for (int i = 1; i < lines.Length; i++)
                 {
                     var line = lines[i];
                     var fields = ParseCsvLine(line);
                     if (fields.Count == 0 || fields.All(string.IsNullOrWhiteSpace)) continue;
+                    while (fields.Count < headers.Count) fields.Add("");
 
+                    var code = fields[colCode].Trim();
+                    var name = fields[colName].Trim();
+
+                    if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(name))
+                    {
+                        result.Errors.Add($"Dòng {i + 1}: Mã hoặc tên phụ tùng không được trống.");
+                    }
+
+                    if (colCategory != -1 && !string.IsNullOrWhiteSpace(fields[colCategory]))
+                    {
+                        var catName = fields[colCategory].Trim();
+                        if (!categories.Any(c => c.CategoryName.Equals(catName, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            result.Errors.Add($"Dòng {i + 1}: Category '{catName}' không tồn tại.");
+                        }
+                    }
+
+                    if (colSupplier != -1 && !string.IsNullOrWhiteSpace(fields[colSupplier]))
+                    {
+                        var supName = fields[colSupplier].Trim();
+                        if (!suppliers.Any(s => s.SupplierName.Equals(supName, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            result.Errors.Add($"Dòng {i + 1}: Supplier '{supName}' không tồn tại.");
+                        }
+                    }
+
+                    if (colLoc != -1 && !string.IsNullOrWhiteSpace(fields[colLoc]))
+                    {
+                        var locName = fields[colLoc].Trim();
+                        if (!locations.Any(l => l.LocName.Equals(locName, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            result.Errors.Add($"Dòng {i + 1}: Location '{locName}' không tồn tại.");
+                        }
+                    }
+
+                    if (colDept != -1 && !string.IsNullOrWhiteSpace(fields[colDept]))
+                    {
+                        var deptCode = fields[colDept].Trim();
+                        if (!departments.Any(d => d.DeptCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            result.Errors.Add($"Dòng {i + 1}: Department '{deptCode}' không tồn tại.");
+                        }
+                    }
+                }
+
+                if (result.Errors.Any())
+                {
+                    result.Success = false;
+                    result.Message = "Có lỗi xác thực dữ liệu. Vui lòng kiểm tra và tạo mới các dữ liệu tham chiếu (Danh mục, NCC, Vị trí...) trước khi import.";
+                    result.FailureCount = result.Errors.Count;
+                    return result;
+                }
+
+                // Phase 2: Insert / Update
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+                    var fields = ParseCsvLine(line);
+                    if (fields.Count == 0 || fields.All(string.IsNullOrWhiteSpace)) continue;
                     while (fields.Count < headers.Count) fields.Add("");
 
                     try
                     {
                         var code = fields[colCode].Trim();
                         var name = fields[colName].Trim();
-
-                        if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(name))
-                        {
-                            result.FailureCount++;
-                            result.Errors.Add($"Dòng {i + 1}: Mã hoặc tên phụ tùng không được trống.");
-                            continue;
-                        }
-
                         var unit = colUnit != -1 ? fields[colUnit].Trim() : "";
+                        
                         decimal? price = null;
                         if (colPrice != -1 && decimal.TryParse(fields[colPrice], out var parsedPrice)) price = parsedPrice;
                         
-                        int inventory = 0;
-                        if (colInventory != -1 && int.TryParse(fields[colInventory], out var parsedInv)) inventory = parsedInv;
-
                         int minStock = 0;
                         if (colMinStock != -1 && int.TryParse(fields[colMinStock], out var parsedMin)) minStock = parsedMin;
+
+                        bool isCoded = false;
+                        if (colIsCoded != -1)
+                        {
+                            var val = fields[colIsCoded].Trim().ToLower();
+                            isCoded = (val == "1" || val == "true" || val == "yes" || val == "có");
+                        }
 
                         string note = colNote != -1 ? fields[colNote].Trim() : "";
 
                         int? categoryId = null;
-                        if (colCategory != -1)
+                        if (colCategory != -1 && !string.IsNullOrWhiteSpace(fields[colCategory]))
                         {
                             var catName = fields[colCategory].Trim();
-                            if (!string.IsNullOrEmpty(catName))
-                            {
-                                var cat = categories.FirstOrDefault(c => c.CategoryName.Equals(catName, StringComparison.OrdinalIgnoreCase));
-                                if (cat == null)
-                                {
-                                    var insertCatSql = @"
-                                        INSERT INTO dbo.Tbl_SparePartCategories (CategoryName, CreateDate, CreateBy) 
-                                        VALUES (@CategoryName, @CreateDate, @CreateBy);
-                                        SELECT CAST(SCOPE_IDENTITY() AS INT);";
-                                    var newCatId = await connection.ExecuteScalarAsync<int>(insertCatSql, new {
-                                        CategoryName = catName,
-                                        CreateDate = DateTime.Now,
-                                        CreateBy = currentUser?.Id
-                                    });
-                                    var newCat = new SparePartCategoryDto { CategoryID = newCatId, CategoryName = catName };
-                                    categories.Add(newCat);
-                                    categoryId = newCatId;
-                                }
-                                else
-                                {
-                                    categoryId = cat.CategoryID;
-                                }
-                            }
+                            categoryId = categories.First(c => c.CategoryName.Equals(catName, StringComparison.OrdinalIgnoreCase)).CategoryID;
                         }
 
                         int? supplierId = null;
-                        if (colSupplier != -1)
+                        if (colSupplier != -1 && !string.IsNullOrWhiteSpace(fields[colSupplier]))
                         {
                             var supName = fields[colSupplier].Trim();
-                            if (!string.IsNullOrEmpty(supName))
-                            {
-                                var sup = suppliers.FirstOrDefault(s => s.SupplierName.Equals(supName, StringComparison.OrdinalIgnoreCase));
-                                if (sup == null)
-                                {
-                                    var insertSupSql = @"
-                                        INSERT INTO dbo.Tbl_SparePartSuppliers (SupplierName, CreateDate, CreateBy) 
-                                        VALUES (@SupplierName, @CreateDate, @CreateBy);
-                                        SELECT CAST(SCOPE_IDENTITY() AS INT);";
-                                    var newSupId = await connection.ExecuteScalarAsync<int>(insertSupSql, new {
-                                        SupplierName = supName,
-                                        CreateDate = DateTime.Now,
-                                        CreateBy = currentUser?.Id
-                                    });
-                                    var newSup = new SparePartSupplierDto { SupplierID = newSupId, SupplierName = supName };
-                                    suppliers.Add(newSup);
-                                    supplierId = newSupId;
-                                }
-                                else
-                                {
-                                    supplierId = sup.SupplierID;
-                                }
-                            }
+                            supplierId = suppliers.First(s => s.SupplierName.Equals(supName, StringComparison.OrdinalIgnoreCase)).SupplierID;
                         }
 
                         int? locId = null;
-                        if (colLoc != -1)
+                        if (colLoc != -1 && !string.IsNullOrWhiteSpace(fields[colLoc]))
                         {
                             var locName = fields[colLoc].Trim();
-                            if (!string.IsNullOrEmpty(locName))
-                            {
-                                var loc = locations.FirstOrDefault(l => l.LocName.Equals(locName, StringComparison.OrdinalIgnoreCase));
-                                if (loc != null) locId = loc.LocID;
-                            }
+                            locId = locations.First(l => l.LocName.Equals(locName, StringComparison.OrdinalIgnoreCase)).LocID;
                         }
 
                         int? deptId = null;
-                        if (colDept != -1)
+                        if (colDept != -1 && !string.IsNullOrWhiteSpace(fields[colDept]))
                         {
                             var deptCode = fields[colDept].Trim();
-                            if (!string.IsNullOrEmpty(deptCode))
-                            {
-                                var dept = departments.FirstOrDefault(d => d.DeptCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase));
-                                if (dept != null) deptId = dept.DeptID;
-                            }
+                            deptId = departments.First(d => d.DeptCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase)).DeptID;
                         }
 
-                        // Check if part code already exists
+                        int? facId = currentUser?.FACID;
+
                         var existsSql = "SELECT SPID FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode";
                         var existingPartId = await connection.QueryFirstOrDefaultAsync<int?>(existsSql, new { PartCode = code });
 
                         if (existingPartId.HasValue)
                         {
-                            // Update existing
                             var updateSql = @"
                                 UPDATE dbo.Tbl_SparePart 
                                 SET PartName = @PartName, Unit = @Unit, Price = COALESCE(@Price, Price), 
-                                    Inventory = @Inventory, MinStock = @MinStock, CategoryID = COALESCE(@CategoryID, CategoryID),
+                                    MinStock = @MinStock, CategoryID = COALESCE(@CategoryID, CategoryID),
                                     SupplierID = COALESCE(@SupplierID, SupplierID), LocID = COALESCE(@LocID, LocID), 
-                                    DeptID = COALESCE(@DeptID, DeptID), Note = @Note, UpdateDate = GETDATE()
+                                    DeptID = COALESCE(@DeptID, DeptID), FACID = COALESCE(@FACID, FACID), Note = @Note, UpdateDate = GETDATE(),
+                                    IsCoded = @IsCoded
                                 WHERE SPID = @SPID";
                             await connection.ExecuteAsync(updateSql, new {
                                 PartName = name,
                                 Unit = unit,
                                 Price = price,
-                                Inventory = inventory,
                                 MinStock = minStock,
                                 CategoryID = categoryId,
                                 SupplierID = supplierId,
                                 LocID = locId,
                                 DeptID = deptId,
+                                FACID = facId,
                                 Note = note,
+                                IsCoded = isCoded,
                                 SPID = existingPartId.Value
                             });
                             result.SuccessCount++;
                         }
                         else
                         {
-                            // Insert new
                             var insertSql = @"
-                                INSERT INTO dbo.Tbl_SparePart (PartCode, PartName, Unit, Price, Inventory, MinStock, CategoryID, SupplierID, LocID, DeptID, Note, CreateDate, UpdateDate, CreateBy, IsCoded)
-                                VALUES (@PartCode, @PartName, @Unit, @Price, @Inventory, @MinStock, @CategoryID, @SupplierID, @LocID, @DeptID, @Note, GETDATE(), GETDATE(), @CreateBy, 0)";
+                                INSERT INTO dbo.Tbl_SparePart (PartCode, PartName, Unit, Price, MinStock, CategoryID, SupplierID, LocID, DeptID, FACID, Note, CreateDate, UpdateDate, CreateBy, IsCoded)
+                                VALUES (@PartCode, @PartName, @Unit, @Price, @MinStock, @CategoryID, @SupplierID, @LocID, @DeptID, @FACID, @Note, GETDATE(), GETDATE(), @CreateBy, @IsCoded)";
                             await connection.ExecuteAsync(insertSql, new {
                                 PartCode = code,
                                 PartName = name,
                                 Unit = unit,
                                 Price = price ?? 0m,
-                                Inventory = inventory,
                                 MinStock = minStock,
                                 CategoryID = categoryId,
                                 SupplierID = supplierId,
                                 LocID = locId,
                                 DeptID = deptId,
+                                FACID = facId,
                                 Note = note,
-                                CreateBy = currentUser?.Id
+                                CreateBy = currentUser?.Id,
+                                IsCoded = isCoded
                             });
                             result.SuccessCount++;
                         }

@@ -1,10 +1,10 @@
-﻿@inject NavigationManager Nav
+@inject NavigationManager Nav
 
 @code {
     protected override void OnInitialized()
     {
         var baseUri = Nav.BaseUri.TrimEnd('/');
-        Nav.NavigateTo($"{baseUri}/login", true);
+        Nav.NavigateTo($"{baseUri}/dash-board", true);
     }
 }
 

@@ -264,10 +264,12 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 tempExportDetail.PartCode = part.PartCode;
                 tempExportDetail.PartName = part.PartName;
                 tempExportDetail.HasCode = part.IsCoded;
+                tempExportDetail.Inventory = part.Inventory;
+                tempExportDetail.Unit = part.Unit;
                 if (part.IsCoded)
                 {
                     tempExportDetail.Quantity = 1;
-                    var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/coded-items?page=1&pageSize=100&partCode={part.PartCode}&status=Available");
+                    var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}&status=Available");
                     if (itemsRes != null)
                     {
                         availableCodedItemsForSelectedPart = itemsRes.Items ?? new();

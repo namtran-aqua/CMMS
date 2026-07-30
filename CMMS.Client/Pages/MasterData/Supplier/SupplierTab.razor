@@ -1,0 +1,103 @@
+@namespace CMMS.Client.Pages.MasterData.Supplier
+@using AntDesign
+@using CMMS.Shared.Dtos.SpareParts
+@using CMMS.Shared.Authorization
+
+<div class="supplier-catalog-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3>Supplier Management</h3>
+            <p class="text-muted">Create and manage spare part suppliers in the system.</p>
+        </div>
+        @if (true) // Replace with role check if needed
+        {
+            <Button Type="@ButtonType.Primary" OnClick="ShowAddSupplierModal" Class="btn-custom">
+                <Icon Type="plus" /> Add Supplier
+            </Button>
+        }
+    </div>
+
+    <!-- Table Card -->
+    <div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3"> 
+            <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Suppliers List</h6>
+            <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@(Suppliers?.Count ?? 0) suppliers total</p>
+        </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 150px;">Supplier ID</th>
+                    <th>Supplier Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th class="sticky-action" style="width: 150px; text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Suppliers != null && Suppliers.Any())
+                {
+                    foreach (var supplier in Suppliers)
+                    {
+                        <tr>
+                            <td><strong>@supplier.SupplierID</strong></td>
+                            <td>@supplier.SupplierName</td>
+                            <td>@supplier.Phone</td>
+                            <td>@supplier.Email</td>
+                            <td class="sticky-action" style="text-align: center;">
+                                @if (true) // Replace with role check if needed
+                                {
+                                    <div style="display:flex; justify-content:center; gap:6px;">
+                                        <Tooltip Title="@("Edit")">
+                                            <Button Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => ShowEditSupplierModal(supplier)">
+                                                <Icon Type="edit" />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip Title="@("Delete")">
+                                            <Popconfirm Title="Are you sure you want to delete this supplier?"
+                                                        OnConfirm="() => DeleteSupplier(supplier.SupplierID)"
+                                                        OkText="Yes"
+                                                        CancelText="No">
+                                                <Button Size="ButtonSize.Small" Class="btn-without-title" Danger>
+                                                    <Icon Type="delete" />
+                                                </Button>
+                                            </Popconfirm>
+                                        </Tooltip>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Không có dữ liệu.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+    <Modal Title="@modalTitle"
+           Visible="@isSupplierModalVisible"
+           OnOk="@HandleSupplierOk"
+           OnCancel="HandleSupplierCancel"
+           OkText="@("Save")"
+           CancelText="@("Cancel")">
+        <Form Model="@editingSupplier" Layout="@FormLayout.Vertical">
+            <FormItem Label="Supplier Name">
+                <Input @bind-Value="@editingSupplier.SupplierName" />
+            </FormItem>
+            <FormItem Label="Phone">
+                <Input @bind-Value="@editingSupplier.Phone" />
+            </FormItem>
+            <FormItem Label="Email">
+                <Input @bind-Value="@editingSupplier.Email" />
+            </FormItem>
+        </Form>
+    </Modal>
+</div>

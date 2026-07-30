@@ -19,7 +19,7 @@ namespace CMMS.Server.Controllers.SparePart
             try
             {
                 var bytes = await _service.ExportInventoryToExcelAsync(factoryId);
-                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"SparePart_Inventory_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+                return File(bytes, "text/csv; charset=utf-8", $"SparePart_Inventory_{DateTime.Now:yyyyMMddHHmmss}.csv");
             }
             catch (Exception ex)
             {
