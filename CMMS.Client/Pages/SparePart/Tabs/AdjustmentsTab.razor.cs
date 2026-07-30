@@ -225,7 +225,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                     tempAdjustDetail.Quantity = 1;
                     if (tempAdjustDetail.Type == "OUT")
                     {
-                        var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/coded-items?page=1&pageSize=100&partCode={part.PartCode}&status=Available");
+                        var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}&status=Available&isCoded=true");
                         if (itemsRes != null)
                         {
                             availableCodedItemsForSelectedPart = itemsRes.Items ?? new();
@@ -252,7 +252,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 var part = adjustPartsSearchList.FirstOrDefault(p => p.SPID == tempAdjustDetail.SPID);
                 if (part != null)
                 {
-                    var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/coded-items?page=1&pageSize=100&partCode={part.PartCode}&status=Available");
+                    var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}&status=Available&isCoded=true");
                     if (itemsRes != null)
                     {
                         availableCodedItemsForSelectedPart = itemsRes.Items ?? new();
