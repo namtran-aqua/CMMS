@@ -3,6 +3,7 @@ using CMMS.Shared.Authorization;
 using CMMS.Shared.Dtos.Common;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.User;
+using CMMS.Server.Services.Auth;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
@@ -15,20 +16,37 @@ namespace CMMS.Server.Services.EquipmentService
     {
         private readonly IConfiguration _config;
         private readonly ISqlConnectionFactory _connectionFactory;
-        public EquipmentService(IConfiguration config, ISqlConnectionFactory connectionFactory)
+        private readonly IDataPermissionService _dataPermissionService;
+
+        public EquipmentService(IConfiguration config, ISqlConnectionFactory connectionFactory, IDataPermissionService dataPermissionService)
         {
             _config = config;
             _connectionFactory = connectionFactory;
+            _dataPermissionService = dataPermissionService;
         }
+
         public async Task<List<EquipmentDto>> GetAllAsync(int? factoryId = null)
         {
+            var permission = _dataPermissionService.GetPermission();
+
             using var connection = _connectionFactory.CreateConnection();
             string sql = "SELECT * FROM vw_EquipmentInfo WHERE IsActive = 1";
+
+            if (!permission.IsGlobal)
+            {
+                sql += " AND FACID = @UserFacId AND DeptID = @UserDeptId";
+            }
+
             if (factoryId.HasValue)
             {
                 sql += " AND FACID = @FactoryId";
             }
-            var result = await connection.QueryAsync<EquipmentDto>(sql, new { FactoryId = factoryId });
+
+            var result = await connection.QueryAsync<EquipmentDto>(sql, new { 
+                FactoryId = factoryId,
+                UserFacId = permission.FacId,
+                UserDeptId = permission.DeptId
+            });
             return result.ToList();
         }
         public async Task<bool> CreatedAsync(EquipmentDto equipment)

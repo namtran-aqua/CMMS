@@ -11,6 +11,8 @@ using CMMS.Server.Services.UserService;
 using CMMS.Server.Services.VendorService;
 using CMMS.Server.Services.SparePartService;
 using CMMS.Server.Services.EmailService;
+using CMMS.Server.Services.FactoryService;
+using CMMS.Server.Services.Auth;
 
 namespace CMMS.Server
 {
@@ -34,6 +36,10 @@ namespace CMMS.Server
             services.AddScoped<ILocationService, LocationService>();
             services.AddScoped<ISparePartService, SparePartService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IFactoryService, FactoryService>();
+            
+            services.AddScoped<ICurrentUser, CurrentUser>();
+            services.AddScoped<IDataPermissionService, DataPermissionService>();
             return services;
         }
     }

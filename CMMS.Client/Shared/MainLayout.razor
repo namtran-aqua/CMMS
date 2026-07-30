@@ -17,9 +17,10 @@
             </div>
         </div>
 
-        <Menu Mode="MenuMode.Inline"
-              Theme="MenuTheme.Light"
-              Class="custom-menu">
+        <div class="menu-container">
+            <Menu Mode="MenuMode.Inline"
+                  Theme="MenuTheme.Light"
+                  Class="custom-menu">
 
             <MenuItem>
                 <NavLink href="@GetLink("/dash-board")" class="menu-link" Match="NavLinkMatch.All">
@@ -27,93 +28,137 @@
                     <span>Dashboard</span>
                 </NavLink>
             </MenuItem>
+                @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName) && CurrentUser.RoleID == CMMS.Shared.Constants.SystemRoles.Admin)
+                {
+                    <SubMenu Key="master-data">
+                        <TitleTemplate>
+                            <div class="menu-link">
+                                <i class="fa-solid fa-database menu-icon"></i>
+                                <span>Master Data</span>
+                            </div>
+                        </TitleTemplate>
+                        <ChildContent>
+                            <MenuItem Key="md-catalog">
+                                <NavLink href="@GetLink("/master-data/spare-part-catalog")" class="menu-link">
+                                    <i class="fa-solid fa-folder-open menu-icon"></i>
+                                    <span>Catalog Spare Parts</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-category">
+                                <NavLink href="@GetLink("/master-data/category")" class="menu-link">
+                                    <i class="fa-solid fa-tags menu-icon"></i>
+                                    <span>Category</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-supplier">
+                                <NavLink href="@GetLink("/master-data/supplier")" class="menu-link">
+                                    <i class="fa-solid fa-truck-field menu-icon"></i>
+                                    <span>Supplier</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-vendor">
+                                <NavLink href="@GetLink("/master-data/vendor")" class="menu-link">
+                                    <i class="fa-solid fa-store menu-icon"></i>
+                                    <span>Vendor</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-location">
+                                <NavLink href="@GetLink("/master-data/location")" class="menu-link">
+                                    <i class="fa-solid fa-location-dot menu-icon"></i>
+                                    <span>Location</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-department">
+                                <NavLink href="@GetLink("/master-data/department")" class="menu-link">
+                                    <i class="fa-solid fa-building-user menu-icon"></i>
+                                    <span>Department</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-factory">
+                                <NavLink href="@GetLink("/master-data/factory")" class="menu-link">
+                                    <i class="fa-solid fa-industry menu-icon"></i>
+                                    <span>Factory</span>
+                                </NavLink>
+                            </MenuItem>
+                            <MenuItem Key="md-user">
+                                <NavLink href="@GetLink("/master-data/user")" class="menu-link">
+                                    <i class="fa-solid fa-users menu-icon"></i>
+                                    <span>Users</span>
+                                </NavLink>
+                            </MenuItem>
+                        </ChildContent>
+                    </SubMenu>
+                }
+            @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName))
+            {
+                <SubMenu Key="spare-parts">
+                    <TitleTemplate>
+                        <div class="menu-link">
+                            <i class="fa-solid fa-box menu-icon"></i>
+                            <span>Spare Parts</span>
+                        </div>
+                    </TitleTemplate>
+                    <ChildContent>
+                        <MenuItem Key="sp-inventory">
+                            <NavLink href="@GetLink("/spare-parts/inventory")" class="menu-link">
+                                <i class="fa-solid fa-boxes-stacked menu-icon"></i>
+                                <span>Inventory Stock</span>
+                            </NavLink>
+                        </MenuItem>
+                        <MenuItem Key="sp-coded">
+                            <NavLink href="@GetLink("/spare-parts/coded-parts")" class="menu-link">
+                                <i class="fa-solid fa-barcode menu-icon"></i>
+                                <span>Coded Parts</span>
+                            </NavLink>
+                        </MenuItem>
+                        <MenuItem Key="sp-non-coded">
+                            <NavLink href="@GetLink("/spare-parts/non-coded")" class="menu-link">
+                                <i class="fa-solid fa-layer-group menu-icon"></i>
+                                <span>Non-Coded Parts</span>
+                            </NavLink>
+                        </MenuItem>
+                        <MenuItem Key="sp-imports">
+                            <NavLink href="@GetLink("/spare-parts/imports")" class="menu-link">
+                                <i class="fa-solid fa-file-import menu-icon"></i>
+                                <span>Inbound</span>
+                            </NavLink>
+                        </MenuItem>
+                        <MenuItem Key="sp-exports">
+                            <NavLink href="@GetLink("/spare-parts/exports")" class="menu-link">
+                                <i class="fa-solid fa-file-export menu-icon"></i>
+                                <span>Outbound</span>
+                            </NavLink>
+                        </MenuItem>
+                        <MenuItem Key="sp-adjustments">
+                            <NavLink href="@GetLink("/spare-parts/adjustments")" class="menu-link">
+                                <i class="fa-solid fa-scale-balanced menu-icon"></i>
+                                <span>Stock Adjustments</span>
+                            </NavLink>
+                        </MenuItem>
+                        <MenuItem Key="sp-history">
+                            <NavLink href="@GetLink("/spare-parts/history")" class="menu-link">
+                                <i class="fa-solid fa-clock-rotate-left menu-icon"></i>
+                                <span>Transactions Log</span>
+                            </NavLink>
+                        </MenuItem>
+                    </ChildContent>
+                </SubMenu>
+                <MenuItem>
+                    <NavLink href="@GetLink("/equipment")" class="menu-link">
+                        <i class="fa-solid fa-sliders menu-icon"></i>
+                        <span>Equipment</span>
+                    </NavLink>
+                </MenuItem>
 
-            <MenuItem>
-                <NavLink href="@GetLink("/equipment")" class="menu-link">
-                    <i class="fa-solid fa-sliders menu-icon"></i>
-                    <span>Equipment</span>
-                </NavLink>
-            </MenuItem>
-
-            <MenuItem>
-                <NavLink href="@GetLink("/maintenance")" class="menu-link">
-                    <i class="fa-solid fa-wrench menu-icon"></i>
-                    <span>Maintenance</span>
-                </NavLink>
-            </MenuItem>
-
-            <SubMenu Key="spare-parts">
-                <TitleTemplate>
-                    <div class="menu-link" >
-                        <i class="fa-solid fa-box menu-icon"></i>
-                        <span>Spare Parts</span>
-                    </div>
-                </TitleTemplate>
-                <ChildContent>
-                    @* <MenuItem Key="sp-dashboard">
-                        <NavLink href="@GetLink("/spare-parts/dashboard")" class="menu-link">
-                            <i class="fa-solid fa-gauge menu-icon"></i>
-                            <span>Dashboard</span>
-                        </NavLink>
-                    </MenuItem> *@
-                    <MenuItem Key="sp-catalog">
-                        <NavLink href="@GetLink("/spare-parts/catalog")" class="menu-link">
-                            <i class="fa-solid fa-folder-open menu-icon"></i>
-                            <span>Master Data</span>
-                        </NavLink>
-                    </MenuItem>
-                    <MenuItem Key="sp-inventory">
-                        <NavLink href="@GetLink("/spare-parts/inventory")" class="menu-link">
-                            <i class="fa-solid fa-boxes-stacked menu-icon"></i>
-                            <span>Inventory Stock</span>
-                        </NavLink>
-                    </MenuItem>
-                    <MenuItem Key="sp-coded">
-                        <NavLink href="@GetLink("/spare-parts/coded-parts")" class="menu-link">
-                            <i class="fa-solid fa-barcode menu-icon"></i>
-                            <span>Coded Parts</span>
-                        </NavLink>
-                    </MenuItem>
-                    <MenuItem Key="sp-non-coded">
-                        <NavLink href="@GetLink("/spare-parts/non-coded")" class="menu-link">
-                            <i class="fa-solid fa-layer-group menu-icon"></i>
-                            <span>Non-Coded Parts</span>
-                        </NavLink>
-                    </MenuItem>
-                    <MenuItem Key="sp-imports">
-                        <NavLink href="@GetLink("/spare-parts/imports")" class="menu-link">
-                            <i class="fa-solid fa-file-import menu-icon"></i>
-                            <span>Import Orders</span>
-                        </NavLink>
-                    </MenuItem>
-                    <MenuItem Key="sp-exports">
-                        <NavLink href="@GetLink("/spare-parts/exports")" class="menu-link">
-                            <i class="fa-solid fa-file-export menu-icon"></i>
-                            <span>Export Orders</span>
-                        </NavLink>
-                    </MenuItem>
-                    <MenuItem Key="sp-adjustments">
-                        <NavLink href="@GetLink("/spare-parts/adjustments")" class="menu-link">
-                            <i class="fa-solid fa-scale-balanced menu-icon"></i>
-                            <span>Stock Adjustments</span>
-                        </NavLink>
-                    </MenuItem>
-                    @* <MenuItem Key="sp-monthly">
-                        <NavLink href="@GetLink("/spare-parts/monthly-closing")" class="menu-link">
-                            <i class="fa-solid fa-calendar-check menu-icon"></i>
-                            <span>Monthly Closed</span>
-                        </NavLink>
-                    </MenuItem> *@
-                    <MenuItem Key="sp-history">
-                        <NavLink href="@GetLink("/spare-parts/history")" class="menu-link">
-                            <i class="fa-solid fa-clock-rotate-left menu-icon"></i>
-                            <span>Transactions Log</span>
-                        </NavLink>
-                    </MenuItem>
-                </ChildContent>
-            </SubMenu> 
-
-        </Menu>
+                <MenuItem>
+                    <NavLink href="@GetLink("/maintenance")" class="menu-link">
+                        <i class="fa-solid fa-wrench menu-icon"></i>
+                        <span>Maintenance</span>
+                    </NavLink>
+                </MenuItem>
+            }
+            </Menu>
+        </div>
     </aside>
 
     <!-- MAIN - LOGIN INFO-->

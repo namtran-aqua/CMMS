@@ -1,20 +1,190 @@
 .app-layout {
     height: 100vh !important;
     overflow: hidden;
+    display: flex;
+    background: #f6f7f9;
 }
 
+/* ===== SIDEBAR ===== */
+.sidebar {
+    width: 260px;
+    background: #fff;
+    border-right: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-shadow: 2px 0 12px rgba(15, 23, 42, 0.02) !important;
+}
+
+.sidebar-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.logo-box {
+    width: 36px;
+    height: 36px;
+    background: #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.sidebar-title .title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.sidebar-title .subtitle {
+    font-size: 12px;
+    color: #888;
+}
+
+.menu-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* ===== MENU ===== */
+.custom-menu {
+    border: none !important;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+
+    .custom-menu .ant-menu-item {
+        height: auto !important;
+        margin: 6px 12px !important;
+        border-radius: 16px;
+        padding: 0 !important;
+        width: auto !important;
+        overflow: hidden;
+    }
+
+    /* SubMenu Toggle Style - match margins, padding:0, and heights of standard menu items */
+    .custom-menu .ant-menu-submenu-title {
+        height: auto !important;
+        margin: 6px 12px !important;
+        padding: 0 !important; /* MATCH ant-menu-item padding: 0 */
+        border-radius: 16px !important; /* MATCH ant-menu-item border-radius */
+        background: transparent !important;
+        line-height: normal !important;
+        width: auto !important;
+        overflow: hidden;
+        display: block !important;
+    }
+
+    /* Hover effect for the SubMenu toggle card's inner menu-link */
+    .custom-menu .ant-menu-submenu-title:hover .menu-link {
+        background: #f3f3f3 !important;
+        color: #1890ff !important;
+    }
+
+    .custom-menu .ant-menu-submenu-title:hover .menu-icon {
+        color: #111 !important;
+    }
+
+    /* Reset background colors on various AntDesign active/selected submenu container states */
+    .custom-menu .ant-menu-submenu,
+    .custom-menu .ant-menu-submenu-open,
+    .custom-menu .ant-menu-submenu-active,
+    .custom-menu .ant-menu-submenu-selected {
+        background: transparent !important;
+    }
+
+    /* Align the built-in submenu arrow caret position and color */
+    .custom-menu .ant-menu-submenu-arrow {
+        color: #999 !important;
+        right: 16px !important; /* Align to right padding edge of the title bar */
+        transition: color 0.2s;
+    }
+
+    .custom-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow {
+        color: #111 !important;
+    }
+
+    .custom-menu .ant-menu-sub {
+        background: transparent !important;
+        padding: 0 !important;
+    }
+
+    /* Nested menu items styling under SubMenu container */
+    .custom-menu .ant-menu-sub .ant-menu-item {
+        height: auto !important;
+        margin: 4px 12px 4px 28px !important; /* Left indentation spacing */
+        border-radius: 14px !important;
+        padding: 0 !important;
+        width: auto !important;
+        overflow: hidden;
+        background: transparent !important;
+    }
+
+/* ===== LINK ===== */
+.menu-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 500;
+    border-radius: 14px;
+    transition: 0.2s;
+    width: 100%;
+    font-weight: 600;
+}
+
+.menu-icon {
+    font-size: 16px;
+    color: #999;
+}
+
+/* HOVER */
+.menu-link:hover {
+    background: #f3f3f3;
+    color: #111;
+}
+
+    .menu-link:hover .menu-icon {
+        color: #111;
+    }
+
+/* ACTIVE */
+.menu-link.active {
+    background: linear-gradient(180deg, #111, #000);
+    color: #fff;
+    font-weight: 600;
+}
+
+    .menu-link.active .menu-icon {
+        color: #fff;
+    }
+
+/* ===== MAIN ===== */
 .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
     overflow: hidden;
 }
 
 .topbar {
     height: 64px !important;
     background: #fff;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f1f5f9 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02) !important;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 14px 24px !important;
     gap: 16px;
 }
 

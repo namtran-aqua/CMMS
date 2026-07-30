@@ -294,23 +294,52 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
         {
             try
             {
-                var facId = FactoryState.SelectedFacId;
-                var url = "api/SparePart/export-excel";
-                if (facId.HasValue) url += $"?factoryId={facId.Value}";
+                var items = FilteredParts; // Use the currently filtered list
+                var sb = new System.Text.StringBuilder();
+                // Add BOM for UTF-8
+                sb.AppendLine("Part Code,Part Name,Category,Unit,Price,Inventory,Min Stock,Location,Supplier,Note");
 
-                var response = await Http.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                foreach (var item in items)
                 {
-                    var fileBytes = await response.Content.ReadAsByteArrayAsync();
-                    var fileName = $"SparePart_Inventory_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
-                    var base64 = Convert.ToBase64String(fileBytes);
-                    await JS.InvokeVoidAsync("CMMSJsFunctions.saveAsFile", fileName, base64);
-                    Message.Success("Exported successfully!");
+                    string escape(object? val)
+                    {
+                        if (val == null) return string.Empty;
+                        var s = val.ToString() ?? string.Empty;
+                        if (s.Contains(",") || s.Contains("\"") || s.Contains("\n") || s.Contains("\r"))
+                        {
+                            return $"\"{s.Replace("\"", "\"\"")}\"";
+                        }
+                        return s;
+                    }
+                    sb.AppendLine($"{escape(item.PartCode)},{escape(item.PartName)},{escape(item.CategoryName)},{escape(item.Unit)},{item.Price},{item.Inventory},{item.MinStock},{escape(item.Location)},{escape(item.SupplierName)},{escape(item.Note)}");
                 }
-                else
-                {
-                    Message.Error("Export failed.");
-                }
+
+                var csvBytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+                var bom = new byte[] { 0xEF, 0xBB, 0xBF };
+                var result = new byte[bom.Length + csvBytes.Length];
+                Buffer.BlockCopy(bom, 0, result, 0, bom.Length);
+                Buffer.BlockCopy(csvBytes, 0, result, bom.Length, csvBytes.Length);
+
+                var base64 = Convert.ToBase64String(result);
+                var fileName = $"SparePart_Inventory_Filtered_{DateTime.Now:yyyyMMddHHmmss}.csv";
+
+                // Inject JS to ensure download works even if index.html is cached
+                var jsCode = @"
+                    if(!window.downloadCsvFile) {
+                        window.downloadCsvFile = function(filename, bytesBase64) {
+                            var link = document.createElement('a');
+                            link.download = filename;
+                            link.href = 'data:text/csv;base64,' + bytesBase64;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        };
+                    }
+                ";
+                await JS.InvokeVoidAsync("eval", jsCode);
+                await JS.InvokeVoidAsync("window.downloadCsvFile", fileName, base64);
+                
+                Message.Success("Exported filtered data successfully!");
             }
             catch (Exception ex)
             {

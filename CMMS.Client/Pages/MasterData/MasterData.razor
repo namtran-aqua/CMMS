@@ -1,0 +1,41 @@
+@page "/master-data"
+@page "/master-data/{SubPath}"
+@namespace CMMS.Client.Pages.MasterData
+@using CMMS.Client.Pages.MasterData.Catalog
+@using CMMS.Client.Pages.MasterData.Category
+@using CMMS.Client.Pages.MasterData.Supplier
+@using CMMS.Client.Pages.MasterData.Vendor
+@using CMMS.Client.Pages.MasterData.Location
+@using CMMS.Client.Pages.MasterData.Department
+@using CMMS.Client.Pages.MasterData.Factory
+@using CMMS.Client.Pages.MasterData.User
+@attribute [Authorize(Policy = "AdminOnly")]
+
+<PageTitle>Master Data</PageTitle>
+
+<div class="masterdata-layout" style="background:#f8fafc; min-height: calc(100vh - 64px); overflow-y:auto;">
+    <div style="@(selectedTab == "Catalog" ? "" : "display:none;")">
+        <CatalogTab />
+    </div>
+    <div style="@(selectedTab == "Category" ? "" : "display:none;")">
+        <CategoryTab />
+    </div>
+    <div style="@(selectedTab == "Supplier" ? "" : "display:none;")">
+        <SupplierTab />
+    </div>
+    <div style="@(selectedTab == "Vendor" ? "" : "display:none;")">
+        <VendorTab />
+    </div>
+    <div style="@(selectedTab == "Location" ? "" : "display:none;")">
+        <LocationTab />
+    </div>
+    <div style="@(selectedTab == "Department" ? "" : "display:none;")">
+        <DepartmentTab />
+    </div>
+    <div style="@(selectedTab == "Factory" ? "" : "display:none;")">
+        <FactoryTab />
+    </div>
+    <div style="@(selectedTab == "User" ? "" : "display:none;")">
+        <UserTab />
+    </div>
+</div>

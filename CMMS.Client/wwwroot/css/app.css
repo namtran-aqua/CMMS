@@ -431,7 +431,9 @@ li {
 }
 
 /* Custom button style for consistent UI dimensions */
-.btn-custom {
+.btn-custom,
+.ant-modal-footer .ant-btn,
+.ant-popover-buttons .ant-btn {
     border-radius: 8px !important;
     padding: 0 12px !important;
     height: 38px !important;

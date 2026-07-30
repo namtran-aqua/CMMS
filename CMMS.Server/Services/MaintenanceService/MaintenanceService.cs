@@ -11,6 +11,7 @@ using NPOI.SS.Formula.Functions;
 using CMMS.Shared.Dtos.Maintenance.Attachments;
 using System.Data;
 using System.Security.Claims;
+using CMMS.Server.Services.Auth;
 
 namespace CMMS.Server.Services.MaintenanceService
 {
@@ -19,15 +20,20 @@ namespace CMMS.Server.Services.MaintenanceService
         private readonly IConfiguration _config;
         private readonly ISqlConnectionFactory _connectionFactory;
         private readonly SparePartService.ISparePartService _sparePartService;
+        private readonly IDataPermissionService _dataPermissionService;
 
-        public MaintenanceService(IConfiguration config, ISqlConnectionFactory connectionFactory, SparePartService.ISparePartService sparePartService)
+        public MaintenanceService(IConfiguration config, ISqlConnectionFactory connectionFactory, SparePartService.ISparePartService sparePartService, IDataPermissionService dataPermissionService)
         {
             _config = config;
             _connectionFactory = connectionFactory;
             _sparePartService = sparePartService;
+            _dataPermissionService = dataPermissionService;
         }
+
         public async Task<List<MaintenanceDto>> GetAllAsync()
         {
+            var permission = _dataPermissionService.GetPermission();
+
             using var connection = _connectionFactory.CreateConnection();
             string sql = @"
                 SELECT 
@@ -35,8 +41,14 @@ namespace CMMS.Server.Services.MaintenanceService
                     m.VendorID, m.MaintPrice, m.PICID, m.MaintPIC, m.MaintDescription, m.MaintNote, m.IsEQActive,
                     a.Id, a.MTID, a.FilePath, a.FileExtend, a.FileName, a.FileSize, a.CreatedTime
                 FROM Tbl_MaintenanceRecord m
-                LEFT JOIN dbo.Tbl_Attachments a
-                ON a.MTID = m.MTID";
+                LEFT JOIN dbo.Tbl_Attachments a ON a.MTID = m.MTID
+                INNER JOIN dbo.vw_EquipmentInfo eq ON eq.EQID = m.EQID
+                WHERE 1 = 1";
+
+            if (!permission.IsGlobal)
+            {
+                sql += " AND eq.FACID = @UserFacId AND eq.DeptID = @UserDeptId";
+            }
 
             var maintenanceDict = new Dictionary<long, MaintenanceDto>();
 
@@ -58,6 +70,7 @@ namespace CMMS.Server.Services.MaintenanceService
 
                     return maint;
                 },
+                new { UserFacId = permission.FacId, UserDeptId = permission.DeptId },
                 splitOn: "Id");
 
             var maintTypeId = await _sparePartService.GetMovementTypeIdByNameAsync(CMMS.Shared.Dtos.SpareParts.MovementTypeConstants.Maintenance);

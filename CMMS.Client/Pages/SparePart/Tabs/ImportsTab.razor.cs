@@ -89,6 +89,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
 
         private ImportOrderDto? selectedImportOrder;
         private bool isImportDetailVisible = false;
+        private List<string> availableCodedItemsForSelectedPart = new();
 
         private ImportOrderDto newImportOrder = new();
         private ImportOrderDetailDto tempImportDetail = new();
@@ -275,9 +276,16 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 tempImportDetail.PartName = part.PartName;
                 tempImportDetail.HasCode = part.IsCoded;
                 tempImportDetail.Price = part.Price ?? 0m;
+                tempImportDetail.Inventory = part.Inventory;
+                tempImportDetail.Unit = part.Unit;
                 if (part.IsCoded)
                 {
                     tempImportDetail.Quantity = 1;
+                    var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}");
+                    if (itemsRes != null)
+                    {
+                        availableCodedItemsForSelectedPart = itemsRes.Items?.Select(x => x.SerialCode).Where(x => !string.IsNullOrEmpty(x)).ToList() ?? new();
+                    }
                 }
                 await InvokeAsync(StateHasChanged);
             }

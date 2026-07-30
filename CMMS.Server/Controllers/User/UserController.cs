@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using CMMS.Server.Services.UserService;
 using CMMS.Shared.Dtos.User;
 
@@ -40,5 +40,91 @@ public class UserController : ControllerBase
             return new UserDto();
 
         return currentUser;
+    }
+
+    [HttpGet("aqua-users")]
+    public async Task<IActionResult> GetAquaUsers([FromQuery] string keyword = "")
+    {
+        try
+        {
+            var data = await _service.GetAquaUsersAsync(keyword);
+            return Ok(data);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    private async Task<UserDto> GetApiUserAsync()
+    {
+        var idClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idClaim) || !Guid.TryParse(idClaim, out var userId))
+            throw new Exception("Unauthorized");
+
+        var user = await _service.GetCurrentUserAsync(userId);
+        if (user == null)
+            throw new Exception("Unauthorized");
+            
+        return user;
+    }
+
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+    {
+        try
+        {
+            var currentUser = await GetApiUserAsync();
+            var result = await _service.CreateUserAsync(request, currentUser);
+            return Ok(new { success = result });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("update")]
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
+    {
+        try
+        {
+            var currentUser = await GetApiUserAsync();
+            var result = await _service.UpdateUserAsync(request, currentUser);
+            return Ok(new { success = result });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}/disable")]
+    public async Task<IActionResult> DisableUser(Guid id)
+    {
+        try
+        {
+            var currentUser = await GetApiUserAsync();
+            var result = await _service.DisableUserAsync(id, currentUser);
+            return Ok(new { success = result });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("roles")]
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    public IActionResult GetRoles()
+    {
+        var roles = new List<object>
+        {
+            new { Id = 1, Name = "Manager" },
+            new { Id = 2, Name = "User" },
+            new { Id = 3, Name = "Admin" },
+            new { Id = 4, Name = "IT" }
+        };
+        return Ok(roles);
     }
 }

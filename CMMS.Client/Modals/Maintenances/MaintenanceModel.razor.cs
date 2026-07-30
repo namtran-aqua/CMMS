@@ -293,7 +293,7 @@ namespace CMMS.Client.Modals.Maintenances
                     row.Qty = 1;
                     try
                     {
-                        var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/coded-items?page=1&pageSize=100&partCode={sp.PartCode}&status=Available");
+                        var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={sp.PartCode}&status=Available");
                         if (itemsRes != null)
                         {
                             row.AvailableSerials = itemsRes.Items ?? new();

@@ -1,4 +1,4 @@
-@namespace CMMS.Client.Pages.SpareParts.Tabs
+@namespace CMMS.Client.Pages.MasterData.Catalog
 @using AntDesign
 @using CMMS.Shared.Dtos.SpareParts
 @using CMMS.Shared.Authorization
@@ -9,7 +9,7 @@
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center">
     <div>
-        <h3>Spare Part Catalog</h3>
+        <h3>Spare Part</h3>
         <p class="text-muted">Create and manage the master data of new spare parts in the system.</p>
     </div>
     @if (IsAuthenticated)
@@ -194,7 +194,7 @@
 </div>
 
 <!-- Double Column Categories & Suppliers Management -->
-<div class="row">
+@* <div class="row">
     <!-- Categories Card -->
     <div class="col-md-6 mb-4">
         <div class="card p-4" style="border-radius:15px; min-height: 380px;">
@@ -267,7 +267,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> *@
 
 <!-- Spare Part Detail Modal -->
 <Modal @bind-Visible="isPartDetailModalVisible" Title="Spare Part Details" Width="600" Footer="null" Style="z-index:9999;">

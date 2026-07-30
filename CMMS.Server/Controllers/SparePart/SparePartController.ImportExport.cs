@@ -48,9 +48,9 @@ namespace CMMS.Server.Controllers.SparePart
         [HttpGet("import-template")]
         public IActionResult DownloadTemplate()
         {
-            var csv = "PartCode,PartName,Unit,Price,Inventory,MinStock,CategoryName,SupplierName,LocName,DeptCode,Note\n" +
-                      "SP-001,Cảm biến tiệm cận M18,Cái,150000,20,5,Cảm biến,Nhà cung cấp Omron,Khu vực A,Maint-Dept,Ghi chú mẫu\n" +
-                      "SP-002,Băng tải cao su B500,Mét,450000,5,2,Băng tải,Nhà cung cấp Habasit,Khu vực B,Prod-Dept,Ghi chú mẫu 2";
+            var csv = "PartCode,PartName,Unit,Price,MinStock,CategoryName,SupplierName,LocName,DeptCode,IsCoded,Note\n" +
+                      "Mã001,Tên001,Cái,150000,5,Cảm biến,Nhà cung cấp Omron,Khu vực A,Maint-Dept,1,Ghi chú mẫu\n" +
+                      "Mã002,Tên002,Mét,450000,2,Băng tải,Nhà cung cấp Habasit,Khu vực B,Prod-Dept,0,Ghi chú mẫu 2";
             
             var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
             return File(bytes, "text/csv; charset=utf-8", "SparePart_Import_Template.csv");

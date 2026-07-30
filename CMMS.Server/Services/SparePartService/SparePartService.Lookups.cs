@@ -74,6 +74,54 @@ namespace CMMS.Server.Services.SparePartService
             }
         }
 
+        public async Task<bool> UpdateCategory(SparePartCategoryDto dto, UserDto currentUser)
+        {
+            if (string.IsNullOrWhiteSpace(dto.CategoryName))
+                throw new ArgumentException("CategoryName không được để trống.");
+
+            var connStr = _config.GetConnectionString("DefaultConnection");
+
+            const string sqlCheckExists =
+                "SELECT COUNT(1) FROM dbo.Tbl_SparePartCategories WHERE CategoryName = @CategoryName AND CategoryID != @CategoryID";
+
+            const string sqlUpdate = @"
+                UPDATE dbo.Tbl_SparePartCategories 
+                SET CategoryName = @CategoryName
+                WHERE CategoryID = @CategoryID";
+
+            await using var con = new SqlConnection(connStr);
+            await con.OpenAsync();
+            await using var tran = con.BeginTransaction();
+
+            try
+            {
+                await using (var checkCmd = new SqlCommand(sqlCheckExists, con, tran))
+                {
+                    checkCmd.Parameters.Add("@CategoryName", SqlDbType.NVarChar, 50).Value = dto.CategoryName;
+                    checkCmd.Parameters.Add("@CategoryID", SqlDbType.Int).Value = dto.CategoryID;
+                    var exists = (int)await checkCmd.ExecuteScalarAsync();
+                    if (exists > 0)
+                        throw new InvalidOperationException($"Category '{dto.CategoryName}' đã tồn tại.");
+                }
+
+                int rows;
+                await using (var cmd = new SqlCommand(sqlUpdate, con, tran))
+                {
+                    cmd.Parameters.Add("@CategoryName", SqlDbType.NVarChar, 50).Value = dto.CategoryName;
+                    cmd.Parameters.Add("@CategoryID", SqlDbType.Int).Value = dto.CategoryID;
+                    rows = await cmd.ExecuteNonQueryAsync();
+                }
+
+                await tran.CommitAsync();
+                return rows > 0;
+            }
+            catch
+            {
+                await tran.RollbackAsync();
+                throw;
+            }
+        }
+
         public async Task<bool> DeleteCategory(int categoryid, UserDto currentUser)
         {
             using var connection = _connectionFactory.CreateConnection();
@@ -127,6 +175,56 @@ namespace CMMS.Server.Services.SparePartService
 
                 dto.SupplierID = newId;
                 return dto;
+            }
+            catch
+            {
+                await tran.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateSupplier(SparePartSupplierDto dto, UserDto currentUser)
+        {
+            if (string.IsNullOrWhiteSpace(dto.SupplierName))
+                throw new ArgumentException("SupplierName không được để trống.");
+
+            var connStr = _config.GetConnectionString("DefaultConnection");
+
+            const string sqlCheckExists =
+                "SELECT COUNT(1) FROM dbo.Tbl_SparePartSuppliers WHERE SupplierName = @SupplierName AND SupplierID != @SupplierID";
+
+            const string sqlUpdate = @"
+                UPDATE dbo.Tbl_SparePartSuppliers 
+                SET SupplierName = @SupplierName, Phone = @Phone, Email = @Email
+                WHERE SupplierID = @SupplierID";
+
+            await using var con = new SqlConnection(connStr);
+            await con.OpenAsync();
+            await using var tran = con.BeginTransaction();
+
+            try
+            {
+                await using (var checkCmd = new SqlCommand(sqlCheckExists, con, tran))
+                {
+                    checkCmd.Parameters.Add("@SupplierName", SqlDbType.NVarChar, 50).Value = dto.SupplierName;
+                    checkCmd.Parameters.Add("@SupplierID", SqlDbType.Int).Value = dto.SupplierID;
+                    var exists = (int)await checkCmd.ExecuteScalarAsync();
+                    if (exists > 0)
+                        throw new InvalidOperationException($"Supplier '{dto.SupplierName}' đã tồn tại.");
+                }
+
+                int rows;
+                await using (var cmd = new SqlCommand(sqlUpdate, con, tran))
+                {
+                    cmd.Parameters.Add("@SupplierName", SqlDbType.NVarChar, 50).Value = dto.SupplierName;
+                    cmd.Parameters.Add("@Phone", SqlDbType.NVarChar, 20).Value = (object?)dto.Phone ?? DBNull.Value;
+                    cmd.Parameters.Add("@Email", SqlDbType.NVarChar, 50).Value = (object?)dto.Email ?? DBNull.Value;
+                    cmd.Parameters.Add("@SupplierID", SqlDbType.Int).Value = dto.SupplierID;
+                    rows = await cmd.ExecuteNonQueryAsync();
+                }
+
+                await tran.CommitAsync();
+                return rows > 0;
             }
             catch
             {

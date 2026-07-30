@@ -3,6 +3,7 @@ using Blazored.SessionStorage;
 using CMMS.Client;
 using CMMS.Client.Services;
 using CMMS.Shared.Dtos.User;
+using CMMS.Shared.Constants;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -28,5 +29,9 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().Cre
 
 builder.Services.AddSingleton<FactoryStateService>();
 builder.Services.AddAntDesign();
-builder.Services.AddAuthorizationCore();
+builder.Services.AddAuthorizationCore(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim("RoleID", SystemRoles.Admin.ToString()));
+});
 await builder.Build().RunAsync();

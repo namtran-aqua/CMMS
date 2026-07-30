@@ -1,5 +1,7 @@
 using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.Common;
 using Microsoft.Data.SqlClient;
+using Dapper;
 
 namespace CMMS.Server.Services.LocationService
 {
@@ -10,27 +12,70 @@ namespace CMMS.Server.Services.LocationService
         {
             _config = config;
         }
+
         public async Task<List<LocationDto>> GetLocationsAsync()
         {
-            var list = new List<LocationDto>();
             var sql = "SELECT * FROM dbo.Tbl_FactoryLocation";
             using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            using var cmd = new SqlCommand(sql, con);
-            await con.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var list = await con.QueryAsync<LocationDto>(sql);
+            return list.ToList();
+        }
+
+        public async Task<LocationDto> GetLocationAsync(int id)
+        {
+            var sql = "SELECT * FROM dbo.Tbl_FactoryLocation WHERE LocID = @Id";
+            using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return await con.QueryFirstOrDefaultAsync<LocationDto>(sql, new { Id = id });
+        }
+
+        public async Task<ApiResponse> CreateLocationAsync(LocationDto location)
+        {
+            try
             {
-                list.Add(new LocationDto
-                {
-                    LocID = reader["LocID"] as int?,
-                    DeptID = reader["DeptID"] as int?,
-                    FACID = reader["FACID"] as int?,
-                    LocName = reader["LocName"] == DBNull.Value ? null : reader["LocName"].ToString(),
-                    LocCode = reader["LocCode"] == DBNull.Value ? null : reader["LocCode"].ToString(),
-                    LocManager = reader["LocManager"] == DBNull.Value ? null : reader["LocManager"].ToString()
-                });
+                var sql = @"INSERT INTO dbo.Tbl_FactoryLocation 
+                            (DeptID, FACID, LocName, LocCode, LocManager)
+                            VALUES (@DeptID, @FACID, @LocName, @LocCode, @LocManager)";
+                using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+                await con.ExecuteAsync(sql, location);
+                return new ApiResponse { Success = true, Message = "Location created successfully" };
             }
-            return list;
+            catch (Exception ex)
+            {
+                return new ApiResponse { Success = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResponse> UpdateLocationAsync(LocationDto location)
+        {
+            try
+            {
+                var sql = @"UPDATE dbo.Tbl_FactoryLocation 
+                            SET DeptID = @DeptID, FACID = @FACID, LocName = @LocName, 
+                                LocCode = @LocCode, LocManager = @LocManager
+                            WHERE LocID = @LocID";
+                using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+                await con.ExecuteAsync(sql, location);
+                return new ApiResponse { Success = true, Message = "Location updated successfully" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse { Success = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResponse> DeleteLocationAsync(int id)
+        {
+            try
+            {
+                var sql = "DELETE FROM dbo.Tbl_FactoryLocation WHERE LocID = @Id";
+                using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+                await con.ExecuteAsync(sql, new { Id = id });
+                return new ApiResponse { Success = true, Message = "Location deleted successfully" };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse { Success = false, Message = ex.Message };
+            }
         }
     }
 }

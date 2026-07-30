@@ -1,9 +1,9 @@
-﻿@page "/"
+@page "/"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @inject NavigationManager NavigationManager
 @inject IWebAssemblyHostEnvironment webHostEnvironment
-@attribute [Authorize]
+@attribute [AllowAnonymous]
 <PageTitle>Home</PageTitle>
 <div class="container-index">
     <h1>Greetings from Aqua</h1>

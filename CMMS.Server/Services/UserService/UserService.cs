@@ -3,6 +3,7 @@ using CMMS.Server.Services.UserService;
 using CMMS.Shared.Dtos.AuthModels;
 using CMMS.Shared.Dtos.User;
 using CMMS.Shared.PasswordHelpers;
+using CMMS.Shared.Constants;
 using CMMS.Server.Services.EmailService;
 using Dapper;
 using Microsoft.Data.SqlClient;
@@ -30,28 +31,36 @@ namespace CMMS.Server.Services.UserService
         }
         public async Task<List<UserDto>> GetUsersAsync()
         {
-            using var con = new SqlConnection(_config.GetConnectionString("SolutionConnection"));
-            // JOIN cross-database với Tbl_User trong CMMS để lấy FACID, DeptID, LocID, RoleID
+            using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             const string sql = @"
                 SELECT
                     u.Id,
                     u.WorkDayId,
                     u.FullName,
-                    cu.FACID,
-                    cu.DeptID,
-                    cu.LocID,
-                    cu.RoleID
-                FROM Admin.tbl_Users u
-                LEFT JOIN CMMS.dbo.Tbl_User cu ON cu.Id = u.Id
-                WHERE u.IsActive = 1";
+                    u.Email,
+                    u.FACID,
+                    f.FACName,
+                    u.DeptID,
+                    d.DeptName,
+                    u.LocID,
+                    u.RoleID,
+                    r.RoleName,
+                    u.IsActive,
+                    u.IsDeleted
+                FROM dbo.Tbl_User u
+                LEFT JOIN dbo.Tbl_Factory f ON f.FACID = u.FACID
+                LEFT JOIN dbo.Tbl_FactoryDepartment d ON d.DeptID = u.DeptID
+                LEFT JOIN dbo.Tbl_Roles r ON r.RoleID = u.RoleID";
 
             var result = await con.QueryAsync<UserDto>(sql);
             var list = result.AsList();
             foreach (var user in list)
             {
                 user.Roles = new List<string>();
-                if (user.RoleID == 1) user.Roles.Add("Manager");
-                else if (user.RoleID == 2) user.Roles.Add("User");
+                if (!string.IsNullOrEmpty(user.RoleName))
+                {
+                    user.Roles.Add(user.RoleName);
+                }
             }
             return list;
         }
@@ -80,7 +89,10 @@ namespace CMMS.Server.Services.UserService
             using var reader = await cmd.ExecuteReaderAsync();
 
             if (!await reader.ReadAsync())
+            {
+                Console.WriteLine("DEBUG: User not found in Aqua DB");
                 return null;
+            }
 
             var user = new UserDto
             {
@@ -97,6 +109,7 @@ namespace CMMS.Server.Services.UserService
                     user.PasswordHash,
                     loginRequest.Password))
             {
+                Console.WriteLine("DEBUG: Password mismatch");
                 return null;
             }
             var userId = user.Id;
@@ -109,9 +122,11 @@ namespace CMMS.Server.Services.UserService
                 FACID,
                 DeptID,
                 LocID,
-                RoleID
+                RoleID,
+                IsActive,
+                IsDeleted
             FROM Tbl_User
-            WHERE Id = @Id";
+            WHERE Id = @Id AND IsActive = 1 AND IsDeleted = 0";
 
             using var checkCmd = new SqlCommand(checkSql, cmmsCon);
 
@@ -123,8 +138,10 @@ namespace CMMS.Server.Services.UserService
 
             if (!await cmmsReader.ReadAsync())
             {
+                Console.WriteLine($"DEBUG: User not found in CMMS DB or inactive/deleted. UserId: {userId}");
                 return null;
             }
+            Console.WriteLine("DEBUG: User verified successfully in CMMS");
 
             var facId = cmmsReader["FACID"]?.ToString();
             var deptId = cmmsReader["DeptID"]?.ToString();
@@ -158,13 +175,21 @@ namespace CMMS.Server.Services.UserService
                 new Claim("RoleID", roleId ?? "")
             };
 
-            if (roleId == "1")
+            if (roleId == SystemRoles.Manager.ToString())
             {
                 claimsList.Add(new Claim(ClaimTypes.Role, "Manager"));
             }
-            else if (roleId == "2")
+            else if (roleId == SystemRoles.User.ToString())
             {
                 claimsList.Add(new Claim(ClaimTypes.Role, "User"));
+            }
+            else if (roleId == SystemRoles.Admin.ToString())
+            {
+                claimsList.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+            else if (roleId == SystemRoles.IT.ToString())
+            {
+                claimsList.Add(new Claim(ClaimTypes.Role, "IT"));
             }
 
             var token = new JwtSecurityToken(
@@ -524,20 +549,27 @@ namespace CMMS.Server.Services.UserService
             try
             {
                 using var con = new SqlConnection(
-                    _config.GetConnectionString("SolutionConnection"));
+                    _config.GetConnectionString("DefaultConnection"));
 
-                // JOIN cross-database với Tbl_User trong CMMS để lấy FACID, DeptID, LocID, RoleID
                 const string sql = @"
                     SELECT
                         u.Id,
                         u.WorkDayId,
                         u.FullName,
-                        cu.FACID,
-                        cu.DeptID,
-                        cu.LocID,
-                        cu.RoleID
-                    FROM Admin.tbl_Users u
-                    LEFT JOIN CMMS.dbo.Tbl_User cu ON cu.Id = u.Id
+                        u.Email,
+                        u.FACID,
+                        f.FACName,
+                        u.DeptID,
+                        d.DeptName,
+                        u.LocID,
+                        u.RoleID,
+                        r.RoleName,
+                        u.IsActive,
+                        u.IsDeleted
+                    FROM dbo.Tbl_User u
+                    LEFT JOIN dbo.Tbl_Factory f ON f.FACID = u.FACID
+                    LEFT JOIN dbo.Tbl_FactoryDepartment d ON d.DeptID = u.DeptID
+                    LEFT JOIN dbo.Tbl_Roles r ON r.RoleID = u.RoleID
                     WHERE u.Id = @Id";
 
                 var user = await con.QueryFirstOrDefaultAsync<UserDto>(
@@ -548,8 +580,10 @@ namespace CMMS.Server.Services.UserService
                 if (user != null)
                 {
                     user.Roles = new List<string>();
-                    if (user.RoleID == 1) user.Roles.Add("Manager");
-                    else if (user.RoleID == 2) user.Roles.Add("User");
+                    if (!string.IsNullOrEmpty(user.RoleName))
+                    {
+                        user.Roles.Add(user.RoleName);
+                    }
                 }
 
                 return user;
@@ -558,6 +592,162 @@ namespace CMMS.Server.Services.UserService
             {
                 throw;
             }
+        }
+
+        public async Task<List<AquaUserDto>> GetAquaUsersAsync(string keyword)
+        {
+            using var con = _connectionFactory.CreateSolutionConnection();
+            
+            var sql = @"
+                SELECT u.Id, u.WorkDayId, u.FullName, u.Email
+                FROM Admin.tbl_Users u
+                WHERE u.IsActive = 1 AND u.IsDeleted = 0
+                  AND NOT EXISTS (SELECT 1 FROM CMMS.dbo.Tbl_User c WHERE c.Id = u.Id)
+            ";
+            
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                sql += " AND (u.FullName LIKE @Keyword OR u.WorkDayId LIKE @Keyword OR u.Email LIKE @Keyword)";
+            }
+
+            sql += " ORDER BY u.FullName";
+
+            var result = await con.QueryAsync<AquaUserDto>(sql, new { Keyword = $"%{keyword}%" });
+            return result.AsList();
+        }
+
+        public async Task<bool> CreateUserAsync(CreateUserRequest request, UserDto currentUser)
+        {
+            using var solutionCon = _connectionFactory.CreateSolutionConnection();
+            // Fetch User info from Aqua to keep CMMS updated
+            var aquaUser = await solutionCon.QueryFirstOrDefaultAsync<AquaUserDto>(
+                "SELECT Id, WorkDayId, FullName, Email FROM Admin.tbl_Users WHERE Id = @Id",
+                new { Id = request.UserId }
+            );
+
+            if (aquaUser == null)
+            {
+                throw new Exception("User not found in AquaSolution.");
+            }
+
+            using var cmmsCon = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            await cmmsCon.OpenAsync();
+            using var transaction = cmmsCon.BeginTransaction();
+            
+            try
+            {
+                // Check if exists
+                var exists = await cmmsCon.ExecuteScalarAsync<bool>(
+                    "SELECT CAST(CASE WHEN EXISTS (SELECT 1 FROM Tbl_User WHERE Id = @Id) THEN 1 ELSE 0 END AS BIT)",
+                    new { Id = request.UserId }, transaction
+                );
+
+                if (exists)
+                {
+                    throw new Exception("User already exists in CMMS.");
+                }
+
+                // Check if Department belongs to Factory
+                var validDept = await cmmsCon.ExecuteScalarAsync<bool>(
+                    "SELECT CAST(CASE WHEN EXISTS (SELECT 1 FROM Tbl_FactoryDepartment WHERE DeptID = @DeptId AND FACID = @FacId) THEN 1 ELSE 0 END AS BIT)",
+                    new { DeptId = request.DeptId, FacId = request.FacId }, transaction
+                );
+
+                if (!validDept)
+                {
+                    throw new Exception("Department does not belong to the selected Factory.");
+                }
+
+                const string sql = @"
+                    INSERT INTO Tbl_User (Id, WorkDayId, FullName, Email, FACID, DeptID, RoleID, IsActive, IsDeleted, CreatedDate, CreatedBy)
+                    VALUES (@Id, @WorkDayId, @FullName, @Email, @FACID, @DeptID, @RoleID, 1, 0, GETDATE(), @CreatedBy)";
+                
+                await cmmsCon.ExecuteAsync(sql, new {
+                    Id = request.UserId,
+                    WorkDayId = aquaUser.WorkDayId,
+                    FullName = aquaUser.FullName,
+                    Email = aquaUser.Email,
+                    FACID = request.FacId,
+                    DeptID = request.DeptId,
+                    RoleID = request.RoleId,
+                    CreatedBy = currentUser.FullName
+                }, transaction);
+
+                transaction.Commit();
+                return true;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateUserAsync(UpdateUserRequest request, UserDto currentUser)
+        {
+            using var cmmsCon = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            await cmmsCon.OpenAsync();
+            using var transaction = cmmsCon.BeginTransaction();
+            
+            try
+            {
+                // Verify department
+                var validDept = await cmmsCon.ExecuteScalarAsync<bool>(
+                    "SELECT CAST(CASE WHEN EXISTS (SELECT 1 FROM Tbl_FactoryDepartment WHERE DeptID = @DeptId AND FACID = @FacId) THEN 1 ELSE 0 END AS BIT)",
+                    new { DeptId = request.DeptId, FacId = request.FacId }, transaction
+                );
+
+                if (!validDept)
+                {
+                    throw new Exception("Department does not belong to the selected Factory.");
+                }
+
+                const string sql = @"
+                    UPDATE Tbl_User
+                    SET FACID = @FACID,
+                        DeptID = @DeptID,
+                        RoleID = @RoleID,
+                        IsActive = @IsActive,
+                        UpdatedDate = GETDATE(),
+                        UpdatedBy = @UpdatedBy
+                    WHERE Id = @Id";
+                
+                var affected = await cmmsCon.ExecuteAsync(sql, new {
+                    Id = request.UserId,
+                    FACID = request.FacId,
+                    DeptID = request.DeptId,
+                    RoleID = request.RoleId,
+                    IsActive = request.IsActive,
+                    UpdatedBy = currentUser.FullName
+                }, transaction);
+
+                transaction.Commit();
+                return affected > 0;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public async Task<bool> DisableUserAsync(Guid userId, UserDto currentUser)
+        {
+            using var cmmsCon = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            
+            const string sql = @"
+                UPDATE Tbl_User
+                SET IsActive = 0,
+                    UpdatedDate = GETDATE(),
+                    UpdatedBy = @UpdatedBy
+                WHERE Id = @Id";
+            
+            var affected = await cmmsCon.ExecuteAsync(sql, new {
+                Id = userId,
+                UpdatedBy = currentUser.FullName
+            });
+
+            return affected > 0;
         }
     }
 }
