@@ -289,7 +289,25 @@ namespace CMMS.Server.Services.SparePartService
                         }
                         else
                         {
-                            // Deduct Non-Coded FIFO
+                            // 1. Check if Tbl_SparePartItem is out of sync with Tbl_SparePart.Inventory
+                            const string sqlGetSum = "SELECT ISNULL(SUM(RemainingQuantity), 0) FROM dbo.Tbl_SparePartItem WHERE SPID = @SPID AND Status = 'Available'";
+                            int sumRemaining = 0;
+                            await using (var cmdSum = new SqlCommand(sqlGetSum, con, (SqlTransaction)tran))
+                            {
+                                cmdSum.Parameters.Add("@SPID", SqlDbType.Int).Value = line.SPID;
+                                sumRemaining = Convert.ToInt32(await cmdSum.ExecuteScalarAsync());
+                            }
+
+                            // If physical items are less than the current system Inventory (beforeQty), we insert a dummy item to heal the mismatch
+                            if (sumRemaining < beforeQty)
+                            {
+                                int missing = beforeQty - sumRemaining;
+                                await CreateSparePartItemRecordInternalAsync(
+                                    con, (SqlTransaction)tran, line.SPID, null, null, null, missing, dto.AdjustDate, currentUser?.Id
+                                );
+                            }
+
+                            // 2. Deduct Non-Coded FIFO
                             var deductions = await DeductSparePartItemFIFOAsync(con, (SqlTransaction)tran, line.SPID, line.Quantity, "Adjusted");
                             
                             // Insert transaction log for the total OUT deduction

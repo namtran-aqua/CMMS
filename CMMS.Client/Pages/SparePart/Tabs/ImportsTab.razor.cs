@@ -89,7 +89,6 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
 
         private ImportOrderDto? selectedImportOrder;
         private bool isImportDetailVisible = false;
-        private List<string> availableCodedItemsForSelectedPart = new();
 
         private ImportOrderDto newImportOrder = new();
         private ImportOrderDetailDto tempImportDetail = new();
@@ -266,7 +265,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             var part = importPartsSearchList.FirstOrDefault(p => p.SPID == spid);
             if (part == null && spid > 0)
             {
-                part = await Http.GetFromJsonAsync<SparePartDto>($"api/SparePart/get-paged?page=1&pageSize=1&searchText={spid}");
+                var pagedRes = await Http.GetFromJsonAsync<SparePartPagedResultDto>($"api/SparePart/get-paged?page=1&pageSize=1&searchText={spid}");
+                part = pagedRes?.Items?.FirstOrDefault();
             }
 
             if (part != null)
@@ -281,11 +281,6 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 if (part.IsCoded)
                 {
                     tempImportDetail.Quantity = 1;
-                    var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}");
-                    if (itemsRes != null)
-                    {
-                        availableCodedItemsForSelectedPart = itemsRes.Items?.Select(x => x.SerialCode).Where(x => !string.IsNullOrEmpty(x)).ToList() ?? new();
-                    }
                 }
                 await InvokeAsync(StateHasChanged);
             }

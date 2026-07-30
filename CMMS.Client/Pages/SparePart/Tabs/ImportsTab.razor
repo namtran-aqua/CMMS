@@ -284,9 +284,8 @@
             {
                 <div class="col-md-4">
                     <label style="font-size:12px; font-weight:600; color:#64748b;">Mã Serial/Code (Chỉ 1 con)</label>
-                    <AutoComplete @bind-Value="tempImportDetail.SerialCode"
-                                  Options="availableCodedItemsForSelectedPart"
-                                  Placeholder="Nhập hoặc chọn mã serial..." />
+                    <Input @bind-Value="tempImportDetail.SerialCode"
+                           Placeholder="Nhập mã serial..." />
                 </div>
             }
             else
