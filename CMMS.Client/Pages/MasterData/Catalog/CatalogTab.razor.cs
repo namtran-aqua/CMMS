@@ -53,6 +53,10 @@ namespace CMMS.Client.Pages.MasterData.Catalog
                 {
                     result = result.Where(x => x.FACID == FactoryState.SelectedFacId.Value);
                 }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(x => x.DeptID == FactoryState.SelectedDeptId.Value);
+                }
 
                 // Filter by Search Text
                 if (!string.IsNullOrWhiteSpace(catalogSearchText))

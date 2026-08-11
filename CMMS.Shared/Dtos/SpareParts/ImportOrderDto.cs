@@ -12,6 +12,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public string? VendorName { get; set; }
         public DateTime ImportDate { get; set; } = DateTime.Now;
         public int? FACID { get; set; }
+        public int? DeptID { get; set; }
         public string Status { get; set; } = "Completed"; // Draft, Completed, Cancelled, Reversed, etc.
         public Guid? CreateBy { get; set; }
         public string? CreateUser { get; set; }

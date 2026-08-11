@@ -12,8 +12,8 @@
                 <i class="fa-solid fa-sliders"></i>
             </div>
             <div class="sidebar-title">
-                <div class="title">Equipment Manager</div>
-                <div class="subtitle">EMS v1.0</div>
+                <div class="title">CMMS</div>
+                @* <div class="subtitle">CMMS v1.0</div> *@
             </div>
         </div>
 
@@ -22,12 +22,28 @@
                   Theme="MenuTheme.Light"
                   Class="custom-menu">
 
-            <MenuItem>
-                <NavLink href="@GetLink("/dash-board")" class="menu-link" Match="NavLinkMatch.All">
-                    <i class="fa-solid fa-table-cells menu-icon"></i>
-                    <span>Dashboard</span>
-                </NavLink>
-            </MenuItem>
+            <SubMenu Key="dashboards">
+                <TitleTemplate>
+                    <div class="menu-link">
+                        <i class="fa-solid fa-chart-line menu-icon"></i>
+                        <span>Dashboards</span>
+                    </div>
+                </TitleTemplate>
+                <ChildContent>
+                    <MenuItem Key="db-equipment">
+                        <NavLink href="@GetLink("/dash-board/equipment")" class="menu-link" Match="NavLinkMatch.All">
+                            <i class="fa-solid fa-table-cells menu-icon"></i>
+                            <span>Equipment</span>
+                        </NavLink>
+                    </MenuItem>
+                    <MenuItem Key="db-spare-part">
+                        <NavLink href="@GetLink("/spare-parts/dashboard")" class="menu-link">
+                            <i class="fa-solid fa-chart-pie menu-icon"></i>
+                            <span>Spare Part</span>
+                        </NavLink>
+                    </MenuItem>
+                </ChildContent>
+            </SubMenu>
                 @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName) && CurrentUser.RoleID == CMMS.Shared.Constants.SystemRoles.Admin)
                 {
                     <SubMenu Key="master-data">
@@ -99,6 +115,13 @@
                         </div>
                     </TitleTemplate>
                     <ChildContent>
+
+                        @* <MenuItem Key="sp-monthly-closing">
+                            <NavLink href="@GetLink("/spare-parts/monthly-closing")" class="menu-link">
+                                <i class="fa-solid fa-calendar-check menu-icon"></i>
+                                <span>Monthly Closing</span>
+                            </NavLink>
+                        </MenuItem> *@
                         <MenuItem Key="sp-inventory">
                             <NavLink href="@GetLink("/spare-parts/inventory")" class="menu-link">
                                 <i class="fa-solid fa-boxes-stacked menu-icon"></i>
@@ -164,32 +187,63 @@
     <!-- MAIN - LOGIN INFO-->
     <section class="main">
         <header class="topbar">
-            <!-- Factory Selector -->
-            <div class="factory-filter">
+            <!-- Filters Group -->
+            <div class="filters-container" style="display: flex; gap: 16px;">
+                <!-- Factory Selector -->
+                <div class="factory-filter">
 
-                <div class="factory-select-wrapper">
+                    <div class="factory-select-wrapper">
 
-                    <i class="fa-solid fa-warehouse factory-icon"></i>
+                        <i class="fa-solid fa-warehouse factory-icon"></i>
 
-                    <select class="factory-select"
-                            @onchange="OnFactoryChanged"
-                            value="@(FactoryState.SelectedFacId?.ToString() ?? "")">
+                        <select class="factory-select"
+                                @onchange="OnFactoryChanged"
+                                value="@(FactoryState.SelectedFacId?.ToString() ?? "")">
 
-                        <option value="">All Factories</option>
+                            <option value="">All Factories</option>
 
-                        @foreach (var fac in FactoryState.Factories)
-                        {
-                            <option value="@fac.FacId">
-                                @fac.FacCode - @fac.FacName
-                            </option>
-                        }
+                            @foreach (var fac in FactoryState.Factories)
+                            {
+                                <option value="@fac.FacId">
+                                    @fac.FacCode - @fac.FacName
+                                </option>
+                            }
 
-                    </select>
+                        </select>
 
-                    <i class="fa-solid fa-chevron-down factory-arrow"></i>
+                        <i class="fa-solid fa-chevron-down factory-arrow"></i>
+
+                    </div>
 
                 </div>
 
+                <!-- Department Selector -->
+                <div class="factory-filter">
+
+                    <div class="factory-select-wrapper">
+
+                        <i class="fa-solid fa-building factory-icon"></i>
+
+                        <select class="factory-select"
+                                @onchange="OnDepartmentChanged"
+                                value="@(FactoryState.SelectedDeptId?.ToString() ?? "")">
+
+                            <option value="">All Departments</option>
+
+                            @foreach (var dept in FactoryState.FilteredDepartments)
+                            {
+                                <option value="@dept.DeptID">
+                                    @(dept.DeptCode ?? dept.DeptName) - @dept.DeptName
+                                </option>
+                            }
+
+                        </select>
+
+                        <i class="fa-solid fa-chevron-down factory-arrow"></i>
+
+                    </div>
+
+                </div>
             </div>
 
             @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName))

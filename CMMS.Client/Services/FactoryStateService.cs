@@ -1,10 +1,10 @@
-﻿using CMMS.Shared.Dtos.Equipment;
+using CMMS.Shared.Dtos.Equipment;
 
 namespace CMMS.Client.Services
 {
     /// <summary>
-    /// Singleton service lưu factory đang được chọn (null = All Factories).
-    /// Các page subscribe OnChange để tự refresh khi factory thay đổi.
+    /// Singleton service lưu factory và department đang được chọn.
+    /// Các page subscribe OnChange để tự refresh khi factory/department thay đổi.
     /// </summary>
     public class FactoryStateService
     {
@@ -12,8 +12,14 @@ namespace CMMS.Client.Services
         public int? SelectedFacId { get; private set; } = null;
         public string SelectedFacName { get; private set; } = "All Factories";
 
-        // Danh sách factory dùng để populate dropdown
+        // null = "All Departments"
+        public int? SelectedDeptId { get; private set; } = null;
+        public string SelectedDeptName { get; private set; } = "All Departments";
+
+        // Danh sách factory và department dùng để populate dropdown
         public List<FactoryOption> Factories { get; set; } = new();
+        public List<DepartmentDto> AllDepartments { get; set; } = new();
+        public List<DepartmentDto> FilteredDepartments { get; private set; } = new();
 
         public event Action? OnChange;
 
@@ -21,6 +27,28 @@ namespace CMMS.Client.Services
         {
             SelectedFacId = facId;
             SelectedFacName = facId.HasValue ? facName : "All Factories";
+            
+            // Filter departments based on selected factory
+            if (facId.HasValue)
+            {
+                FilteredDepartments = AllDepartments.Where(d => d.FACID == facId).ToList();
+            }
+            else
+            {
+                FilteredDepartments = AllDepartments;
+            }
+
+            // Reset department when factory changes
+            SelectedDeptId = null;
+            SelectedDeptName = "All Departments";
+
+            OnChange?.Invoke();
+        }
+
+        public void SetDepartment(int? deptId, string deptName)
+        {
+            SelectedDeptId = deptId;
+            SelectedDeptName = deptId.HasValue ? deptName : "All Departments";
             OnChange?.Invoke();
         }
 
@@ -29,6 +57,8 @@ namespace CMMS.Client.Services
         /// </summary>
         public void LoadFactoriesFromDepartments(List<DepartmentDto> departments)
         {
+            AllDepartments = departments;
+            
             Factories = departments
                 .Where(d => d.FACID.HasValue && !string.IsNullOrEmpty(d.FACName))
                 .GroupBy(d => d.FACID)
@@ -40,6 +70,16 @@ namespace CMMS.Client.Services
                 })
                 .OrderBy(f => f.FacCode)
                 .ToList();
+
+            // Default initialize FilteredDepartments
+            if (SelectedFacId.HasValue)
+            {
+                FilteredDepartments = AllDepartments.Where(d => d.FACID == SelectedFacId).ToList();
+            }
+            else
+            {
+                FilteredDepartments = AllDepartments;
+            }
         }
     }
 

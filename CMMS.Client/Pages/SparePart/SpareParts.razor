@@ -59,7 +59,7 @@
 
 <div class="spareparts-layout" style="background:#f8fafc; min-height: calc(100vh - 64px); overflow-y:auto;">
     <div style="@(selectedTab == "Dashboard" ? "" : "display:none;")">
-        <DashboardTab />
+        <!-- Dashboard has been moved to its own standalone page to support AllowAnonymous -->
     </div>
     <div style="@(selectedTab == "Inventory" ? "" : "display:none;")">
         <InventoryTab />

@@ -46,6 +46,10 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 {
                     result = result.Where(x => x.FACID == FactoryState.SelectedFacId.Value);
                 }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(x => x.DeptID == FactoryState.SelectedDeptId.Value);
+                }
 
                 // Filter by adjust code search
                 if (!string.IsNullOrWhiteSpace(adjustCodeSearch))
@@ -176,7 +180,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             newAdjustOrder = new CreateAdjustOrderDto
             {
                 AdjustDate = DateTime.Now,
-                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID
+                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID,
+                DeptID = FactoryState.SelectedDeptId
             };
             tempAdjustDetail = new AdjustOrderDetailDto { Quantity = 1, Type = "IN" };
             availableCodedItemsForSelectedPart.Clear();
@@ -220,6 +225,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 tempAdjustDetail.PartCode = part.PartCode;
                 tempAdjustDetail.PartName = part.PartName;
                 tempAdjustDetail.HasCode = part.IsCoded;
+                tempAdjustDetail.Inventory = part.Inventory;
+                tempAdjustDetail.Unit = part.Unit;
                 if (part.IsCoded)
                 {
                     tempAdjustDetail.Quantity = 1;
@@ -255,7 +262,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                     var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}&status=Available&isCoded=true");
                     if (itemsRes != null)
                     {
-                        availableCodedItemsForSelectedPart = itemsRes.Items ?? new();
+                        var addedSerials = newAdjustOrder.Lines.Where(d => d.SPID == part.SPID && d.HasCode && d.Type == "OUT").Select(d => d.SerialCode).ToList();
+                        availableCodedItemsForSelectedPart = (itemsRes.Items ?? new()).Where(i => !addedSerials.Contains(i.SerialCode)).ToList();
                     }
                 }
             }
@@ -291,6 +299,40 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 return;
             }
 
+            if (!tempAdjustDetail.HasCode)
+            {
+                var existingItem = newAdjustOrder.Lines.FirstOrDefault(d => d.SPID == tempAdjustDetail.SPID && d.Type == tempAdjustDetail.Type);
+                var currentQty = existingItem?.Quantity ?? 0;
+                
+                if (tempAdjustDetail.Type == "OUT" && (currentQty + tempAdjustDetail.Quantity > (tempAdjustDetail.Inventory ?? 0)))
+                {
+                    Message.Error($"Số lượng điều chỉnh xuất ({currentQty + tempAdjustDetail.Quantity}) vượt quá số lượng tồn kho ({tempAdjustDetail.Inventory ?? 0}).");
+                    return;
+                }
+
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += tempAdjustDetail.Quantity;
+                }
+                else
+                {
+                    newAdjustOrder.Lines.Add(new AdjustOrderDetailDto
+                    {
+                        SPID = tempAdjustDetail.SPID,
+                        PartCode = tempAdjustDetail.PartCode,
+                        PartName = tempAdjustDetail.PartName,
+                        HasCode = false,
+                        Type = tempAdjustDetail.Type,
+                        Quantity = tempAdjustDetail.Quantity
+                    });
+                }
+                
+                tempAdjustDetail = new AdjustOrderDetailDto { Quantity = 1, Type = tempAdjustDetail.Type };
+                availableCodedItemsForSelectedPart.Clear();
+                selectedAdjustPartId = 0;
+                return;
+            }
+
             newAdjustOrder.Lines.Add(new AdjustOrderDetailDto
             {
                 SPID = tempAdjustDetail.SPID,
@@ -299,17 +341,30 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 HasCode = tempAdjustDetail.HasCode,
                 SerialCode = tempAdjustDetail.SerialCode,
                 Type = tempAdjustDetail.Type,
-                Quantity = tempAdjustDetail.HasCode ? 1 : tempAdjustDetail.Quantity
+                Quantity = 1
             });
 
-            tempAdjustDetail = new AdjustOrderDetailDto { Quantity = 1, Type = "IN" };
-            availableCodedItemsForSelectedPart.Clear();
-            selectedAdjustPartId = 0;
+            if (tempAdjustDetail.HasCode && tempAdjustDetail.Type == "OUT")
+            {
+                var addedSerials = newAdjustOrder.Lines.Where(d => d.SPID == tempAdjustDetail.SPID && d.HasCode && d.Type == "OUT").Select(d => d.SerialCode).ToList();
+                availableCodedItemsForSelectedPart = availableCodedItemsForSelectedPart.Where(x => !addedSerials.Contains(x.SerialCode)).ToList();
+                tempAdjustDetail.SerialCode = null;
+            }
+            else
+            {
+                tempAdjustDetail = new AdjustOrderDetailDto { Quantity = 1, Type = tempAdjustDetail.Type };
+                availableCodedItemsForSelectedPart.Clear();
+                selectedAdjustPartId = 0;
+            }
         }
 
         private void RemoveAdjustDetail(AdjustOrderDetailDto item)
         {
             newAdjustOrder.Lines.Remove(item);
+            if (item.HasCode && item.Type == "OUT" && item.SPID == selectedAdjustPartId)
+            {
+                _ = OnAdjustTypeChanged("OUT"); // this triggers a refresh of the serials list
+            }
         }
 
         private void OnAdjustAttachmentUploaded(UploadInfo fileinfo)

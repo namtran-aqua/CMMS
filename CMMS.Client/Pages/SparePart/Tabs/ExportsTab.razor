@@ -64,7 +64,7 @@
 <div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
     <div class="d-flex justify-content-between align-items-center mb-3"> 
         <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Exports Register</h6>
-        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredExportOrders.Count orders found</p>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500; margin-bottom: 0;">@FilteredExportOrders.Count orders found</p>
     </div>
     <div class="table-responsive">
         <table class="table">
@@ -230,7 +230,7 @@
                             Accept=".jpg,.jpeg,.png,.pdf,.docx,.xlsx"
                             ShowUploadList="false"
                             OnSingleCompleted="OnExportAttachmentUploaded">
-                        <Button Icon="upload">Tải lên</Button>
+                        <Button Class="btn-custom" Icon="upload">Tải lên</Button>
                     </Upload>
                     @if (newExportOrder.AttachmentUrls.Any())
                     {
@@ -282,7 +282,7 @@
             {
                 <div class="col-md-4">
                     <label style="font-size:12px; font-weight:600; color:#64748b;">Số Lượng Xuất (FIFO Tự Động)</label>
-                    <AntDesign.InputNumber TValue="int" @bind-Value="tempExportDetail.Quantity" Min="1" Style="width:100%" />
+                    <AntDesign.InputNumber TValue="int" @bind-Value="tempExportDetail.Quantity" Min="1" Style="width:100% ; height:38px" />
                 </div>
             }
 
@@ -313,7 +313,7 @@
                             <td>@(det.HasCode ? det.SerialCode : "FIFO Tự Động")</td>
                             <td>@det.Quantity</td>
                             <td>
-                                <Button Danger Size="ButtonSize.Small" OnClick="() => RemoveExportDetail(det)"><Icon Type="delete" /></Button>
+                                <Button Danger Size="ButtonSize.Small" Class="btn-without-title" OnClick="() => RemoveExportDetail(det)"><Icon Type="delete" /></Button>
                             </td>
                         </tr>
                     }

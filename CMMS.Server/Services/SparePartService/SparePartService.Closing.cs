@@ -38,54 +38,47 @@ namespace CMMS.Server.Services.SparePartService
                         new { Year = prevYear, Month = prevMonth, SPID = part.SPID },
                         transaction: transaction);
 
-                    int openingQty = prevPeriod?.ClosingQty ?? 0;
-                    decimal openingValue = prevPeriod?.ClosingValue ?? 0m;
+                    bool isFirstMonth = false;
+                    int openingQty = 0;
+                    decimal openingValue = 0m;
 
-                    int importQty = await connection.ExecuteScalarAsync<int>(
-                        @"SELECT ISNULL(SUM(d.Quantity), 0)
-                          FROM dbo.Tbl_ImportOrderDetail d
-                          JOIN dbo.Tbl_ImportOrder o ON o.ImportID = d.ImportID
-                          WHERE d.SPID = @SPID 
-                            AND o.ImportDate BETWEEN @Start AND @End 
-                            AND o.Status = 'Completed' 
-                            AND o.PONumber IS NOT NULL",
-                        new { SPID = part.SPID, Start = startDate, End = endDate },
-                        transaction: transaction);
+                    if (prevPeriod != null)
+                    {
+                        openingQty = prevPeriod.ClosingQty;
+                        openingValue = prevPeriod.ClosingValue;
+                    }
+                    else
+                    {
+                        isFirstMonth = true;
+                    }
+
+                    DateTime effectiveStart = isFirstMonth ? new DateTime(1900, 1, 1) : startDate;
+
+                    int importQty = 0;
+                    if (!isFirstMonth)
+                    {
+                        importQty = await connection.ExecuteScalarAsync<int>(
+                            @"SELECT ISNULL(SUM(d.Quantity), 0)
+                              FROM dbo.Tbl_ImportOrderDetail d
+                              JOIN dbo.Tbl_ImportOrder o ON o.ImportID = d.ImportID
+                              WHERE d.SPID = @SPID 
+                                AND o.ImportDate BETWEEN @Start AND @End 
+                                AND o.Status = 'Completed'",
+                            new { SPID = part.SPID, Start = effectiveStart, End = endDate },
+                            transaction: transaction);
+                    }
 
                     int exportQty = await connection.ExecuteScalarAsync<int>(
                         @"SELECT ISNULL(SUM(d.Quantity), 0)
                           FROM dbo.Tbl_ExportOrderDetail d
                           JOIN dbo.Tbl_ExportOrder o ON o.ExportID = d.ExportID
-                          LEFT JOIN dbo.Tbl_MovementType m ON m.MovementTypeID = o.MovementTypeID
                           WHERE d.SPID = @SPID 
                             AND o.ExportDate BETWEEN @Start AND @End 
-                            AND o.Status = 'Completed'
-                            AND (m.MovementTypeName IS NULL OR (m.MovementTypeName <> 'Manual Adjust (IN)' AND m.MovementTypeName <> 'Manual Adjust (OUT)'))",
-                        new { SPID = part.SPID, Start = startDate, End = endDate },
+                            AND o.Status = 'Completed'",
+                        new { SPID = part.SPID, Start = effectiveStart, End = endDate },
                         transaction: transaction);
 
-                    int manualImportQty = await connection.ExecuteScalarAsync<int>(
-                        @"SELECT ISNULL(SUM(d.Quantity), 0)
-                          FROM dbo.Tbl_ImportOrderDetail d
-                          JOIN dbo.Tbl_ImportOrder o ON o.ImportID = d.ImportID
-                          WHERE d.SPID = @SPID 
-                            AND o.ImportDate BETWEEN @Start AND @End 
-                            AND o.Status = 'Completed' 
-                            AND o.PONumber IS NULL",
-                        new { SPID = part.SPID, Start = startDate, End = endDate },
-                        transaction: transaction);
 
-                    int manualExportQty = await connection.ExecuteScalarAsync<int>(
-                        @"SELECT ISNULL(SUM(d.Quantity), 0)
-                          FROM dbo.Tbl_ExportOrderDetail d
-                          JOIN dbo.Tbl_ExportOrder o ON o.ExportID = d.ExportID
-                          JOIN dbo.Tbl_MovementType m ON m.MovementTypeID = o.MovementTypeID
-                          WHERE d.SPID = @SPID 
-                            AND o.ExportDate BETWEEN @Start AND @End 
-                            AND o.Status = 'Completed'
-                            AND (m.MovementTypeName = 'Manual Adjust (IN)' OR m.MovementTypeName = 'Manual Adjust (OUT)')",
-                        new { SPID = part.SPID, Start = startDate, End = endDate },
-                        transaction: transaction);
 
                     int adjustOrderInQty = await connection.ExecuteScalarAsync<int>(
                         @"SELECT ISNULL(SUM(d.Quantity), 0)
@@ -94,7 +87,7 @@ namespace CMMS.Server.Services.SparePartService
                           WHERE d.SPID = @SPID 
                             AND o.AdjustDate BETWEEN @Start AND @End 
                             AND d.Type = 'IN'",
-                        new { SPID = part.SPID, Start = startDate, End = endDate },
+                        new { SPID = part.SPID, Start = effectiveStart, End = endDate },
                         transaction: transaction);
 
                     int adjustOrderOutQty = await connection.ExecuteScalarAsync<int>(
@@ -104,12 +97,24 @@ namespace CMMS.Server.Services.SparePartService
                           WHERE d.SPID = @SPID 
                             AND o.AdjustDate BETWEEN @Start AND @End 
                             AND d.Type = 'OUT'",
-                        new { SPID = part.SPID, Start = startDate, End = endDate },
+                        new { SPID = part.SPID, Start = effectiveStart, End = endDate },
                         transaction: transaction);
 
-                    int adjustmentQty = manualImportQty - manualExportQty + adjustOrderInQty - adjustOrderOutQty;
+                    int adjustIn = adjustOrderInQty;
+                    int adjustOut = adjustOrderOutQty;
+                    int adjustmentQty = adjustIn - adjustOut;
+                    int closingQty = 0;
 
-                    int closingQty = openingQty + importQty - exportQty + adjustmentQty;
+                    if (isFirstMonth)
+                    {
+                        closingQty = part.Inventory ?? 0;
+                        importQty = closingQty - adjustmentQty + exportQty;
+                    }
+                    else
+                    {
+                        closingQty = openingQty + importQty - exportQty + adjustmentQty;
+                    }
+
                     decimal closingValue = closingQty * (part.Price ?? 0m);
 
                     const string sqlSave = @"
@@ -117,16 +122,16 @@ namespace CMMS.Server.Services.SparePartService
                         BEGIN
                             UPDATE dbo.Tbl_SparePartMonthlyPeriod
                             SET OpeningQty = @OpeningQty, OpeningValue = @OpeningValue, ImportQty = @ImportQty, ExportQty = @ExportQty, 
-                                AdjustmentQty = @AdjustmentQty, ClosingQty = @ClosingQty, ClosingValue = @ClosingValue,
+                                AdjustIn = @AdjustIn, AdjustOut = @AdjustOut ,  ClosingQty = @ClosingQty, ClosingValue = @ClosingValue,
                                 UpdateBy = @UpdateBy, UpdateAt = GETDATE()
                             WHERE Year = @Year AND Month = @Month AND SPID = @SPID
                         END
                         ELSE
                         BEGIN
                             INSERT INTO dbo.Tbl_SparePartMonthlyPeriod 
-                                (Year, Month, SPID, OpeningQty, OpeningValue, ImportQty, ExportQty, AdjustmentQty, ClosingQty, ClosingValue, CreateBy, CreateAt)
+                                (Year, Month, SPID, OpeningQty, OpeningValue, ImportQty, ExportQty, AdjustIn, AdjustOut, ClosingQty, ClosingValue, CreateBy, CreateAt)
                             VALUES 
-                                (@Year, @Month, @SPID, @OpeningQty, @OpeningValue, @ImportQty, @ExportQty, @AdjustmentQty, @ClosingQty, @ClosingValue, @CreateBy, GETDATE())
+                                (@Year, @Month, @SPID, @OpeningQty, @OpeningValue, @ImportQty, @ExportQty, @AdjustIn, @AdjustOut, @ClosingQty, @ClosingValue, @CreateBy, GETDATE())
                         END";
 
                     await connection.ExecuteAsync(sqlSave, new {
@@ -137,7 +142,8 @@ namespace CMMS.Server.Services.SparePartService
                         OpeningValue = openingValue,
                         ImportQty = importQty,
                         ExportQty = exportQty,
-                        AdjustmentQty = adjustmentQty,
+                        AdjustIn = adjustIn,
+                        AdjustOut = adjustOut,
                         ClosingQty = closingQty,
                         ClosingValue = closingValue,
                         CreateBy = currentUser?.Id,
@@ -196,8 +202,8 @@ namespace CMMS.Server.Services.SparePartService
             parameters.Add("PageSize", pageSize);
 
             var sql = $@"
-                SELECT p.PeriodID, p.Year, p.Month, p.SPID, p.OpeningQty, p.OpeningValue, p.ImportQty, p.ExportQty, p.AdjustmentQty, p.ClosingQty, p.ClosingValue, p.CreateAt AS ClosingDate,
-                       sp.PartCode, sp.PartName, u.WorkDayId AS CreateUser
+                SELECT p.PeriodID, p.Year, p.Month, p.SPID, p.OpeningQty, p.OpeningValue, p.ImportQty, p.ExportQty, ISNULL(p.AdjustIn, 0) AS AdjustIn, ISNULL(p.AdjustOut, 0) AS AdjustOut, p.ClosingQty, p.ClosingValue, p.CreateAt AS ClosingDate,
+                       sp.PartCode, sp.PartName, sp.MinStock, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_SparePartMonthlyPeriod p
                 JOIN dbo.Tbl_SparePart sp ON sp.SPID = p.SPID
                 LEFT JOIN dbo.Tbl_User u ON u.Id = p.CreateBy
@@ -213,8 +219,8 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT p.PeriodID, p.Year, p.Month, p.SPID, p.OpeningQty, p.OpeningValue, p.ImportQty, p.ExportQty, p.AdjustmentQty, p.ClosingQty, p.ClosingValue, p.CreateAt AS ClosingDate,
-                       sp.PartCode, sp.PartName, u.WorkDayId AS CreateUser
+                SELECT p.PeriodID, p.Year, p.Month, p.SPID, p.OpeningQty, p.OpeningValue, p.ImportQty, p.ExportQty, ISNULL(p.AdjustIn, 0) AS AdjustIn, ISNULL(p.AdjustOut, 0) AS AdjustOut, p.ClosingQty, p.ClosingValue, p.CreateAt AS ClosingDate,
+                       sp.PartCode, sp.PartName, sp.MinStock, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_SparePartMonthlyPeriod p
                 JOIN dbo.Tbl_SparePart sp ON sp.SPID = p.SPID
                 LEFT JOIN dbo.Tbl_User u ON u.Id = p.CreateBy";

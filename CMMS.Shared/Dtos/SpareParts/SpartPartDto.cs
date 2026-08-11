@@ -25,6 +25,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public DateTime? UpdateDate { get; set; }
         public Guid? CreateBy { get; set; }
         public Guid? UpdateBy { get; set; }
+        public string? PartModel { get; set; }
         public bool IsCoded { get; set; }
         public string? ImageUrl { get; set; }
 

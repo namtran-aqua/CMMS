@@ -48,6 +48,10 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 {
                     result = result.Where(x => x.FACID == FactoryState.SelectedFacId.Value);
                 }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(x => x.DeptID == FactoryState.SelectedDeptId.Value);
+                }
 
                 // Filter by export code search
                 if (!string.IsNullOrWhiteSpace(exportCodeSearch))
@@ -220,7 +224,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             newExportOrder = new ExportOrderDto
             {
                 ExportDate = DateTime.Now,
-                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID
+                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID,
+                DeptID = FactoryState.SelectedDeptId
             };
             tempExportDetail = new ExportOrderDetailDto { Quantity = 1 };
             availableCodedItemsForSelectedPart.Clear();
@@ -272,7 +277,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                     var itemsRes = await Http.GetFromJsonAsync<PagedResultDto<SparePartItemDto>>($"api/SparePart/items?page=1&pageSize=100&partCode={part.PartCode}&status=Available");
                     if (itemsRes != null)
                     {
-                        availableCodedItemsForSelectedPart = itemsRes.Items ?? new();
+                        var addedSerials = newExportOrder.Details.Where(d => d.SPID == part.SPID && d.HasCode).Select(d => d.SerialCode).ToList();
+                        availableCodedItemsForSelectedPart = (itemsRes.Items ?? new()).Where(i => !addedSerials.Contains(i.SerialCode)).ToList();
                     }
                 }
                 else
@@ -301,6 +307,38 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 return;
             }
 
+            if (!tempExportDetail.HasCode)
+            {
+                var existingItem = newExportOrder.Details.FirstOrDefault(d => d.SPID == tempExportDetail.SPID);
+                var currentQty = existingItem?.Quantity ?? 0;
+                if (currentQty + tempExportDetail.Quantity > (tempExportDetail.Inventory ?? 0))
+                {
+                    Message.Error($"Số lượng xuất ({currentQty + tempExportDetail.Quantity}) vượt quá số lượng tồn kho ({tempExportDetail.Inventory ?? 0}).");
+                    return;
+                }
+
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += tempExportDetail.Quantity;
+                }
+                else
+                {
+                    newExportOrder.Details.Add(new ExportOrderDetailDto
+                    {
+                        SPID = tempExportDetail.SPID,
+                        PartCode = tempExportDetail.PartCode,
+                        PartName = tempExportDetail.PartName,
+                        HasCode = false,
+                        Quantity = tempExportDetail.Quantity
+                    });
+                }
+
+                tempExportDetail = new ExportOrderDetailDto { Quantity = 1 };
+                availableCodedItemsForSelectedPart.Clear();
+                selectedExportPartId = 0;
+                return;
+            }
+
             newExportOrder.Details.Add(new ExportOrderDetailDto
             {
                 SPID = tempExportDetail.SPID,
@@ -308,17 +346,24 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 PartName = tempExportDetail.PartName,
                 HasCode = tempExportDetail.HasCode,
                 SerialCode = tempExportDetail.SerialCode,
-                Quantity = tempExportDetail.HasCode ? 1 : tempExportDetail.Quantity
+                Quantity = 1
             });
 
-            tempExportDetail = new ExportOrderDetailDto { Quantity = 1 };
-            availableCodedItemsForSelectedPart.Clear();
-            selectedExportPartId = 0;
+            if (tempExportDetail.HasCode)
+            {
+                var addedSerials = newExportOrder.Details.Where(d => d.SPID == tempExportDetail.SPID && d.HasCode).Select(d => d.SerialCode).ToList();
+                availableCodedItemsForSelectedPart = availableCodedItemsForSelectedPart.Where(x => !addedSerials.Contains(x.SerialCode)).ToList();
+                tempExportDetail.SerialCode = null;
+            }
         }
 
         private void RemoveExportDetail(ExportOrderDetailDto item)
         {
             newExportOrder.Details.Remove(item);
+            if (item.HasCode && item.SPID == selectedExportPartId)
+            {
+                _ = OnExportPartSelected(selectedExportPartId);
+            }
         }
 
         private void OnExportAttachmentUploaded(UploadInfo fileinfo)

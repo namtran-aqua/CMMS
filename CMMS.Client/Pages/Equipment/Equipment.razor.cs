@@ -95,6 +95,10 @@ namespace CMMS.Client.Pages.Equipment
                 {
                     result = result.Where(e => e.FACID == FactoryState.SelectedFacId.Value);
                 }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(e => e.DeptID == FactoryState.SelectedDeptId.Value);
+                }
 
                 // Filter by Search Text
                 if (!string.IsNullOrWhiteSpace(searchText))
@@ -105,7 +109,8 @@ namespace CMMS.Client.Pages.Equipment
                         (e.EquipmentCode != null && e.EquipmentCode.ToLower().Contains(search)) ||
                         (e.EquipmentModel != null && e.EquipmentModel.ToLower().Contains(search)) ||
                         (e.EquipmentSerial != null && e.EquipmentSerial.ToLower().Contains(search)) ||
-                        (e.LocName != null && e.LocName.ToLower().Contains(search))
+                        (e.LocName != null && e.LocName.ToLower().Contains(search)) ||
+                        (e.LocCode != null && e.LocCode.ToLower().Contains(search))
                     );
                 }
 

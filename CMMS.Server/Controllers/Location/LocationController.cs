@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "AdminOnly")]
+[Authorize]
 public class LocationController : ControllerBase
 {
     private readonly ILocationService _service;
@@ -34,18 +34,21 @@ public class LocationController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ApiResponse> CreateLocation([FromBody] LocationDto location)
     {
         return await _service.CreateLocationAsync(location);
     }
 
     [HttpPut]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ApiResponse> UpdateLocation([FromBody] LocationDto location)
     {
         return await _service.UpdateLocationAsync(location);
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ApiResponse> DeleteLocation(int id)
     {
         return await _service.DeleteLocationAsync(id);

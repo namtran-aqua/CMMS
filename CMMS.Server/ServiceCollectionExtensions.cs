@@ -40,6 +40,13 @@ namespace CMMS.Server
             
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IDataPermissionService, DataPermissionService>();
+            
+            // Spare Part Dashboard Services
+            services.AddScoped<CMMS.Server.Services.SparePartDashboardService.ISparePartDashboardService, CMMS.Server.Services.SparePartDashboardService.SparePartDashboardService>();
+            services.AddScoped<CMMS.Server.Services.SparePartDashboardService.IInventoryAnalyticsService, CMMS.Server.Services.SparePartDashboardService.InventoryAnalyticsService>();
+            services.AddScoped<CMMS.Server.Services.SparePartDashboardService.IInventoryKpiService, CMMS.Server.Services.SparePartDashboardService.InventoryKpiService>();
+            services.AddScoped<CMMS.Server.Services.SparePartDashboardService.IInventoryAlertService, CMMS.Server.Services.SparePartDashboardService.InventoryAlertService>();
+            
             return services;
         }
     }

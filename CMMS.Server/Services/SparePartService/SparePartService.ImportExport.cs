@@ -31,8 +31,8 @@ namespace CMMS.Server.Services.SparePartService
                 dto.CreateAt = DateTime.Now;
 
                 const string sqlHeader = @"
-                    INSERT INTO dbo.Tbl_ImportOrder (ImportCode, PONumber, VendorID, ImportDate, FACID, Status, CreateBy, CreateAt)
-                    VALUES (@ImportCode, @PONumber, @VendorID, @ImportDate, @FACID, @Status, @CreateBy, @CreateAt);
+                    INSERT INTO dbo.Tbl_ImportOrder (ImportCode, PONumber, VendorID, ImportDate, FACID, DeptID, Status, CreateBy, CreateAt)
+                    VALUES (@ImportCode, @PONumber, @VendorID, @ImportDate, @FACID, @DeptID, @Status, @CreateBy, @CreateAt);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);";
                 
                 dto.ImportID = await connection.ExecuteScalarAsync<int>(sqlHeader, dto, transaction);
@@ -284,7 +284,7 @@ namespace CMMS.Server.Services.SparePartService
             parameters.Add("PageSize", pageSize);
 
             var sql = $@"
-                SELECT o.ImportID, o.ImportCode, o.PONumber, o.VendorID, o.ImportDate, o.FACID, o.Status, o.CreateBy, o.CreateAt,
+                SELECT o.ImportID, o.ImportCode, o.PONumber, o.VendorID, o.ImportDate, o.FACID, o.DeptID, o.Status, o.CreateBy, o.CreateAt,
                        v.VendorName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ImportOrder o
                 LEFT JOIN dbo.Tbl_Vendors v ON v.VendorID = o.VendorID
@@ -317,7 +317,7 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sqlHeader = @"
-                SELECT o.ImportID, o.ImportCode, o.PONumber, o.VendorID, o.ImportDate, o.FACID, o.Status, o.CreateBy, o.CreateAt,
+                SELECT o.ImportID, o.ImportCode, o.PONumber, o.VendorID, o.ImportDate, o.FACID, o.DeptID, o.Status, o.CreateBy, o.CreateAt,
                        v.VendorName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ImportOrder o
                 LEFT JOIN dbo.Tbl_Vendors v ON v.VendorID = o.VendorID
@@ -379,8 +379,8 @@ namespace CMMS.Server.Services.SparePartService
             dto.CreateAt = DateTime.Now;
 
             const string sqlHeader = @"
-                INSERT INTO dbo.Tbl_ExportOrder (ExportCode, MovementTypeID, ExportDate, FACID, Status, CreateBy, CreateAt)
-                VALUES (@ExportCode, @MovementTypeID, @ExportDate, @FACID, @Status, @CreateBy, @CreateAt);
+                INSERT INTO dbo.Tbl_ExportOrder (ExportCode, MovementTypeID, ExportDate, FACID, DeptID, Status, CreateBy, CreateAt)
+                VALUES (@ExportCode, @MovementTypeID, @ExportDate, @FACID, @DeptID, @Status, @CreateBy, @CreateAt);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);";
             dto.ExportID = await connection.ExecuteScalarAsync<int>(sqlHeader, dto, transaction);
 
@@ -665,7 +665,7 @@ namespace CMMS.Server.Services.SparePartService
             parameters.Add("PageSize", pageSize);
 
             var sql = $@"
-                SELECT o.ExportID, o.ExportCode, o.MovementTypeID, o.ExportDate, o.FACID, o.Status, o.CreateBy, o.CreateAt,
+                SELECT o.ExportID, o.ExportCode, o.MovementTypeID, o.ExportDate, o.FACID, o.DeptID, o.Status, o.CreateBy, o.CreateAt,
                        m.MovementTypeName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ExportOrder o
                 LEFT JOIN dbo.Tbl_MovementType m ON m.MovementTypeID = o.MovementTypeID
@@ -695,7 +695,7 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sqlHeader = @"
-                SELECT o.ExportID, o.ExportCode, o.MovementTypeID, o.ExportDate, o.FACID, o.Status, o.CreateBy, o.CreateAt,
+                SELECT o.ExportID, o.ExportCode, o.MovementTypeID, o.ExportDate, o.FACID, o.DeptID, o.Status, o.CreateBy, o.CreateAt,
                        m.MovementTypeName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ExportOrder o
                 LEFT JOIN dbo.Tbl_MovementType m ON m.MovementTypeID = o.MovementTypeID
@@ -729,7 +729,7 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT o.ImportID, o.ImportCode, o.PONumber, o.VendorID, o.ImportDate, o.FACID, o.Status, o.CreateBy, o.CreateAt,
+                SELECT o.ImportID, o.ImportCode, o.PONumber, o.VendorID, o.ImportDate, o.FACID, o.DeptID, o.Status, o.CreateBy, o.CreateAt,
                        v.VendorName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ImportOrder o
                 LEFT JOIN dbo.Tbl_Vendors v ON v.VendorID = o.VendorID
@@ -776,7 +776,7 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT o.ExportID, o.ExportCode, o.MovementTypeID, o.ExportDate, o.FACID, o.Status, o.CreateBy, o.CreateAt,
+                SELECT o.ExportID, o.ExportCode, o.MovementTypeID, o.ExportDate, o.FACID, o.DeptID, o.Status, o.CreateBy, o.CreateAt,
                        m.MovementTypeName, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_ExportOrder o
                 LEFT JOIN dbo.Tbl_MovementType m ON m.MovementTypeID = o.MovementTypeID
