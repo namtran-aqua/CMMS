@@ -23,7 +23,7 @@
 <div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
     <div class="d-flex justify-content-between align-items-center mb-3"> 
         <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Closed Periods</h6>
-        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredMonthlyPeriods.Count records closed</p>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@FilteredMonthlyPeriods.Count records closed</p>
     </div>
     <div class="table-responsive">
         <table class="table">
@@ -36,8 +36,10 @@
                 <th>Opening Value</th>
                 <th>Import Qty</th>
                 <th>Export Qty</th>
-                <th>Manual Adjust</th>
+                <th>Adjust In</th>
+                <th>Adjust Out</th>
                 <th>Closing Qty</th>
+                <th>Status</th>
                 <th>Closing Value</th>
                 <th>Closing Date</th>
             </tr>
@@ -55,10 +57,23 @@
                         <td>@String.Format("{0:N0}", p.OpeningValue)</td>
                         <td>@p.ImportQty</td>
                         <td>@p.ExportQty</td>
-                        <td style="color:@(p.AdjustmentQty < 0 ? "#ff4d4f" : (p.AdjustmentQty > 0 ? "#52c41a" : "#0f172a")); font-weight:700;">
-                            @p.AdjustmentQty
+                        <td style="color:#52c41a; font-weight:700;">
+                            @p.AdjustIn
+                        </td>
+                        <td style="color:#ff4d4f; font-weight:700;">
+                            @p.AdjustOut
                         </td>
                         <td><strong>@p.ClosingQty</strong></td>
+                        <td>
+                            @if (p.IsWithinLimit)
+                            {
+                                <Tag>Trong định mức</Tag>
+                            }
+                            else
+                            {
+                                <Tag> Dưới định mức</Tag>
+                            }
+                        </td>
                         <td><strong>@String.Format("{0:N0} VND", p.ClosingValue)</strong></td>
                         <td>@p.ClosingDate.ToString("yyyy-MM-dd")</td>
                     </tr>
@@ -91,7 +106,7 @@
 </div>
 
 <!-- Close Period Modal -->
-<Modal @bind-Visible="isClosingCreateVisible" Title="Chốt Sổ Kỳ Kế Toán" Width="400" Footer="null" Style="z-index:9999;">
+<Modal @bind-Visible="isClosingCreateVisible" Title="Chốt Sổ Kỳ Kế Toán" Width="400" Footer="null" MaskClosable="false">
     <div style="display:flex; flex-direction:column; gap:16px;">
         <p style="color:#64748b; font-size:13px; margin:0;">
             Việc chốt sổ sẽ tự động tính toán Số Dư Đầu Kỳ (Opening), Số Lượng Nhập (Import), Số Lượng Xuất (Export), Số Lượng Điều Chỉnh (Adjustment) và Số Dư Cuối Kỳ (Closing) kèm giá trị tồn kho cho tất cả các loại phụ tùng.

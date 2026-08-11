@@ -1,117 +1,276 @@
+@page "/spare-parts/dashboard"
 @namespace CMMS.Client.Pages.SpareParts.Tabs
-@inject NavigationManager Navigation
+@using CMMS.Shared.Dtos.SpareParts.Dashboard
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
 
-<!-- Dashboard Stats Grid -->
-<div class="d-flex justify-content-between align-items-center">
-    <div>
-        <h3>Warehouse Dashboard</h3>
-        <p class="text-muted">Real-time inventory statistics, values, and audit status</p>
-    </div>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+    const _sp_charts = {};
 
-<div class="dashboard-grid">
-    <div class="kpi-card" style="border-left: 4px solid #10b981;">
-        <span class="kpi-title">Total SKU Catalog</span>
-        <span class="kpi-value">@DashboardData.TotalSKU</span>
-    </div>
-    <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
-        <span class="kpi-title">In-Stock Quantity</span>
-        <span class="kpi-value">@DashboardData.CurrentInventory</span>
-    </div>
-    <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
-        <span class="kpi-title">Inventory Net Value</span>
-        <span class="kpi-value">@String.Format("{0:N0} VND", DashboardData.InventoryValue)</span>
-    </div>
-    <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
-        <span class="kpi-title">Import (This Month)</span>
-        <span class="kpi-value">@DashboardData.ImportThisMonth pcs</span>
-    </div>
-    <div class="kpi-card" style="border-left: 4px solid #ec4899;">
-        <span class="kpi-title">Export (This Month)</span>
-        <span class="kpi-value">@DashboardData.ExportThisMonth pcs</span>
-    </div>
-    <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-        <span class="kpi-title">Low Stock SKUs</span>
-        <span class="kpi-value" style="color:#ef4444;">@DashboardData.LowStockSKU</span>
-    </div>
-    <div class="kpi-card" style="border-left: 4px solid #000000;">
-        <span class="kpi-title">Zero Stock SKUs</span>
-        <span class="kpi-value" style="color:#ef4444;">@DashboardData.ZeroStockSKU</span>
-    </div>
-</div>
+    function destroySpChart(id) {
+        if (_sp_charts[id]) { _sp_charts[id].destroy(); delete _sp_charts[id]; }
+    }
+    window.destroyAllSpCharts = function () { Object.keys(_sp_charts).forEach(destroySpChart); };
 
-<!-- Analytics Rows -->
-<div class="row mx-0">
-    <!-- Top Used Parts -->
-    <div class="col-md-4 mb-4">
-        <div class="card p-4 h-100" style="border-radius: 15px;">
-            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 16px;">🔥 Top Used Parts (Month)</h6>
-            @if (DashboardData.TopUsedParts != null && DashboardData.TopUsedParts.Any())
-            {
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    @foreach (var item in DashboardData.TopUsedParts)
-                    {
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-                            <div>
-                                <div style="font-weight:600; color:#334155; font-size:13px;">@item.PartName</div>
-                                <small style="color:#94a3b8;">Code: @item.PartCode</small>
-                            </div>
-                            <span class="badge" style="background:#f1f5f9; color:#0f172a; font-weight:700;">@item.QuantityUsed pcs</span>
-                        </div>
-                    }
-                </div>
+    const SP_COLORS       = ['#378ADD','#1D9E75','#BA7517','#D85A30','#7F77DD','#D4537E','#639922'];
+    const SP_STATUS_COLORS = ['#10b981','#f59e0b','#ef4444', '#8b5cf6', '#3b82f6'];
+
+    function kFmt(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v; }
+
+    function safeCreateSp(id, config) {
+        destroySpChart(id);
+        const canvas = document.getElementById(id);
+        if (!canvas) return null;
+        const chart = new Chart(canvas, config);
+        _sp_charts[id] = chart;
+        return chart;
+    }
+
+    window.renderSpBarChart = function (canvasId, labels, data, labelName, color) {
+        safeCreateSp(canvasId, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: labelName, data: data, backgroundColor: color || '#378ADD', borderRadius: 3 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+                scales: { x: { ticks: { font: { size: 11 } } }, y: { ticks: { font: { size: 11 }, callback: kFmt } } }
             }
-            else
-            {
-                <p style="color:#94a3b8; font-size:13px;">No data recorded this month.</p>
-            }
+        });
+    };
+
+    window.renderSpDoughnutChart = function (canvasId, labels, data) {
+        safeCreateSp(canvasId, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data, backgroundColor: SP_STATUS_COLORS, borderWidth: 2, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+    };
+</script>
+
+<div class="report-page">
+
+    @* ── Topbar ── *@
+    <div class="report-topbar">
+        <div class="topbar-left">
+            <span class="page-title"><i class="ti ti-box"></i> Warehouse Dashboard</span>
+            <span class="text-muted ms-2" style="font-size: 13px;">Advanced Spare Part Analytics (Snapshot & Rule Engine)</span>
+        </div>
+        <div class="topbar-right">
+            <button class="btn btn-primary btn-sm" @onclick="ExportToExcel"><i class="ti ti-download"></i> Export Excel</button>
         </div>
     </div>
 
-    <!-- Aging Stock Distribution -->
-    <div class="col-md-4 mb-4">
-        <div class="card p-4 h-100" style="border-radius: 15px;">
-            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 16px;">⏳ Stock Aging Distribution</h6>
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                @foreach (var aging in DashboardData.AgingDistribution)
-                {
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">
-                            <span>@aging.Range</span>
-                            <span>@aging.Quantity pcs (@String.Format("{0:N0} VND", aging.Value))</span>
-                        </div>
-                        <div style="background:#e2e8f0; height:8px; border-radius:4px; overflow:hidden;">
-                            <div style="background:#8b5cf6; height:100%; width:@(DashboardData.CurrentInventory > 0 ? (aging.Quantity * 100 / DashboardData.CurrentInventory) : 0)%;"></div>
-                        </div>
-                    </div>
-                }
+    @* ── KPI Cards ── *@
+    <div class="kpi-row">
+        <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
+            <div class="kpi-label"><i class="ti ti-moneybag"></i> Inventory Value</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Kpi.InventoryValue)</div>
+            <div class="kpi-sub">VND</div>
+        </div>
+        <div class="kpi-card" style="border-left: 4px solid #10b981;">
+            <div class="kpi-label"><i class="ti ti-refresh"></i> Turnover Ratio</div>
+            <div class="kpi-value">@DashboardData.Kpi.InventoryTurnover</div>
+            <div class="kpi-sub">times / year</div>
+        </div>
+        <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+            <div class="kpi-label"><i class="ti ti-alert-circle"></i> Dead Stock Value</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Kpi.DeadStockValue)</div>
+            <div class="kpi-sub">VND</div>
+        </div>
+        <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="kpi-label"><i class="ti ti-target"></i> Fill Rate</div>
+            <div class="kpi-value">@DashboardData.Kpi.FillRate%</div>
+            <div class="kpi-sub">vs. Maintenance Demand</div>
+        </div>
+        <div class="kpi-card" style="border-left: 4px solid #14b8a6;">
+            <div class="kpi-label"><i class="ti ti-check"></i> Stock Accuracy</div>
+            <div class="kpi-value">@DashboardData.Kpi.StockAccuracy%</div>
+            <div class="kpi-sub">Cycle count accuracy</div>
+        </div>
+        <div class="kpi-card" style="border-left: 4px solid #ef4444;">
+            <div class="kpi-label"><i class="ti ti-package"></i> Low/Zero Stock SKUs</div>
+            <div class="kpi-value text-red">@(DashboardData.Summary.LowStockSKUs + DashboardData.Summary.ZeroStockSKUs)</div>
+            <div class="kpi-sub text-red">@DashboardData.Summary.LowStockSKUs Low / @DashboardData.Summary.ZeroStockSKUs Zero</div>
+        </div>
+    </div>
+
+    @* ── Charts & Top Consumed ── *@
+    <div class="bottom-reports-row" style="grid-template-columns: 2fr 1fr;">
+        <div class="chart-card table-card" style="grid-column: span 1;">
+            <div class="chart-title">🔥 Movement Trends</div>
+            <div class="chart-container">
+                <canvas id="topUsedPartsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card table-card" style="grid-column: span 1;">
+            <div class="chart-title">📦 Inventory Value by Category</div>
+            <div class="chart-container">
+                <canvas id="categoryValuesChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Top Vendors -->
-    <div class="col-md-4 mb-4">
-        <div class="card p-4 h-100" style="border-radius: 15px;">
-            <h6 style="font-weight: 700; color: #1e293b; margin-bottom: 16px;">🏢 Top Vendors Valuation</h6>
-            @if (DashboardData.TopVendors != null && DashboardData.TopVendors.Any())
-            {
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    @foreach (var v in DashboardData.TopVendors)
-                    {
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-                            <div>
-                                <div style="font-weight:600; color:#334155; font-size:13px;">@v.VendorName</div>
-                                <small style="color:#94a3b8;">Orders count: @v.TransactionsCount</small>
-                            </div>
-                            <span style="font-weight:700; color:#10b981; font-size:13px;">@String.Format("{0:N0} VND", v.TotalValue)</span>
-                        </div>
-                    }
+    <div class="bottom-reports-row" style="grid-template-columns: 1fr 2fr;">
+        @* Cảnh báo (Rule Engine Alerts) *@
+        <div class="report-card alert-card">
+            <div class="chart-title">Alerts (Rule Engine)</div>
+            <div class="alert-grid">
+                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("critical"))">
+                    <div class="alert-icon bg-red"><i class="ti ti-bell"></i></div>
+                    <div class="alert-count text-red">@DashboardData.Alerts.Critical</div>
+                    <div class="alert-name">Critical (Zero Stock)</div>
                 </div>
-            }
-            else
-            {
-                <p style="color:#94a3b8; font-size:13px;">No data recorded this month.</p>
-            }
+                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("warning"))">
+                    <div class="alert-icon bg-orange"><i class="ti ti-alert-triangle"></i></div>
+                    <div class="alert-count text-orange">@DashboardData.Alerts.Warning</div>
+                    <div class="alert-name">Warning (Low Stock)</div>
+                </div>
+                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("info"))">
+                    <div class="alert-icon bg-yellow"><i class="ti ti-alert-circle"></i></div>
+                    <div class="alert-count text-yellow">@DashboardData.Alerts.Info</div>
+                    <div class="alert-name">Dead/Slow Moving</div>
+                </div>
+                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("normal"))">
+                    <div class="alert-icon bg-blue"><i class="ti ti-info-circle"></i></div>
+                    <div class="alert-count text-blue">@DashboardData.Alerts.Normal</div>
+                    <div class="alert-name">Over/Max Stock</div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <a href="/spare-parts/inventory" class="view-all-link">View Detailed Alerts</a>
+            </div>
+        </div>
+
+        @* Recent Movements Table *@
+        <div class="report-card table-card">
+            <div class="chart-title">
+                <span>Recent Transactions</span>
+                <a href="/spare-parts/history" class="view-all-link">View History</a>
+            </div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction</th>
+                            <th>Part Code</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var move in DashboardData.RecentMovements)
+                        {
+                            <tr>
+                                <td>@move.TransactionCode</td>
+                                <td>@move.PartCode</td>
+                                <td>
+                                    @if(move.Type == MovementType.Import) { <span class="text-green"><i class="ti ti-arrow-down-right"></i> Import</span> }
+                                    else if(move.Type == MovementType.Export) { <span class="text-red"><i class="ti ti-arrow-up-right"></i> Export</span> }
+                                    else { <span class="text-orange"><i class="ti ti-settings"></i> @move.Type.ToString()</span> }
+                                </td>
+                                <td>@move.Quantity</td>
+                                <td class="text-muted">@move.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    @* ── Top Consumed Table ── *@
+    <div class="bottom-reports-row" style="grid-template-columns: 1fr;">
+        <div class="report-card table-card">
+            <div class="chart-title">
+                <span>Top Consumed Parts</span>
+                <a href="/spare-parts/history" class="view-all-link">View Full Report</a>
+            </div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Part Code</th>
+                            <th>Part Name</th>
+                            <th>Section</th>
+                            <th>Quantity Consumed</th>
+                            <th>Value %</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in DashboardData.TopConsumed)
+                        {
+                            <tr style="cursor: pointer;" @onclick="@(() => Navigation.NavigateTo($"/spare-parts/history?partCode={item.PartCode}"))">
+                                <td>@item.PartCode</td>
+                                <td>@item.PartName</td>
+                                <td>@item.SectionName</td>
+                                <td>@String.Format("{0:N0}", item.Quantity)</td>
+                                <td>@item.Percentage%</td>
+                                <td class="@(item.Trend == "Up" ? "text-green" : "text-red")">
+                                    <i class="ti @(item.Trend == "Up" ? "ti-trending-up" : "ti-trending-down")"></i>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<style>
+    .report-page   { padding: 16px; height: 100%; overflow: auto; background-color: #f8f9fa; }
+    .report-topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+    .topbar-left   { display:flex; align-items:center; gap:12px; }
+    .topbar-right  { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .page-title    { font-size:18px; font-weight:600; color: #1e293b; }
+    
+    .kpi-row  { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:20px; }
+    .kpi-card { background:white; border-radius:12px; padding:16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .kpi-label { font-size:12px; color:#64748b; margin-bottom:8px; font-weight: 500; }
+    .kpi-value { font-size:22px; font-weight:600; color: #0f172a; }
+    .kpi-sub   { font-size:12px; color:#94a3b8; margin-top:4px; }
+    
+    .text-red { color:#ef4444; }
+    
+    .chart-card  { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; height:350px; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .chart-title { font-size:14px; font-weight:600; margin-bottom:16px; color: #1e293b; display: flex; justify-content: space-between;}
+    .chart-container { flex-grow: 1; position: relative; width: 100%; height: 100%; min-height: 0; }
+    
+    .bottom-reports-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .report-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    
+    .view-all-link { font-size: 13px; color: #3b82f6; text-decoration: none; font-weight: normal; }
+    .view-all-link:hover { text-decoration: underline; }
+    
+    .table-responsive { overflow-x: auto; flex-grow: 1; margin-top: 12px; }
+    .custom-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .custom-table th { text-align: left; padding: 12px 8px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 600; }
+    .custom-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .custom-table tbody tr:hover { background-color: #f8fafc; }
+    
+    .alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-grow: 1; margin-top: 12px; }
+    .alert-item { text-align: center; padding: 10px; border-radius: 8px; background: #f8fafc; border: 1px solid #f1f5f9; transition: background-color 0.2s; }
+    .alert-item:hover { background: #e2e8f0; }
+    .alert-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 20px; color: white; }
+    .bg-red { background: #ef4444; } .bg-orange { background: #f59e0b; } .bg-yellow { background: #eab308; } .bg-blue { background: #3b82f6; }
+    .text-orange { color: #f59e0b; } .text-yellow { color: #eab308; } .text-blue { color: #3b82f6; } .text-green { color: #10b981; }
+    .alert-count { font-size: 20px; font-weight: bold; margin-bottom: 4px; }
+    .alert-name { font-size: 11px; color: #64748b; }
+    .text-center { text-align: center; } .mt-3 { margin-top: 12px; } .mt-2 { margin-top: 8px; }
+    
+    @@media (max-width:1200px) {
+        .kpi-row      { grid-template-columns:repeat(3,1fr); }
+        .bottom-reports-row { grid-template-columns: 1fr; }
+    }
+</style>

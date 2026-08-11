@@ -55,9 +55,9 @@
 </div>
 
 <!-- Grid Card -->
-<div class="card p-4 mb-4" style="border-radius: 15px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.01); padding: 24px !important;">
+<div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
     <div class="d-flex justify-content-between align-items-center mb-3"> 
-        <h6 class="mb-0" style="font-weight: 700; color: #1e293b; font-size: 16px;">Adjustments Register</h6>
+        <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Adjustments Register</h6>
         <p class="text-muted" style="font-size: 13px; font-weight: 500; margin-bottom: 0;">@FilteredAdjustOrders.Count orders found</p>
     </div>
     <div class="table-responsive">
@@ -265,6 +265,10 @@
                 <!-- Part Select -->
                 <div class="col-md-12">
                     <label style="font-size: 11px; font-weight: 600; color: #64748b;">Select Spare Part</label>
+                    @if (tempAdjustDetail.SPID > 0)
+                    {
+                        <span style="color:#10b981; font-weight:normal; margin-left:4px;">(Tồn: @(tempAdjustDetail.Inventory ?? 0) @tempAdjustDetail.Unit)</span>
+                    }
                     <Select TValue="int"
                             @bind-Value="selectedAdjustPartId"
                             DataSource="adjustPartsSearchList"

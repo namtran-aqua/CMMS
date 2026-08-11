@@ -151,7 +151,7 @@ namespace CMMS.Client.Components.Equipments
         private async Task LoadLocationsData()
         {
             if (Locations != null && Locations.Any()) return;
-            Locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/location/locations") ?? new();
+            Locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/Location/locations") ?? new();
         }
         //private async Task LoadStatusUsingData()
         //{

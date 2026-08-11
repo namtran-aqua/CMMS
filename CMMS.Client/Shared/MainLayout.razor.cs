@@ -101,6 +101,25 @@ namespace CMMS.Client.Shared
                     "All Factories");
             }
         }
+
+        private void OnDepartmentChanged(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out var deptId))
+            {
+                var dept = FactoryState.FilteredDepartments
+                    .FirstOrDefault(d => d.DeptID == deptId);
+
+                FactoryState.SetDepartment(
+                    deptId,
+                    dept?.DeptName ?? "");
+            }
+            else
+            {
+                FactoryState.SetDepartment(
+                    null,
+                    "All Departments");
+            }
+        }
     }
 }
 

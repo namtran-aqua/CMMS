@@ -38,6 +38,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddAppServices();
+builder.Services.AddMemoryCache();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo

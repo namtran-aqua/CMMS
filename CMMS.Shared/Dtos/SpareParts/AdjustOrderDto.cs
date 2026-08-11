@@ -9,6 +9,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public string AdjustCode { get; set; } = string.Empty;
         public DateTime AdjustDate { get; set; }
         public int? FACID { get; set; }
+        public int? DeptID { get; set; }
         public string Status { get; set; } = "Completed";
         public string? Note { get; set; }
         public Guid? CreateBy { get; set; }

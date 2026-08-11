@@ -14,10 +14,13 @@ namespace CMMS.Shared.Dtos.SpareParts
         public decimal OpeningValue { get; set; }
         public int ImportQty { get; set; }
         public int ExportQty { get; set; }
-        public int AdjustmentQty { get; set; }
+        public int AdjustIn { get; set; }
+        public int AdjustOut { get; set; }
         public int ClosingQty { get; set; }
         public decimal ClosingValue { get; set; }
         public DateTime ClosingDate { get; set; }
         public string? CreateUser { get; set; }
+        public int MinStock { get; set; }
+        public bool IsWithinLimit => ClosingQty > MinStock;
     }
 }

@@ -8,7 +8,7 @@
 
 @{
     RenderFragment footer = @<Template>
-        <Button OnClick="UploadFileAsync" Type="ButtonType.Primary" Disabled="@(_file == null || IsUploading)" Loading="IsUploading" Class="btn-custom">
+        <Button OnClick="UploadFileAsync" Type="ButtonType.Primary" Disabled="@(_file == null || IsUploading)" Loading="IsUploading" Style="border-radius: 8px; height: 38px; padding: 0 12px;">
             Start Import
         </Button>
         <Button OnClick="Close" Class="btn-custom">

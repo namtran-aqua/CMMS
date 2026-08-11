@@ -125,8 +125,8 @@ namespace CMMS.Client.Pages.Maintenance
             };
         }
 
-        private List<DashBoarDto> FilteredOverDue => OverDue == null ? new() : OverDue.Where(e => !FactoryState.SelectedFacId.HasValue || e.FACID == FactoryState.SelectedFacId.Value).ToList();
-        private List<DashBoarDto> FilteredDueSoon => DueSoon == null ? new() : DueSoon.Where(e => !FactoryState.SelectedFacId.HasValue || e.FACID == FactoryState.SelectedFacId.Value).ToList();
+        private List<DashBoarDto> FilteredOverDue => OverDue == null ? new() : OverDue.Where(e => (!FactoryState.SelectedFacId.HasValue || e.FACID == FactoryState.SelectedFacId.Value) && (!FactoryState.SelectedDeptId.HasValue || e.DeptID == FactoryState.SelectedDeptId.Value)).ToList();
+        private List<DashBoarDto> FilteredDueSoon => DueSoon == null ? new() : DueSoon.Where(e => (!FactoryState.SelectedFacId.HasValue || e.FACID == FactoryState.SelectedFacId.Value) && (!FactoryState.SelectedDeptId.HasValue || e.DeptID == FactoryState.SelectedDeptId.Value)).ToList();
 
         private List<DashBoarDto> FilteredPendingCombined
         {
@@ -142,6 +142,10 @@ namespace CMMS.Client.Pages.Maintenance
                 if (FactoryState.SelectedFacId.HasValue)
                 {
                     result = result.Where(e => e.FACID == FactoryState.SelectedFacId.Value);
+                }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(e => e.DeptID == FactoryState.SelectedDeptId.Value);
                 }
 
                 // Filter by Search Text
@@ -182,6 +186,13 @@ namespace CMMS.Client.Pages.Maintenance
                     result = result.Where(m => {
                         var eq = DashBoardData?.FirstOrDefault(d => d.EQID == m.EQID);
                         return eq != null && eq.FACID == FactoryState.SelectedFacId.Value;
+                    });
+                }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(m => {
+                        var eq = DashBoardData?.FirstOrDefault(d => d.EQID == m.EQID);
+                        return eq != null && eq.DeptID == FactoryState.SelectedDeptId.Value;
                     });
                 }
 

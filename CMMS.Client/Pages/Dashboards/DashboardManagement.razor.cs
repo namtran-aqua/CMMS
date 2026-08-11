@@ -24,11 +24,16 @@ namespace CMMS.Client.Pages.Dashboards
             get
             {
                 if (DashBoardData == null) return new();
+                var result = DashBoardData.AsEnumerable();
                 if (FactoryState.SelectedFacId.HasValue)
                 {
-                    return DashBoardData.Where(d => d.FACID == FactoryState.SelectedFacId.Value).ToList();
+                    result = result.Where(d => d.FACID == FactoryState.SelectedFacId.Value);
                 }
-                return DashBoardData;
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(d => d.DeptID == FactoryState.SelectedDeptId.Value);
+                }
+                return result.ToList();
             }
         }
 

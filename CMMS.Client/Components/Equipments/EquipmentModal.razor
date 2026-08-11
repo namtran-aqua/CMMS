@@ -112,13 +112,13 @@
             <Col Span="12">
                 <FormItem Label="Purchase Date" Name="BuyDate">
                     <DatePicker @bind-Value="EquipmentDto.BuyDate"
-                                Style="width:100%" />
+                                Style="width:100%; height:38px" />
                 </FormItem>
             </Col>
             <Col Span="12">
                 <FormItem Label="Maintenance Circle Time" Name="MaintenanceCircleTime" Required>
                 <AntDesign.InputNumber TValue="int?" @bind-Value="EquipmentDto.MaintenanceCircleTime"
-                                           Style="width:100%" />
+                                           Style="width:100%; height:38px" />
             </FormItem>
             </Col>
             
@@ -128,7 +128,7 @@
             <FormItem Label="Purchase Price" Name="BuyPrice">
                 <AntDesign.InputNumber TValue="decimal?"
                                        @bind-Value="EquipmentDto.BuyPrice"
-                                       Style="width:100%" />
+                                           Style="width:100%; height:38px" />
             </FormItem>
             </Col>
             <Col Span="12">
@@ -165,7 +165,7 @@
                         @bind-Value="EquipmentDto.LocID"
                         DataSource="Locations"
                         ValueName="LocID"
-                        LabelName="LocCode"
+                        LabelName="LocName"
                         Placeholder="Select Location"
                         ShowSearch
                         AllowClear>

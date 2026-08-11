@@ -17,7 +17,7 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT o.AdjustID, o.AdjustCode, o.AdjustDate, o.FACID, o.Status, o.Note, o.CreateBy, o.CreateAt,
+                SELECT o.AdjustID, o.AdjustCode, o.AdjustDate, o.FACID, o.DeptID, o.Status, o.Note, o.CreateBy, o.CreateAt,
                        u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_AdjustOrder o
                 LEFT JOIN dbo.Tbl_User u ON u.Id = o.CreateBy";
@@ -77,7 +77,7 @@ namespace CMMS.Server.Services.SparePartService
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT o.AdjustID, o.AdjustCode, o.AdjustDate, o.FACID, o.Status, o.Note, o.CreateBy, o.CreateAt,
+                SELECT o.AdjustID, o.AdjustCode, o.AdjustDate, o.FACID, o.DeptID, o.Status, o.Note, o.CreateBy, o.CreateAt,
                        u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_AdjustOrder o
                 LEFT JOIN dbo.Tbl_User u ON u.Id = o.CreateBy
@@ -123,8 +123,8 @@ namespace CMMS.Server.Services.SparePartService
                 var adjustCode = $"ADJ{DateTime.Now:yyMMdd}{(countToday + 1):D4}";
                 // 1. Insert AdjustOrder header
                 const string sqlHeader = @"
-                    INSERT INTO dbo.Tbl_AdjustOrder (AdjustCode, AdjustDate, FACID, Status, Note, CreateBy, CreateAt)
-                    VALUES (@AdjustCode, @AdjustDate, @FACID, 'Completed', @Note, @CreateBy, GETDATE());
+                    INSERT INTO dbo.Tbl_AdjustOrder (AdjustCode, AdjustDate, FACID, DeptID, Status, Note, CreateBy, CreateAt)
+                    VALUES (@AdjustCode, @AdjustDate, @FACID, @DeptID, 'Completed', @Note, @CreateBy, GETDATE());
                     SELECT CAST(SCOPE_IDENTITY() as int);";
                 
                 int adjustId;
@@ -133,6 +133,7 @@ namespace CMMS.Server.Services.SparePartService
                     cmdHeader.Parameters.Add("@AdjustCode", SqlDbType.NVarChar, 50).Value = adjustCode;
                     cmdHeader.Parameters.Add("@AdjustDate", SqlDbType.DateTime).Value = dto.AdjustDate;
                     cmdHeader.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
+                    cmdHeader.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
                     cmdHeader.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = (object?)dto.Note ?? DBNull.Value;
                     cmdHeader.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                     adjustId = (int)await cmdHeader.ExecuteScalarAsync();

@@ -103,7 +103,7 @@
 <div class="card p-4 mb-4" style="border-radius:15px; overflow:hidden; padding: 24px !important;">
     <div class="d-flex justify-content-between align-items-center mb-3"> 
         <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Spare Parts Stock</h6>
-        <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredParts.Count spare parts total</p>
+        <p class="text-muted" style="font-size: 13px; font-weight: 500; margin-bottom: 0;">@FilteredParts.Count spare parts total</p>
     </div>
     <div class="table-responsive">
         <table class="table">
@@ -112,10 +112,10 @@
                 <th style="width: 50px;">Image</th>
                 <th>Part Code</th>
                 <th>Part Name</th>
+                <th>Specification</th>
                 <th>Inventory</th>
                 <th>Unit</th>
                 <th>Price</th>
-                <th>Track Code</th>
                 <th>Location</th>
                 <th class="sticky-action" style="width: 100px; text-align: center;">Action</th>
             </tr>
@@ -140,6 +140,16 @@
                         </td>
                         <td><strong>@p.PartCode</strong></td>
                         <td>@p.PartName</td>
+                        <td>@p.PartModel
+                            @* @if (p.IsCoded)
+                            {
+                                <div style="color:#3b82f6; font-weight:700;">[Coded]</div>
+                            }
+                            else
+                            {
+                                <div style="color:#94a3b8;">None</div>
+                            } *@
+                        </td>
                         <td>
                             <div style="color:@(p.IsLowStock ? "#ff4d4f" : "#0f172a"); font-weight:@(p.IsLowStock ? "700" : "400");">
                                 @p.Inventory
@@ -151,16 +161,6 @@
                         </td>
                         <td>@p.Unit</td>
                         <td>@String.Format("{0:N0}", p.Price)</td>
-                        <td>
-                            @if (p.IsCoded)
-                            {
-                                <div style="color:#3b82f6; font-weight:700;">[Coded]</div>
-                            }
-                            else
-                            {
-                                <div style="color:#94a3b8;">None</div>
-                            }
-                        </td>
                         <td>@p.Location</td>
                         <td class="sticky-action" style="text-align: center;">
                             <div style="display:flex; justify-content:center; gap:6px;">

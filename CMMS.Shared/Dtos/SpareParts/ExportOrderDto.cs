@@ -11,6 +11,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public string? MovementTypeName { get; set; }
         public DateTime ExportDate { get; set; } = DateTime.Now;
         public int? FACID { get; set; }
+        public int? DeptID { get; set; }
         public string Status { get; set; } = "Completed"; // Draft, Completed, Cancelled, Reversed, etc.
         public Guid? CreateBy { get; set; }
         public string? CreateUser { get; set; }

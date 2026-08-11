@@ -50,6 +50,10 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 {
                     result = result.Where(x => x.FACID == FactoryState.SelectedFacId.Value);
                 }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(x => x.DeptID == FactoryState.SelectedDeptId.Value);
+                }
 
                 // Filter by import code search
                 if (!string.IsNullOrWhiteSpace(importCodeSearch))
@@ -226,7 +230,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             newImportOrder = new ImportOrderDto
             {
                 ImportDate = DateTime.Now,
-                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID
+                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID,
+                DeptID = FactoryState.SelectedDeptId
             };
             tempImportDetail = new ImportOrderDetailDto { Quantity = 1 };
             selectedImportPartId = 0;

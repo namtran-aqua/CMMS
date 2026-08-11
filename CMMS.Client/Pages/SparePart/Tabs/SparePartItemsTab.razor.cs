@@ -47,6 +47,10 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 {
                     result = result.Where(x => x.FACID == FactoryState.SelectedFacId.Value);
                 }
+                if (FactoryState.SelectedDeptId.HasValue)
+                {
+                    result = result.Where(x => x.DeptID == FactoryState.SelectedDeptId.Value);
+                }
 
                 // Filter by serial code search
                 if (!string.IsNullOrWhiteSpace(serialSearch))

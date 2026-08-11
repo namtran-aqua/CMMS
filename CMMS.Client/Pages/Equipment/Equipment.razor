@@ -81,7 +81,7 @@
     <div class="card p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3"> 
             <h6 class="mb-0" style="font-weight: 700; color: #1e293b;">Equipment List</h6>
-            <p class="text-muted" style="font-size: 13px; font-weight: 500;">@FilteredEquipments.Count equipment total</p>
+            <p class="text-muted" style="font-size: 13px; font-weight: 500; margin: 0;">@FilteredEquipments.Count equipment total</p>
         </div>
         <!-- Equipment Table -->
         <div class="table-responsive">
@@ -110,7 +110,10 @@
                             </td>
                             <td>@item.EquipmentModel</td>
                             <td>@item.EquipmentSerial</td>
-                            <td>@item.LocCode</td>
+                            <td>
+                                <div>@item.LocName</div>
+                                <div class="text-muted">@item.LocCode</div>
+                            </td>
                             <td>
                                 <Tag Color="@GetTagColor.GetTagColorCss(item.StsUseName.ToString())" Style="border-radius: 12px; padding: 2px 12px; font-weight: 500;">
                                     <Icon Type="@GetTagIcon.GetTagIconCss(item.StsUseName)" Theme="IconThemeType.Outline" Style="margin-right: 4px;" />

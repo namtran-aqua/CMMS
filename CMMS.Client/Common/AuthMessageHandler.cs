@@ -32,7 +32,7 @@ public class AuthMessageHandler : DelegatingHandler
             if (!requestPath.Contains("/api/auth/login", StringComparison.OrdinalIgnoreCase))
             {
                 await _sessionStorage.RemoveItemAsync("authToken");
-                _navigation.NavigateTo("/dash-board", forceLoad: true); // Redirect để xóa token và chuyển về trang dashboard
+                _navigation.NavigateTo("/dash-board/equipment", forceLoad: true); // Redirect để xóa token và chuyển về trang dashboard
             }
         }
 
