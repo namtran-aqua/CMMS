@@ -26,70 +26,91 @@ namespace CMMS.Shared.Dtos.SpareParts.Dashboard
     public class DashboardDto
     {
         public SummaryDto Summary { get; set; } = new();
-        public InventoryKpiDto Kpi { get; set; } = new();
-        public AlertDto Alerts { get; set; } = new();
-        public List<TrendDto> Trends { get; set; } = new();
-        public List<TopConsumedDto> TopConsumed { get; set; } = new();
-        public List<RecentMovementDto> RecentMovements { get; set; } = new();
-        public List<CategoryValueDto> CategoryValues { get; set; } = new();
+        public CodedRatioDto CodedRatio { get; set; } = new();
+        public StockStatusDto StockStatus { get; set; } = new();
+        public List<InOutTrendDto> InOutTrends { get; set; } = new();
+        public List<AgingDistributionDto> MovementAging { get; set; } = new();
+        public List<TopTransactionDto> TopImported { get; set; } = new();
+        public List<TopTransactionDto> TopExported { get; set; } = new();
+        public List<LowStockByLocationDto> LowStockByLocation { get; set; } = new();
+        public List<PartAgingDto> AgingReport { get; set; } = new();
+        public DateTime GeneratedAt { get; set; } = DateTime.Now;
     }
 
     public class SummaryDto
     {
-        public int TotalSKUs { get; set; }
-        public int InStockSKUs { get; set; }
-        public int LowStockSKUs { get; set; }
-        public int ZeroStockSKUs { get; set; }
+        public decimal TotalInventoryQuantity { get; set; }
+        public decimal TotalInventoryValue { get; set; }
+        public decimal ImportThisMonth { get; set; }
+        public double? ImportChangePercentage { get; set; }
+        public decimal ExportThisMonth { get; set; }
+        public double? ExportChangePercentage { get; set; }
     }
 
+    public class CodedRatioDto
+    {
+        public int CodedCount { get; set; }
+        public int NonCodedCount { get; set; }
+    }
+
+    public class StockStatusDto
+    {
+        public int HealthyStock { get; set; }
+        public int LowStock { get; set; }
+        public int OutOfStock { get; set; }
+    }
+
+    public class InOutTrendDto
+    {
+        public string Month { get; set; } = string.Empty; // e.g. "2026-08"
+        public decimal ImportQuantity { get; set; }
+        public decimal ExportQuantity { get; set; }
+    }
+
+    public class AgingDistributionDto
+    {
+        public string Range { get; set; } = string.Empty; // "0-30", "31-60", "61-90", ">90", "No Movement"
+        public decimal Quantity { get; set; }
+    }
+
+    public class TopTransactionDto
+    {
+        public string PartCode { get; set; } = string.Empty;
+        public string PartName { get; set; } = string.Empty;
+        public string Unit { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+    }
+
+    public class LowStockByLocationDto
+    {
+        public string Location { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+
+    public class PartAgingDto
+    {
+        public string PartCode { get; set; } = string.Empty;
+        public string PartName { get; set; } = string.Empty;
+        public decimal CurrentStock { get; set; }
+        public DateTime? LastMovementDate { get; set; }
+        public int? AgeDays { get; set; }
+    }
+
+    // Legacy DTOs kept to prevent build errors in unused services
     public class InventoryKpiDto
     {
         public decimal InventoryValue { get; set; }
-        public decimal InventoryTurnover { get; set; } // Hệ số quay vòng
-        public decimal DeadStockValue { get; set; } // Hàng tồn chậm luân chuyển
-        public decimal StockAccuracy { get; set; } // Độ chính xác tồn kho
-        public decimal FillRate { get; set; } // Tỷ lệ đáp ứng
+        public decimal InventoryTurnover { get; set; }
+        public decimal DeadStockValue { get; set; }
+        public decimal StockAccuracy { get; set; }
+        public decimal FillRate { get; set; }
     }
 
     public class AlertDto
     {
-        public int Critical { get; set; } // Ví dụ: Hết hàng
-        public int Warning { get; set; }  // Ví dụ: Sắp hết
-        public int Info { get; set; }     // Ví dụ: Có biến động
-        public int Normal { get; set; }   // Ví dụ: Tồn kho dư thừa
-    }
-
-    public class TrendDto
-    {
-        public string Period { get; set; } = string.Empty; // e.g. "2026-01"
-        public MovementType Type { get; set; }
-        public decimal Quantity { get; set; }
-        public decimal Value { get; set; }
-    }
-
-    public class TopConsumedDto
-    {
-        public string PartCode { get; set; } = string.Empty;
-        public string PartName { get; set; } = string.Empty;
-        public string SectionName { get; set; } = string.Empty;
-        public decimal Quantity { get; set; }
-        public decimal Value { get; set; }
-        public decimal Percentage { get; set; }
-        public string Trend { get; set; } = string.Empty; // "Up" or "Down"
-    }
-
-    public class RecentMovementDto
-    {
-        public string TransactionCode { get; set; } = string.Empty;
-        public string PartCode { get; set; } = string.Empty;
-        public MovementType Type { get; set; }
-        public decimal Quantity { get; set; }
-        public DateTime Date { get; set; }
-    }
-
-    public class CategoryValueDto
-    {
-        public string CategoryName { get; set; } = string.Empty;
-        public decimal Value { get; set; }
+        public int Critical { get; set; }
+        public int Warning { get; set; }
+        public int Info { get; set; }
+        public int Normal { get; set; }
     }
 }

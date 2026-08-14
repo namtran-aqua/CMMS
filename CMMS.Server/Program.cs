@@ -50,6 +50,13 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Run RBAC seeder
+using (var scope = app.Services.CreateScope())
+{
+    var connectionFactory = scope.ServiceProvider.GetRequiredService<CMMS.Data.Connection.ISqlConnectionFactory>();
+    await CMMS.Server.Infrastructure.RbacDbSeeder.SeedAsync(connectionFactory);
+}
+
 
 app.UseSwagger();
 

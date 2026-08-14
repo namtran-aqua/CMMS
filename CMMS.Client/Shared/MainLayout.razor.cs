@@ -19,6 +19,7 @@ namespace CMMS.Client.Shared
         [Inject] HttpClient Http { get; set; }
         [Inject] ISessionStorageService SessionStorage { get; set; }
         [Inject] FactoryStateService FactoryState { get; set; }
+        [Inject] CMMS.Client.Services.PermissionState PermissionState { get; set; }
 
         private UserDto? CurrentUser { get; set; }
         private List<DepartmentDto> _allDepartments = new();
@@ -42,6 +43,11 @@ namespace CMMS.Client.Shared
             {
                 var currentUserClass = new CurrentUser(Http, AuthStateProvider);
                 CurrentUser = await currentUserClass.LoadCurrentUser();
+
+                if (CurrentUser != null && CurrentUser.Id != Guid.Empty)
+                {
+                    await PermissionState.LoadPermissionsAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -75,7 +81,7 @@ namespace CMMS.Client.Shared
             {
                 authProvider.MarkUserAsLoggedOut();
             }
-            NavigationManager.NavigateTo($"{NavigationManager.BaseUri}dash-board", forceLoad: true);
+            NavigationManager.NavigateTo($"{NavigationManager.BaseUri}dash-board/equipment", forceLoad: true);
         }
 
         private void GoToLogin()

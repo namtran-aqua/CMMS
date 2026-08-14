@@ -38,17 +38,17 @@ namespace CMMS.Server.Controllers.SparePart
             worksheet.Cell(1, 1).Style.Font.Bold = true;
             worksheet.Cell(1, 1).Style.Font.FontSize = 16;
             
-            worksheet.Cell(3, 1).Value = "KPIs";
+            worksheet.Cell(3, 1).Value = "Summary";
             worksheet.Cell(4, 1).Value = "Inventory Value (VND)";
-            worksheet.Cell(4, 2).Value = dashboardData.Kpi.InventoryValue;
-            worksheet.Cell(5, 1).Value = "Stock Accuracy (%)";
-            worksheet.Cell(5, 2).Value = dashboardData.Kpi.StockAccuracy;
+            worksheet.Cell(4, 2).Value = dashboardData.Summary.TotalInventoryValue;
+            worksheet.Cell(5, 1).Value = "Total Quantity";
+            worksheet.Cell(5, 2).Value = dashboardData.Summary.TotalInventoryQuantity;
             
-            worksheet.Cell(7, 1).Value = "Alerts";
-            worksheet.Cell(8, 1).Value = "Critical Alerts";
-            worksheet.Cell(8, 2).Value = dashboardData.Alerts.Critical;
-            worksheet.Cell(9, 1).Value = "Warning Alerts";
-            worksheet.Cell(9, 2).Value = dashboardData.Alerts.Warning;
+            worksheet.Cell(7, 1).Value = "Stock Status";
+            worksheet.Cell(8, 1).Value = "Out of Stock SKUs";
+            worksheet.Cell(8, 2).Value = dashboardData.StockStatus.OutOfStock;
+            worksheet.Cell(9, 1).Value = "Low Stock SKUs";
+            worksheet.Cell(9, 2).Value = dashboardData.StockStatus.LowStock;
 
             using var stream = new System.IO.MemoryStream();
             workbook.SaveAs(stream);

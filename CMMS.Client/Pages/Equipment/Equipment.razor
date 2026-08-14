@@ -6,8 +6,10 @@
 @inject IMessageService Message
 @inject IJSRuntime JS
 @inject NavigationManager NavigationManager
+@inject CMMS.Client.Services.PermissionState PermissionState
 <PageTitle>Equipment</PageTitle>
 
+<PermissionView Code="@Permissions.EquipmentView" ShowFallback="true">
 <div>
 
     <!-- Header -->
@@ -29,12 +31,16 @@
                     <Icon Type="plus" /> Add Equipment
                 </button>
             </div> */
+            <PermissionView Code="@Permissions.EquipmentImport">
                 <Button Type="@ButtonType.Default" OnClick="ShowImportModal" Class="btn-custom">
-                <Icon Type="import" Theme="IconThemeType.Outline" /> Import
-            </Button>
+                    <Icon Type="import" Theme="IconThemeType.Outline" /> Import
+                </Button>
+            </PermissionView>
+            <PermissionView Code="@Permissions.EquipmentAdd">
                 <Button Type="@ButtonType.Primary" OnClick="CreatedAsync" Class="btn-custom">
-                <Icon Type="plus" Theme="IconThemeType.Outline" /> Add
-            </Button>
+                    <Icon Type="plus" Theme="IconThemeType.Outline" /> Add
+                </Button>
+            </PermissionView>
         }
         </div>
 
@@ -142,7 +148,7 @@
                                             </ChildContent>
                                             <ContentTemplate>
                                                 <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px;">
-                                                    @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                                                    @if (PermissionState.HasPermission(Permissions.EquipmentEdit) && AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
                                                     {
                                                         <Button Type="ButtonType.Text" OnClick="@(async () => await EditAsync(item))" Style="text-align: left;">
                                                             <Icon Type="edit" /> Edit
@@ -180,3 +186,4 @@
 </div>
 <EquipmentModal OnSave="LoadData" @ref="equipmentModal" />
 <ImportModal @ref="importModal" Title="Import Equipment" TemplateUrl="api/Equipment/import-template" UploadUrl="api/Equipment/import" OnSave="LoadData" />
+</PermissionView>

@@ -8,6 +8,7 @@
 @inject IMessageService Message
 @inject IJSRuntime JS
 @inject NavigationManager NavigationManager
+@inject CMMS.Client.Services.PermissionState PermissionState
 @* @inject AuthenticationStateProvider AuthStateProvider *@
 <PageTitle>Maintenance</PageTitle>
 <style>
@@ -63,6 +64,7 @@
     }
 </style>
 
+<PermissionView Code="@Permissions.MaintenanceView" ShowFallback="true">
 <div>
 
     <!-- Header -->
@@ -158,7 +160,7 @@
                                 <td class="sticky-action" style="text-align: center;">
                                     @if (IsAuthenticated)
                                     {
-                                        @if (AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
+                                        @if (PermissionState.HasPermission(Permissions.MaintenanceAction) && AuthorizationHelper.CanEditOrMaintain(CurrentUser, item.FACID, item.PICID))
                                         {
                                             <Button Type="@ButtonType.Primary" Ghost Size="ButtonSize.Small" OnClick="() => CreatedAsync(item.EQID)" Class="btn-custom">
                                                 <Icon Type="tool" Theme="IconThemeType.Outline" /> Maintenance
@@ -405,3 +407,4 @@
 </div>
 <MaintenanceModel OnSave="LoadData" @ref="_maintenanceModal"/>
 <MaintenanceDetailModel @ref="_detailModal" />
+</PermissionView>

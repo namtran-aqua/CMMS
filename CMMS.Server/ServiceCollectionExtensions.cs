@@ -47,6 +47,11 @@ namespace CMMS.Server
             services.AddScoped<CMMS.Server.Services.SparePartDashboardService.IInventoryKpiService, CMMS.Server.Services.SparePartDashboardService.InventoryKpiService>();
             services.AddScoped<CMMS.Server.Services.SparePartDashboardService.IInventoryAlertService, CMMS.Server.Services.SparePartDashboardService.InventoryAlertService>();
             
+            // RBAC Permission Engine
+            services.AddScoped<CMMS.Server.Services.PermissionService.IPermissionService, CMMS.Server.Services.PermissionService.PermissionService>();
+            services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, CMMS.Server.Infrastructure.Authorization.PermissionPolicyProvider>();
+            services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, CMMS.Server.Infrastructure.Authorization.PermissionAuthorizationHandler>();
+            
             return services;
         }
     }

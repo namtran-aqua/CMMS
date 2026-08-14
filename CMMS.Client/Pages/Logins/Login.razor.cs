@@ -46,6 +46,8 @@ public partial class Login
     private bool showNewPassword = false;
     private bool showConfirmPassword = false;
 
+    [Inject] private CMMS.Client.Services.PermissionState PermissionState { get; set; } = default!;
+
     private async Task DoLogin()
     {
         if (string.IsNullOrWhiteSpace(username))
@@ -91,6 +93,9 @@ public partial class Login
 
             await _sessionStorage.SetItemAsync("authToken", content["token"]);
             AuthProvider.MarkUserAsAuthenticated(username, claims);
+
+            // Load RBAC permissions from backend
+            await PermissionState.LoadPermissionsAsync();
 
             var baseUri = Nav.BaseUri.TrimEnd('/');
             Nav.NavigateTo($"{baseUri}/");

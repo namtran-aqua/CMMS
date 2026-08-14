@@ -16,8 +16,8 @@ namespace CMMS.Shared.Authorization
                 return false;
             }
 
-            // Manager role (RoleID = 1) can operate on all equipment in their factory
-            if (user.RoleID == 1 || (user.Roles != null && user.Roles.Contains("Manager", StringComparer.OrdinalIgnoreCase)))
+            // Manager (RoleID = 1) or Admin (RoleID = 3) can operate on all equipment in their factory
+            if (user.RoleID == 1 || user.RoleID == 3 || (user.Roles != null && (user.Roles.Contains("Manager", StringComparer.OrdinalIgnoreCase) || user.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase))))
             {
                 return true;
             }

@@ -2,6 +2,10 @@
 @using CMMS.Client.Shared
 @using CMMS.Client.Services
 @using AntDesign
+@using CMMS.Shared.Dtos.Equipment
+@using CMMS.Shared.Dtos.User
+@using CMMS.Shared.Authorization
+@using System.Net.Http.Json
 <div class="app-layout">
 
     <!-- SIDEBAR -->
@@ -44,69 +48,90 @@
                     </MenuItem>
                 </ChildContent>
             </SubMenu>
-                @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName) && CurrentUser.RoleID == CMMS.Shared.Constants.SystemRoles.Admin)
-                {
-                    <SubMenu Key="master-data">
-                        <TitleTemplate>
-                            <div class="menu-link">
-                                <i class="fa-solid fa-database menu-icon"></i>
-                                <span>Master Data</span>
-                            </div>
-                        </TitleTemplate>
-                        <ChildContent>
+            @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName))
+            {
+                <SubMenu Key="master-data">
+                    <TitleTemplate>
+                        <div class="menu-link">
+                            <i class="fa-solid fa-database menu-icon"></i>
+                            <span>Master Data</span>
+                        </div>
+                    </TitleTemplate>
+                    <ChildContent>
+                        <PermissionView Code="@Permissions.MasterDataCatalogView">
                             <MenuItem Key="md-catalog">
                                 <NavLink href="@GetLink("/master-data/spare-part-catalog")" class="menu-link">
                                     <i class="fa-solid fa-folder-open menu-icon"></i>
                                     <span>Catalog Spare Parts</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataCategoryView">
                             <MenuItem Key="md-category">
                                 <NavLink href="@GetLink("/master-data/category")" class="menu-link">
                                     <i class="fa-solid fa-tags menu-icon"></i>
                                     <span>Category</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataSupplierView">
                             <MenuItem Key="md-supplier">
                                 <NavLink href="@GetLink("/master-data/supplier")" class="menu-link">
                                     <i class="fa-solid fa-truck-field menu-icon"></i>
                                     <span>Supplier</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataVendorView">
                             <MenuItem Key="md-vendor">
                                 <NavLink href="@GetLink("/master-data/vendor")" class="menu-link">
                                     <i class="fa-solid fa-store menu-icon"></i>
                                     <span>Vendor</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataLocationView">
                             <MenuItem Key="md-location">
                                 <NavLink href="@GetLink("/master-data/location")" class="menu-link">
                                     <i class="fa-solid fa-location-dot menu-icon"></i>
                                     <span>Location</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataDepartmentView">
                             <MenuItem Key="md-department">
                                 <NavLink href="@GetLink("/master-data/department")" class="menu-link">
                                     <i class="fa-solid fa-building-user menu-icon"></i>
                                     <span>Department</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataFactoryView">
                             <MenuItem Key="md-factory">
                                 <NavLink href="@GetLink("/master-data/factory")" class="menu-link">
                                     <i class="fa-solid fa-industry menu-icon"></i>
                                     <span>Factory</span>
                                 </NavLink>
                             </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataUserView">
                             <MenuItem Key="md-user">
                                 <NavLink href="@GetLink("/master-data/user")" class="menu-link">
                                     <i class="fa-solid fa-users menu-icon"></i>
                                     <span>Users</span>
                                 </NavLink>
                             </MenuItem>
-                        </ChildContent>
-                    </SubMenu>
-                }
-            @if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.FullName))
-            {
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.MasterDataRolePermissionView">
+                            <MenuItem Key="md-role-permission">
+                                <NavLink href="@GetLink("/master-data/role-permission")" class="menu-link">
+                                    <i class="fa-solid fa-user-shield menu-icon"></i>
+                                    <span>Roles & Permissions</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                    </ChildContent>
+                </SubMenu>
                 <SubMenu Key="spare-parts">
                     <TitleTemplate>
                         <div class="menu-link">
@@ -115,70 +140,81 @@
                         </div>
                     </TitleTemplate>
                     <ChildContent>
-
-                        @* <MenuItem Key="sp-monthly-closing">
-                            <NavLink href="@GetLink("/spare-parts/monthly-closing")" class="menu-link">
-                                <i class="fa-solid fa-calendar-check menu-icon"></i>
-                                <span>Monthly Closing</span>
-                            </NavLink>
-                        </MenuItem> *@
-                        <MenuItem Key="sp-inventory">
-                            <NavLink href="@GetLink("/spare-parts/inventory")" class="menu-link">
-                                <i class="fa-solid fa-boxes-stacked menu-icon"></i>
-                                <span>Inventory Stock</span>
-                            </NavLink>
-                        </MenuItem>
-                        <MenuItem Key="sp-coded">
-                            <NavLink href="@GetLink("/spare-parts/coded-parts")" class="menu-link">
-                                <i class="fa-solid fa-barcode menu-icon"></i>
-                                <span>Coded Parts</span>
-                            </NavLink>
-                        </MenuItem>
-                        <MenuItem Key="sp-non-coded">
-                            <NavLink href="@GetLink("/spare-parts/non-coded")" class="menu-link">
-                                <i class="fa-solid fa-layer-group menu-icon"></i>
-                                <span>Non-Coded Parts</span>
-                            </NavLink>
-                        </MenuItem>
-                        <MenuItem Key="sp-imports">
-                            <NavLink href="@GetLink("/spare-parts/imports")" class="menu-link">
-                                <i class="fa-solid fa-file-import menu-icon"></i>
-                                <span>Inbound</span>
-                            </NavLink>
-                        </MenuItem>
-                        <MenuItem Key="sp-exports">
-                            <NavLink href="@GetLink("/spare-parts/exports")" class="menu-link">
-                                <i class="fa-solid fa-file-export menu-icon"></i>
-                                <span>Outbound</span>
-                            </NavLink>
-                        </MenuItem>
-                        <MenuItem Key="sp-adjustments">
-                            <NavLink href="@GetLink("/spare-parts/adjustments")" class="menu-link">
-                                <i class="fa-solid fa-scale-balanced menu-icon"></i>
-                                <span>Stock Adjustments</span>
-                            </NavLink>
-                        </MenuItem>
-                        <MenuItem Key="sp-history">
-                            <NavLink href="@GetLink("/spare-parts/history")" class="menu-link">
-                                <i class="fa-solid fa-clock-rotate-left menu-icon"></i>
-                                <span>Transactions Log</span>
-                            </NavLink>
-                        </MenuItem>
+                        <PermissionView Code="@Permissions.SparePartInventoryView">
+                            <MenuItem Key="sp-inventory">
+                                <NavLink href="@GetLink("/spare-parts/inventory")" class="menu-link">
+                                    <i class="fa-solid fa-boxes-stacked menu-icon"></i>
+                                    <span>Inventory Stock</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.SparePartCodedView">
+                            <MenuItem Key="sp-coded">
+                                <NavLink href="@GetLink("/spare-parts/coded-parts")" class="menu-link">
+                                    <i class="fa-solid fa-barcode menu-icon"></i>
+                                    <span>Coded Parts</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.SparePartNonCodedView">
+                            <MenuItem Key="sp-non-coded">
+                                <NavLink href="@GetLink("/spare-parts/non-coded")" class="menu-link">
+                                    <i class="fa-solid fa-layer-group menu-icon"></i>
+                                    <span>Non-Coded Parts</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.SparePartInboundView">
+                            <MenuItem Key="sp-imports">
+                                <NavLink href="@GetLink("/spare-parts/imports")" class="menu-link">
+                                    <i class="fa-solid fa-file-import menu-icon"></i>
+                                    <span>Inbound</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.SparePartOutboundView">
+                            <MenuItem Key="sp-exports">
+                                <NavLink href="@GetLink("/spare-parts/exports")" class="menu-link">
+                                    <i class="fa-solid fa-file-export menu-icon"></i>
+                                    <span>Outbound</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.SparePartAdjustmentView">
+                            <MenuItem Key="sp-adjustments">
+                                <NavLink href="@GetLink("/spare-parts/adjustments")" class="menu-link">
+                                    <i class="fa-solid fa-scale-balanced menu-icon"></i>
+                                    <span>Stock Adjustments</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
+                        <PermissionView Code="@Permissions.SparePartTransactionsView">
+                            <MenuItem Key="sp-history">
+                                <NavLink href="@GetLink("/spare-parts/history")" class="menu-link">
+                                    <i class="fa-solid fa-clock-rotate-left menu-icon"></i>
+                                    <span>Transactions Log</span>
+                                </NavLink>
+                            </MenuItem>
+                        </PermissionView>
                     </ChildContent>
                 </SubMenu>
-                <MenuItem>
-                    <NavLink href="@GetLink("/equipment")" class="menu-link">
-                        <i class="fa-solid fa-sliders menu-icon"></i>
-                        <span>Equipment</span>
-                    </NavLink>
-                </MenuItem>
+                <PermissionView Code="@Permissions.EquipmentView">
+                    <MenuItem>
+                        <NavLink href="@GetLink("/equipment")" class="menu-link">
+                            <i class="fa-solid fa-sliders menu-icon"></i>
+                            <span>Equipment</span>
+                        </NavLink>
+                    </MenuItem>
+                </PermissionView>
 
-                <MenuItem>
-                    <NavLink href="@GetLink("/maintenance")" class="menu-link">
-                        <i class="fa-solid fa-wrench menu-icon"></i>
-                        <span>Maintenance</span>
-                    </NavLink>
-                </MenuItem>
+                <PermissionView Code="@Permissions.MaintenanceView">
+                    <MenuItem>
+                        <NavLink href="@GetLink("/maintenance")" class="menu-link">
+                            <i class="fa-solid fa-wrench menu-icon"></i>
+                            <span>Maintenance</span>
+                        </NavLink>
+                    </MenuItem>
+                </PermissionView>
             }
             </Menu>
         </div>

@@ -8,10 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
-    public AuthController(IUserService userService)
+    private readonly CMMS.Server.Services.PermissionService.IPermissionService _permissionService;
+
+    public AuthController(IUserService userService, CMMS.Server.Services.PermissionService.IPermissionService permissionService)
     {
         _userService = userService;
+        _permissionService = permissionService;
     }
+
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
@@ -23,6 +27,20 @@ public class AuthController : ControllerBase
         return Ok(new Dictionary<string, string> {
             { "token", result.Token }
         });
+    }
+
+    [Authorize]
+    [HttpGet("my-permissions")]
+    public async Task<IActionResult> GetMyPermissions()
+    {
+        var roleIdClaim = User.FindFirst("RoleID");
+        if (roleIdClaim == null || !int.TryParse(roleIdClaim.Value, out var roleId))
+        {
+            return Ok(new List<string>());
+        }
+
+        var permissions = await _permissionService.GetRolePermissionsAsync(roleId);
+        return Ok(permissions);
     }
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePassRequest request)

@@ -1,0 +1,55 @@
+@using CMMS.Client.Services
+@using CMMS.Shared.Constants
+@using Microsoft.AspNetCore.Components.Authorization
+@inject PermissionState PermissionState
+@inject AuthenticationStateProvider AuthStateProvider
+
+@if (_isAuthorized)
+{
+    @ChildContent
+}
+else if (ShowFallback)
+{
+    @FallbackContent
+}
+
+@code {
+    [Parameter] public string Code { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FallbackContent { get; set; }
+    [Parameter] public bool ShowFallback { get; set; } = false;
+
+    private bool _isAuthorized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckPermissionAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CheckPermissionAsync();
+    }
+
+    private async Task CheckPermissionAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var roleIdClaim = user.FindFirst("RoleID");
+            if (roleIdClaim != null && int.TryParse(roleIdClaim.Value, out var roleId) && roleId == SystemRoles.Admin)
+            {
+                _isAuthorized = true;
+                return;
+            }
+
+            _isAuthorized = PermissionState.HasPermission(Code);
+        }
+        else
+        {
+            _isAuthorized = false;
+        }
+    }
+}

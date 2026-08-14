@@ -9,33 +9,47 @@
 @using CMMS.Client.Pages.MasterData.Department
 @using CMMS.Client.Pages.MasterData.Factory
 @using CMMS.Client.Pages.MasterData.User
-@attribute [Authorize(Policy = "AdminOnly")]
-
 <PageTitle>Master Data</PageTitle>
 
 <div class="masterdata-layout" style="background:#f8fafc; min-height: calc(100vh - 64px); overflow-y:auto;">
     <div style="@(selectedTab == "Catalog" ? "" : "display:none;")">
-        <CatalogTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataCatalogView">
+            <CatalogTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Category" ? "" : "display:none;")">
-        <CategoryTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataCategoryView">
+            <CategoryTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Supplier" ? "" : "display:none;")">
-        <SupplierTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataSupplierView">
+            <SupplierTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Vendor" ? "" : "display:none;")">
-        <VendorTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataVendorView">
+            <VendorTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Location" ? "" : "display:none;")">
-        <LocationTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataLocationView">
+            <LocationTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Department" ? "" : "display:none;")">
-        <DepartmentTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataDepartmentView">
+            <DepartmentTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Factory" ? "" : "display:none;")">
-        <FactoryTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataFactoryView">
+            <FactoryTab />
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "User" ? "" : "display:none;")">
-        <UserTab />
+        <PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataUserView">
+            <UserTab />
+        </PermissionView>
     </div>
 </div>

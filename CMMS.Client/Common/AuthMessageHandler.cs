@@ -25,14 +25,18 @@ public class AuthMessageHandler : DelegatingHandler
 
         var response = await base.SendAsync(request, cancellationToken);
 
-        // Nếu bị 401 thì chuyển hướng logout (ngoại trừ khi gọi API login)
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             var requestPath = request.RequestUri?.AbsolutePath ?? "";
             if (!requestPath.Contains("/api/auth/login", StringComparison.OrdinalIgnoreCase))
             {
                 await _sessionStorage.RemoveItemAsync("authToken");
-                _navigation.NavigateTo("/dash-board/equipment", forceLoad: true); // Redirect để xóa token và chuyển về trang dashboard
+                
+                var currentUri = _navigation.Uri;
+                if (!currentUri.Contains("dash-board/equipment", StringComparison.OrdinalIgnoreCase))
+                {
+                    _navigation.NavigateTo($"{_navigation.BaseUri}dash-board/equipment", forceLoad: true); // Redirect để xóa token và chuyển về trang dashboard
+                }
             }
         }
 

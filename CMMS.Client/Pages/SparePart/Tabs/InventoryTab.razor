@@ -14,9 +14,11 @@
         <p class="text-muted">View spare parts inventory and retrieve report data.</p>
     </div>
     <div style="display:flex; gap:8px;">
-        <Button Type="@ButtonType.Default" OnClick="TriggerExcelExport" Class="btn-custom">
-            <Icon Type="download" /> Export Excel
-        </Button>
+        <PermissionView Code="@Permissions.SparePartInventoryDetail">
+            <Button Type="@ButtonType.Default" OnClick="TriggerExcelExport" Class="btn-custom">
+                <Icon Type="download" /> Export Excel
+            </Button>
+        </PermissionView>
     </div>
 </div>
 
