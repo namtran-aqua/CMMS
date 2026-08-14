@@ -3,6 +3,6 @@
 @code {
     protected override void OnInitialized()
     {
-        Navigation.NavigateTo("/login", true);
+        Navigation.NavigateTo($"{Navigation.BaseUri}login", true);
     }
 }

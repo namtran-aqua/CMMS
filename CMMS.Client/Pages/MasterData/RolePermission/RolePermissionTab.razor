@@ -1,0 +1,91 @@
+@page "/master-data/role-permission"
+@namespace CMMS.Client.Pages.MasterData.RolePermission
+@using AntDesign
+@using CMMS.Shared.Dtos.AuthModels
+
+<PageTitle>Roles & Permissions</PageTitle>
+
+<PermissionView Code="@CMMS.Shared.Authorization.Permissions.MasterDataRolePermissionView" ShowFallback="true">
+    <ChildContent>
+        <div class="role-permission-layout" style="padding: 24px; background:#f8fafc; min-height: calc(100vh - 64px);">
+            <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 24px;">Roles & Permissions</h3>
+        
+        <Row Gutter="24">
+            <Col Span="6">
+                <Card Title="Roles">
+                    @if (loadingRoles)
+                    {
+                        <Spin />
+                    }
+                    else
+                    {
+                        <Menu Mode="MenuMode.Inline" SelectedKeys="@selectedRoleKeys" OnMenuItemClicked="OnRoleSelected">
+                            @foreach (var role in roles)
+                            {
+                                <MenuItem Key="@role.RoleID.ToString()">
+                                    <span>@role.RoleName</span>
+                                    <div style="font-size: 11px; color: #888;">@role.RoleCode</div>
+                                </MenuItem>
+                            }
+                        </Menu>
+                    }
+                </Card>
+            </Col>
+            
+            <Col Span="18">
+                <Card Title=@($"Permissions for {selectedRole?.RoleName ?? "..."}")>
+                    <Extra>
+                        <Button Type="@ButtonType.Primary" OnClick="SavePermissions" Loading="saving" Disabled="selectedRole == null">Save Permissions</Button>
+                    </Extra>
+                    <ChildContent>
+                        @if (loadingPermissions)
+                        {
+                            <Spin />
+                        }
+                        else if (selectedRole != null && permissionPages != null && permissionPages.Any())
+                        {
+                            var groupedPages = permissionPages.GroupBy(p => p.ModuleCode).ToList();
+
+                            <div style="max-height: 600px; overflow-y: auto;">
+                                <Collapse Accordion="false" Bordered="false">
+                                    @foreach (var group in groupedPages)
+                                    {
+                                        var menuName = GetModuleName(group.Key);
+                                        <Panel Header="@menuName" Key="@group.Key" Style="font-weight: 500; font-size: 15px;">
+                                            <Collapse Accordion="false" Bordered="false" Style="margin-left: 16px;">
+                                                @foreach (var permPage in group)
+                                                {
+                                                    <Panel Header="@permPage.PageName" Key="@($"{group.Key}_{permPage.PageCode}")" Style="font-weight: 400; font-size: 14px;">
+                                                        <Table DataSource="@permPage.Permissions" TItem="PermissionDto" Bordered="false" Size="TableSize.Small" HidePagination="true" Style="margin-left: 12px;">
+                                                            <Column Title="PermissionName" TData="string" DataIndex="ActionName" />
+                                                            <ActionColumn Title="Granted" Width="100px" Align="ColumnAlign.Center">
+                                                                <Checkbox @bind-Checked="@context.IsGranted" />
+                                                            </ActionColumn>
+                                                        </Table>
+                                                    </Panel>
+                                                }
+                                            </Collapse>
+                                        </Panel>
+                                    }
+                                </Collapse>
+                            </div>
+                        }
+                        else
+                        {
+                            <Empty />
+                        }
+                    </ChildContent>
+                </Card>
+            </Col>
+        </Row>
+    </div>
+</div>
+    </ChildContent>
+    <FallbackContent>
+        <div style="padding: 24px; text-align: center; margin-top: 100px;">
+            <h3 style="color: #ef4444;">Access Denied</h3>
+            <p>You do not have permission to view roles and permissions.</p>
+        </div>
+    </FallbackContent>
+</PermissionView>

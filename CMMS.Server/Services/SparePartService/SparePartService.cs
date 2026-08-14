@@ -66,9 +66,9 @@ namespace CMMS.Server.Services.SparePartService
             const string sqlCheckCode = "SELECT COUNT(1) FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode";
             const string sqlInsert = @"
                 INSERT INTO dbo.Tbl_SparePart
-                    (PartCode, PartName, CategoryID, Unit, Price, Inventory, MinStock, LocID, DeptID, SupplierID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, ImageUrl, FACID)
+                    (PartCode, PartName, CategoryID, Unit, Price, Inventory, MinStock, LocID, DeptID, SupplierID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, ImageUrl, PartModel, FACID)
                 VALUES
-                    (@PartCode, @PartName, @CategoryID, @Unit, @Price, @Inventory, @MinStock, @LocID, @DeptID, @SupplierID, @Note, @CreateDate, @UpdateDate, @CreateBy, @IsCoded, @ImageUrl, @FACID);
+                    (@PartCode, @PartName, @CategoryID, @Unit, @Price, @Inventory, @MinStock, @LocID, @DeptID, @SupplierID, @Note, @CreateDate, @UpdateDate, @CreateBy, @IsCoded, @ImageUrl, @PartModel, @FACID);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
             await using var con = new SqlConnection(connStr);
@@ -106,6 +106,7 @@ namespace CMMS.Server.Services.SparePartService
                 cmd.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                 cmd.Parameters.Add("@IsCoded", SqlDbType.Bit).Value = dto.IsCoded;
                 cmd.Parameters.Add("@ImageUrl", SqlDbType.NVarChar, 500).Value = (object?)dto.ImageUrl ?? DBNull.Value;
+                cmd.Parameters.Add("@PartModel", SqlDbType.NVarChar, 200).Value = (object?)dto.PartModel ?? DBNull.Value;
                 cmd.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
 
                 var result = await cmd.ExecuteScalarAsync();
@@ -125,7 +126,7 @@ namespace CMMS.Server.Services.SparePartService
                 SET PartCode = @PartCode, PartName = @PartName, CategoryID = @CategoryID, Unit = @Unit,
                     Price = @Price, MinStock = @MinStock, LocID = @LocID,
                     SupplierID = @SupplierID, Note = @Note, UpdateDate = @UpdateDate, UpdateBy = @UpdateBy,
-                    IsCoded = @IsCoded, ImageUrl = @ImageUrl, FACID = @FACID
+                    IsCoded = @IsCoded, ImageUrl = @ImageUrl, PartModel = @PartModel, FACID = @FACID
                 WHERE SPID = @SPID";
 
             await using var con = new SqlConnection(connStr);
@@ -160,6 +161,7 @@ namespace CMMS.Server.Services.SparePartService
             cmd.Parameters.Add("@UpdateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
             cmd.Parameters.Add("@IsCoded", SqlDbType.Bit).Value = dto.IsCoded;
             cmd.Parameters.Add("@ImageUrl", SqlDbType.NVarChar, 500).Value = (object?)dto.ImageUrl ?? DBNull.Value;
+            cmd.Parameters.Add("@PartModel", SqlDbType.NVarChar, 200).Value = (object?)dto.PartModel ?? DBNull.Value;
             cmd.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
 
             var rows = await cmd.ExecuteNonQueryAsync();

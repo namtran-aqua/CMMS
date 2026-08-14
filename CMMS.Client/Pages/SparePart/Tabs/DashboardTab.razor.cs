@@ -68,26 +68,52 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
 
             try { await JS.InvokeVoidAsync("destroyAllSpCharts"); } catch { }
 
-            // Render Trends Chart (Mock implementation based on existing charts)
-            if (DashboardData.Trends != null && DashboardData.Trends.Any())
+            // 1. Coded Ratio Chart (Pie)
+            var codedLabels = new[] { "Coded", "Non-Coded" };
+            var codedData = new[] { (double)DashboardData.CodedRatio.CodedCount, (double)DashboardData.CodedRatio.NonCodedCount };
+            if (codedData.Sum() > 0)
             {
-                var labels = DashboardData.Trends.Select(x => x.Period).Distinct().ToArray();
-                var data = DashboardData.Trends.Where(x => x.Type == MovementType.Import).Select(x => (double)x.Quantity).ToArray();
-                await JS.InvokeVoidAsync("renderSpBarChart", "topUsedPartsChart", labels, data, "Import Trend", "#10b981");
+                await JS.InvokeVoidAsync("renderSpPieChart", "codedRatioChart", codedLabels, codedData, new[] { "#3b82f6", "#10b981" });
             }
 
-            // Render Category Value Doughnut Chart
-            if (DashboardData.CategoryValues != null && DashboardData.CategoryValues.Any())
+            // 2. Stock Status Chart (Doughnut)
+            var stockLabels = new[] { "Healthy", "Low"};
+            var stockData = new[] { (double)DashboardData.StockStatus.HealthyStock, (double)DashboardData.StockStatus.LowStock };
+            if (stockData.Sum() > 0)
             {
-                var labels = DashboardData.CategoryValues.Select(x => x.CategoryName).ToArray();
-                var data = DashboardData.CategoryValues.Select(x => (double)x.Value).ToArray();
-                await JS.InvokeVoidAsync("renderSpDoughnutChart", "categoryValuesChart", labels, data);
+                await JS.InvokeVoidAsync("renderSpDoughnutChart", "stockStatusChart", stockLabels, stockData, new[] { "#10b981", "#f59e0b"});
+            }
+
+            // 3. Movement Aging Chart (Bar)
+            if (DashboardData.MovementAging != null && DashboardData.MovementAging.Any())
+            {
+                var agingLabels = DashboardData.MovementAging.Select(x => x.Range).ToArray();
+                var agingData = DashboardData.MovementAging.Select(x => (double)x.Quantity).ToArray();
+                await JS.InvokeVoidAsync("renderSpBarChart", "movementAgingChart", agingLabels, agingData, "Inventory Qty", "#8b5cf6");
+            }
+
+            // 4. Low Stock by Location Chart (Bar)
+            if (DashboardData.LowStockByLocation != null && DashboardData.LowStockByLocation.Any())
+            {
+                var locLabels = DashboardData.LowStockByLocation.Select(x => x.Location).ToArray();
+                var locData = DashboardData.LowStockByLocation.Select(x => (double)x.Count).ToArray();
+                await JS.InvokeVoidAsync("renderSpBarChart", "lowStockByLocationChart", locLabels, locData, "Low Stock SKUs", "#f59e0b");
+            }
+
+            // 5. In/Out Trends Chart (Line)
+            if (DashboardData.InOutTrends != null && DashboardData.InOutTrends.Any())
+            {
+                var labels = DashboardData.InOutTrends.Select(x => x.Month).ToArray();
+                var imports = DashboardData.InOutTrends.Select(x => (double)x.ImportQuantity).ToArray();
+                var exports = DashboardData.InOutTrends.Select(x => (double)x.ExportQuantity).ToArray();
+                
+                await JS.InvokeVoidAsync("renderSpLineChart", "inOutTrendsChart", labels, imports, exports, "Inbound Orders", "Outbound Orders", "#10b981", "#ef4444");
             }
         }
 
         public void NavigateToAlerts(string alertLevel)
         {
-            Navigation.NavigateTo($"/spare-parts/inventory?alert={alertLevel}");
+            Navigation.NavigateTo($"{Navigation.BaseUri}spare-parts/inventory?alert={alertLevel}");
         }
 
         public async Task ExportToExcel()

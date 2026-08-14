@@ -30,28 +30,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
 
             if (!_cache.TryGetValue(cacheKey, out DashboardDto dashboardData))
             {
-                // Orchestrate calls to sub-services
-                // We can run these in parallel for performance using Task.WhenAll if they don't share same DB context tracking issues,
-                // but awaiting sequentially is safer if they share scoped DbContext.
-                
-                var summary = await _analyticsService.GetSummaryAsync(filter);
-                var kpis = await _kpiService.GetKpisAsync(filter);
-                var alerts = await _alertService.GetAlertsAsync(filter);
-                var trends = await _analyticsService.GetTrendsAsync(filter);
-                var topConsumed = await _analyticsService.GetTopConsumedAsync(filter);
-                var recentMovements = await _analyticsService.GetRecentMovementsAsync(filter);
-                var categoryValues = await _analyticsService.GetCategoryValuesAsync(filter);
-
-                dashboardData = new DashboardDto
-                {
-                    Summary = summary,
-                    Kpi = kpis,
-                    Alerts = alerts,
-                    Trends = trends,
-                    TopConsumed = topConsumed,
-                    RecentMovements = recentMovements,
-                    CategoryValues = categoryValues
-                };
+                dashboardData = await _analyticsService.GetAdvancedDashboardAsync(filter);
 
                 // Cache the aggregated dashboard result
                 var cacheOptions = new MemoryCacheEntryOptions

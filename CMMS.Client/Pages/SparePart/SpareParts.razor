@@ -3,6 +3,7 @@
 @namespace CMMS.Client.Pages.SpareParts
 @using CMMS.Client.Pages.SpareParts.Tabs
 @using AntDesign
+@using CMMS.Shared.Authorization
 
 <PageTitle>Spare Parts</PageTitle>
 
@@ -62,33 +63,54 @@
         <!-- Dashboard has been moved to its own standalone page to support AllowAnonymous -->
     </div>
     <div style="@(selectedTab == "Inventory" ? "" : "display:none;")">
-        <InventoryTab />
+        <PermissionView Code="@Permissions.SparePartInventoryView" ShowFallback="true">
+            <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+            <ChildContent><InventoryTab /></ChildContent>
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "CodedParts" ? "" : "display:none;")">
         @if (selectedTab == "CodedParts")
         {
-            <SparePartItemsTab IsCoded="true" />
+            <PermissionView Code="@Permissions.SparePartCodedView" ShowFallback="true">
+                <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+                <ChildContent><SparePartItemsTab IsCoded="true" /></ChildContent>
+            </PermissionView>
         }
     </div>
     <div style="@(selectedTab == "NonCodedParts" ? "" : "display:none;")">
         @if (selectedTab == "NonCodedParts")
         {
-            <SparePartItemsTab IsCoded="false" />
+            <PermissionView Code="@Permissions.SparePartNonCodedView" ShowFallback="true">
+                <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+                <ChildContent><SparePartItemsTab IsCoded="false" /></ChildContent>
+            </PermissionView>
         }
     </div>
     <div style="@(selectedTab == "Imports" ? "" : "display:none;")">
-        <ImportsTab />
+        <PermissionView Code="@Permissions.SparePartInboundView" ShowFallback="true">
+            <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+            <ChildContent><ImportsTab /></ChildContent>
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Exports" ? "" : "display:none;")">
-        <ExportsTab />
+        <PermissionView Code="@Permissions.SparePartOutboundView" ShowFallback="true">
+            <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+            <ChildContent><ExportsTab /></ChildContent>
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "Adjustments" ? "" : "display:none;")">
-        <AdjustmentsTab />
+        <PermissionView Code="@Permissions.SparePartAdjustmentView" ShowFallback="true">
+            <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+            <ChildContent><AdjustmentsTab /></ChildContent>
+        </PermissionView>
     </div>
     <div style="@(selectedTab == "MonthlyClosing" ? "" : "display:none;")">
         <MonthlyClosingTab />
     </div>
     <div style="@(selectedTab == "History" ? "" : "display:none;")">
-        <HistoryTab />
+        <PermissionView Code="@Permissions.SparePartTransactionsView" ShowFallback="true">
+            <FallbackContent><div class="p-4"><Alert Type="@AlertType.Error" Message="You are not authorized to access this page." /></div></FallbackContent>
+            <ChildContent><HistoryTab /></ChildContent>
+        </PermissionView>
     </div>
 </div>

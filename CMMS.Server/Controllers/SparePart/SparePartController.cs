@@ -11,6 +11,7 @@ namespace CMMS.Server.Controllers.SparePart
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public partial class SparePartController : ControllerBase
     {
         private readonly ISparePartService _service;

@@ -45,140 +45,192 @@
         });
     };
 
-    window.renderSpDoughnutChart = function (canvasId, labels, data) {
+    window.renderSpDoughnutChart = function (canvasId, labels, data, colors) {
         safeCreateSp(canvasId, {
             type: 'doughnut',
-            data: { labels, datasets: [{ data, backgroundColor: SP_STATUS_COLORS, borderWidth: 2, borderColor: '#fff' }] },
+            data: { labels, datasets: [{ data, backgroundColor: colors || SP_STATUS_COLORS, borderWidth: 2, borderColor: '#fff' }] },
             options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+    };
+
+    window.renderSpPieChart = function (canvasId, labels, data, colors) {
+        safeCreateSp(canvasId, {
+            type: 'pie',
+            data: { labels, datasets: [{ data, backgroundColor: colors || SP_COLORS, borderWidth: 1, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+    };
+
+    window.renderSpLineChart = function (canvasId, labels, data1, data2, label1, label2, color1, color2) {
+        safeCreateSp(canvasId, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: label1, data: data1, borderColor: color1 || '#10b981', backgroundColor: color1 || '#10b981', tension: 0.3, fill: false },
+                    { label: label2, data: data2, borderColor: color2 || '#ef4444', backgroundColor: color2 || '#ef4444', tension: 0.3, fill: false }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+                scales: { x: { ticks: { font: { size: 11 } } }, y: { ticks: { font: { size: 11 }, callback: kFmt } } }
+            }
         });
     };
 </script>
 
-<div class="report-page">
+<div>
 
     @* ── Topbar ── *@
-    <div class="report-topbar">
-        <div class="topbar-left">
-            <span class="page-title"><i class="ti ti-box"></i> Warehouse Dashboard</span>
-            <span class="text-muted ms-2" style="font-size: 13px;">Advanced Spare Part Analytics (Snapshot & Rule Engine)</span>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3>DashBoard</h3>
+            <p class="text-muted">Spare part dashboard overview</p>
         </div>
-        <div class="topbar-right">
+        @* <div class="topbar-right">
             <button class="btn btn-primary btn-sm" @onclick="ExportToExcel"><i class="ti ti-download"></i> Export Excel</button>
-        </div>
+        </div> *@
     </div>
 
     @* ── KPI Cards ── *@
-    <div class="kpi-row">
-        <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
-            <div class="kpi-label"><i class="ti ti-moneybag"></i> Inventory Value</div>
-            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Kpi.InventoryValue)</div>
-            <div class="kpi-sub">VND</div>
+    <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+        @* <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
+            <div class="kpi-label"><i class="ti ti-package"></i> Total Inventory Qty</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Summary.TotalInventoryQuantity)</div>
+            <div class="kpi-sub">Total parts in stock</div>
         </div>
         <div class="kpi-card" style="border-left: 4px solid #10b981;">
-            <div class="kpi-label"><i class="ti ti-refresh"></i> Turnover Ratio</div>
-            <div class="kpi-value">@DashboardData.Kpi.InventoryTurnover</div>
-            <div class="kpi-sub">times / year</div>
+            <div class="kpi-label"><i class="ti ti-moneybag"></i> Total Value</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Summary.TotalInventoryValue)</div>
+            <div class="kpi-sub">VND</div>
+        </div> *@
+        <div class="kpi-card" style="border-left: 4px solid #0ea5e9;">
+            <div class="kpi-label"><i class="ti ti-check"></i> In Stock SKUs</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.StockStatus.HealthyStock + DashboardData.StockStatus.LowStock)</div>
+            <div class="kpi-sub">Distinct SKUs with stock > 0</div>
         </div>
         <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
-            <div class="kpi-label"><i class="ti ti-alert-circle"></i> Dead Stock Value</div>
-            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Kpi.DeadStockValue)</div>
-            <div class="kpi-sub">VND</div>
+            <div class="kpi-label"><i class="ti ti-alert-triangle"></i> Low Stock SKUs</div>
+            <div class="kpi-value text-orange">@String.Format("{0:N0}", DashboardData.StockStatus.LowStock)</div>
+            <div class="kpi-sub">Needs replenishment (&lt;= MinStock)</div>
         </div>
         <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
-            <div class="kpi-label"><i class="ti ti-target"></i> Fill Rate</div>
-            <div class="kpi-value">@DashboardData.Kpi.FillRate%</div>
-            <div class="kpi-sub">vs. Maintenance Demand</div>
-        </div>
-        <div class="kpi-card" style="border-left: 4px solid #14b8a6;">
-            <div class="kpi-label"><i class="ti ti-check"></i> Stock Accuracy</div>
-            <div class="kpi-value">@DashboardData.Kpi.StockAccuracy%</div>
-            <div class="kpi-sub">Cycle count accuracy</div>
+            <div class="kpi-label"><i class="ti ti-arrow-down-right"></i> Import This Month</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Summary.ImportThisMonth)</div>
+            <div class="kpi-sub @(DashboardData.Summary.ImportChangePercentage >= 0 ? "text-green" : "text-red")">
+                @* @if (DashboardData.Summary.ImportChangePercentage.HasValue) {
+                    <span><i class="ti @(DashboardData.Summary.ImportChangePercentage >= 0 ? "ti-trending-up" : "ti-trending-down")"></i> @Math.Abs(DashboardData.Summary.ImportChangePercentage.Value)% vs last month</span>
+                } else {
+                    <span class="text-muted" style="font-size: 0.8rem;">N/A (New or No Data)</span>
+                } *@
+            </div>
         </div>
         <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-            <div class="kpi-label"><i class="ti ti-package"></i> Low/Zero Stock SKUs</div>
-            <div class="kpi-value text-red">@(DashboardData.Summary.LowStockSKUs + DashboardData.Summary.ZeroStockSKUs)</div>
-            <div class="kpi-sub text-red">@DashboardData.Summary.LowStockSKUs Low / @DashboardData.Summary.ZeroStockSKUs Zero</div>
+            <div class="kpi-label"><i class="ti ti-arrow-up-right"></i> Export This Month</div>
+            <div class="kpi-value">@String.Format("{0:N0}", DashboardData.Summary.ExportThisMonth)</div>
+            <div class="kpi-sub @(DashboardData.Summary.ExportChangePercentage >= 0 ? "text-green" : "text-red")">
+                @* @if (DashboardData.Summary.ExportChangePercentage.HasValue) {
+                    <span><i class="ti @(DashboardData.Summary.ExportChangePercentage >= 0 ? "ti-trending-up" : "ti-trending-down")"></i> @Math.Abs(DashboardData.Summary.ExportChangePercentage.Value)% vs last month</span>
+                } else {
+                    <span class="text-muted" style="font-size: 0.8rem;">N/A (New or No Data)</span>
+                } *@
+            </div>
         </div>
     </div>
 
-    @* ── Charts & Top Consumed ── *@
-    <div class="bottom-reports-row" style="grid-template-columns: 2fr 1fr;">
-        <div class="chart-card table-card" style="grid-column: span 1;">
-            <div class="chart-title">🔥 Movement Trends</div>
+    @* ── Primary Charts ── *@
+    <div class="bottom-reports-row" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="chart-card">
+            <div class="chart-title">🏷️ Coded vs Non-Coded (SKUs)</div>
             <div class="chart-container">
-                <canvas id="topUsedPartsChart"></canvas>
+                <canvas id="codedRatioChart"></canvas>
             </div>
         </div>
         
-        <div class="chart-card table-card" style="grid-column: span 1;">
-            <div class="chart-title">📦 Inventory Value by Category</div>
+        <div class="chart-card">
+            <div class="chart-title">📊 Stock Status</div>
             <div class="chart-container">
-                <canvas id="categoryValuesChart"></canvas>
+                <canvas id="stockStatusChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-title">⏳ Inventory Aging (Qty by Import Date)</div>
+            <div class="chart-container">
+                <canvas id="movementAgingChart"></canvas>
             </div>
         </div>
     </div>
 
-    <div class="bottom-reports-row" style="grid-template-columns: 1fr 2fr;">
-        @* Cảnh báo (Rule Engine Alerts) *@
-        <div class="report-card alert-card">
-            <div class="chart-title">Alerts (Rule Engine)</div>
-            <div class="alert-grid">
-                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("critical"))">
-                    <div class="alert-icon bg-red"><i class="ti ti-bell"></i></div>
-                    <div class="alert-count text-red">@DashboardData.Alerts.Critical</div>
-                    <div class="alert-name">Critical (Zero Stock)</div>
-                </div>
-                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("warning"))">
-                    <div class="alert-icon bg-orange"><i class="ti ti-alert-triangle"></i></div>
-                    <div class="alert-count text-orange">@DashboardData.Alerts.Warning</div>
-                    <div class="alert-name">Warning (Low Stock)</div>
-                </div>
-                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("info"))">
-                    <div class="alert-icon bg-yellow"><i class="ti ti-alert-circle"></i></div>
-                    <div class="alert-count text-yellow">@DashboardData.Alerts.Info</div>
-                    <div class="alert-name">Dead/Slow Moving</div>
-                </div>
-                <div class="alert-item" style="cursor: pointer;" @onclick="@(() => NavigateToAlerts("normal"))">
-                    <div class="alert-icon bg-blue"><i class="ti ti-info-circle"></i></div>
-                    <div class="alert-count text-blue">@DashboardData.Alerts.Normal</div>
-                    <div class="alert-name">Over/Max Stock</div>
-                </div>
-            </div>
-            <div class="text-center mt-3">
-                <a href="/spare-parts/inventory" class="view-all-link">View Detailed Alerts</a>
+    @* ── Secondary Charts ── *@
+    <div class="bottom-reports-row" style="grid-template-columns: 1fr 1fr;">
+        <div class="chart-card">
+            <div class="chart-title">📈 6-Month In/Out Trends</div>
+            <div class="chart-container">
+                <canvas id="inOutTrendsChart"></canvas>
             </div>
         </div>
 
-        @* Recent Movements Table *@
-        <div class="report-card table-card">
-            <div class="chart-title">
-                <span>Recent Transactions</span>
-                <a href="/spare-parts/history" class="view-all-link">View History</a>
+        <div class="chart-card">
+            <div class="chart-title">📍 Low Stock SKUs by Location</div>
+            <div class="chart-container">
+                <canvas id="lowStockByLocationChart"></canvas>
             </div>
+        </div>
+    </div>
+
+    <div class="bottom-reports-row" style="grid-template-columns: 1fr 1fr;">
+        @* Top Imported *@
+        <div class="report-card table-card">
+            <div class="chart-title">📥 Top 5 Imported (Current Month)</div>
             <div class="table-responsive">
                 <table class="custom-table">
                     <thead>
                         <tr>
-                            <th>Transaction</th>
                             <th>Part Code</th>
-                            <th>Type</th>
-                            <th>Quantity</th>
-                            <th>Date</th>
+                            <th>Part Name</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var move in DashboardData.RecentMovements)
+                        @foreach (var item in DashboardData.TopImported)
                         {
                             <tr>
-                                <td>@move.TransactionCode</td>
-                                <td>@move.PartCode</td>
-                                <td>
-                                    @if(move.Type == MovementType.Import) { <span class="text-green"><i class="ti ti-arrow-down-right"></i> Import</span> }
-                                    else if(move.Type == MovementType.Export) { <span class="text-red"><i class="ti ti-arrow-up-right"></i> Export</span> }
-                                    else { <span class="text-orange"><i class="ti ti-settings"></i> @move.Type.ToString()</span> }
-                                </td>
-                                <td>@move.Quantity</td>
-                                <td class="text-muted">@move.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.PartCode</td>
+                                <td>@item.PartName</td>
+                                <td>@String.Format("{0:N0}", item.Quantity)</td>
+                                <td>@item.Unit</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* Top Exported *@
+        <div class="report-card table-card">
+            <div class="chart-title">📤 Top 5 Exported (Current Month)</div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Part Code</th>
+                            <th>Part Name</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in DashboardData.TopExported)
+                        {
+                            <tr>
+                                <td>@item.PartCode</td>
+                                <td>@item.PartName</td>
+                                <td>@String.Format("{0:N0}", item.Quantity)</td>
+                                <td>@item.Unit</td>
                             </tr>
                         }
                     </tbody>
@@ -187,36 +239,38 @@
         </div>
     </div>
 
-    @* ── Top Consumed Table ── *@
+    @* Aging Report *@
     <div class="bottom-reports-row" style="grid-template-columns: 1fr;">
         <div class="report-card table-card">
-            <div class="chart-title">
-                <span>Top Consumed Parts</span>
-                <a href="/spare-parts/history" class="view-all-link">View Full Report</a>
-            </div>
+            <div class="chart-title">⏳ Inventory Aging Details (Top 10 Oldest Items)</div>
             <div class="table-responsive">
                 <table class="custom-table">
                     <thead>
                         <tr>
                             <th>Part Code</th>
                             <th>Part Name</th>
-                            <th>Section</th>
-                            <th>Quantity Consumed</th>
-                            <th>Value %</th>
-                            <th>Trend</th>
+                            <th>Current Stock</th>
+                            <th>Last Movement Date</th>
+                            <th>Age (Days)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in DashboardData.TopConsumed)
+                        @foreach (var item in DashboardData.AgingReport)
                         {
-                            <tr style="cursor: pointer;" @onclick="@(() => Navigation.NavigateTo($"/spare-parts/history?partCode={item.PartCode}"))">
+                            <tr>
                                 <td>@item.PartCode</td>
                                 <td>@item.PartName</td>
-                                <td>@item.SectionName</td>
-                                <td>@String.Format("{0:N0}", item.Quantity)</td>
-                                <td>@item.Percentage%</td>
-                                <td class="@(item.Trend == "Up" ? "text-green" : "text-red")">
-                                    <i class="ti @(item.Trend == "Up" ? "ti-trending-up" : "ti-trending-down")"></i>
+                                <td>@String.Format("{0:N0}", item.CurrentStock)</td>
+                                <td>@(item.LastMovementDate?.ToString("dd/MM/yyyy") ?? "No Movement")</td>
+                                <td>
+                                    @if(item.AgeDays.HasValue)
+                                    {
+                                        <span class="@(item.AgeDays > 90 ? "text-red font-weight-bold" : "")">@item.AgeDays days</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-red font-weight-bold">Never moved</span>
+                                    }
                                 </td>
                             </tr>
                         }
