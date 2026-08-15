@@ -4,6 +4,8 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using CMMS.Shared.Authorization;
+using CMMS.Server.Infrastructure.Authorization;
 
 namespace CMMS.Server.Controllers.SparePart
 {
@@ -16,7 +18,7 @@ namespace CMMS.Server.Controllers.SparePart
         public async Task<List<SparePartSupplierDto>> GetSuppliers() => await _service.GetSuppliersAsync();
 
         [HttpPost("create")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataCatalogAdd)]
         public async Task<IActionResult> Create(SparePartDto dto)
         {
             try
@@ -28,7 +30,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPut("update")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataCatalogEdit)]
         public async Task<IActionResult> Update(SparePartDto dto)
         {
             try
@@ -40,7 +42,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPost("category/create")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataCategoryAdd)]
         public async Task<IActionResult> CreateCategory(SparePartCategoryDto dto)
         {
             try
@@ -52,7 +54,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPut("category/update")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataCategoryEdit)]
         public async Task<IActionResult> UpdateCategory(SparePartCategoryDto dto)
         {
             try
@@ -64,7 +66,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpDelete("category/delete/{categoryid}")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataCategoryDelete)]
         public async Task<IActionResult> DeleteCategory(int categoryid)
         {
             var success = await _service.DeleteCategory(categoryid, await GetCurrentUserAsync());
@@ -72,7 +74,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPost("supplier/create")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataSupplierAdd)]
         public async Task<IActionResult> CreateSupplier(SparePartSupplierDto dto)
         {
             try
@@ -84,7 +86,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpPut("supplier/update")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataSupplierEdit)]
         public async Task<IActionResult> UpdateSupplier(SparePartSupplierDto dto)
         {
             try
@@ -96,7 +98,7 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpDelete("supplier/delete/{spid}")]
-        [Authorize(Policy = "AdminOnly")]
+        [RequirePermission(Permissions.MasterDataSupplierDelete)]
         public async Task<IActionResult> DeleteSupplier(int spid)
         {
             var success = await _service.DeleteSupplier(spid, await GetCurrentUserAsync());

@@ -6,165 +6,590 @@
 @using CMMS.Shared.Dtos.AuthModels
 @using System.IdentityModel.Tokens.Jwt
 @inject IMessageService Message
+
 <style>
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    /* ===== RESET & BASE ===== */
     .login-page {
         display: flex;
-        justify-content: center;
-        align-items: center;
         height: 100vh;
-        background: radial-gradient(circle at 20% 30%, #dce4f7, #f5f8ff);
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: cover;
-        font-family: 'Segoe UI', sans-serif;
+        width: 100vw;
+        overflow: hidden;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
     }
 
-    .login-box {
-        background-color: white;
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-        width: 400px;
-        text-align: center;
+    /* ===== LEFT PANEL - BRANDING ===== */
+    .login-branding {
+        flex: 1.2;
+        background: linear-gradient(135deg, #0041C2 0%, #0066CC 30%, #0088CC 60%, #00A5A8 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
     }
 
-        .login-box .login-logo img {
-            width: 120px;
-            margin-bottom: 20px;
-        }
+    /* Wave decorations */
+    .login-branding::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background:
+            radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
+            radial-gradient(ellipse at 60% 80%, rgba(255,255,255,0.06) 0%, transparent 45%);
+        animation: float 15s ease-in-out infinite;
+    }
 
-        .login-box h4 {
-            margin-bottom: 20px;
-            font-weight: 600;
-            color: #005eb8;
-        }
-
-        .login-box .form-control {
-            margin-bottom: 15px;
-            height: 45px;
-            font-size: 16px;
-        }
-
-    .btn-primary {
-        background-color: #1677ff;
-        border: none;
+    .login-branding::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
         width: 100%;
-        padding: 12px;
-        font-size: 16px;
-        border-radius: 6px;
-        transition: background-color 0.3s;
+        height: 40%;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='rgba(255,255,255,0.06)' d='M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,208C672,213,768,171,864,165.3C960,160,1056,192,1152,197.3C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom center;
+        background-size: cover;
     }
 
-        .btn-primary:hover {
-            background-color: #0d5ed7;
+    /* Floating particles */
+    .particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        animation: particleFloat 8s ease-in-out infinite;
+    }
+
+    .particle:nth-child(1) { top: 15%; left: 20%; animation-delay: 0s; animation-duration: 10s; }
+    .particle:nth-child(2) { top: 35%; left: 70%; animation-delay: 2s; animation-duration: 8s; width: 6px; height: 6px; }
+    .particle:nth-child(3) { top: 60%; left: 40%; animation-delay: 4s; animation-duration: 12s; }
+    .particle:nth-child(4) { top: 80%; left: 80%; animation-delay: 1s; animation-duration: 9s; width: 5px; height: 5px; }
+    .particle:nth-child(5) { top: 25%; left: 50%; animation-delay: 3s; animation-duration: 11s; }
+    .particle:nth-child(6) { top: 70%; left: 15%; animation-delay: 5s; animation-duration: 7s; width: 3px; height: 3px; }
+    .particle:nth-child(7) { top: 45%; left: 85%; animation-delay: 2.5s; animation-duration: 13s; }
+    .particle:nth-child(8) { top: 90%; left: 55%; animation-delay: 6s; animation-duration: 10s; width: 5px; height: 5px; }
+
+    /* Decorative circles */
+    .deco-circle {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        pointer-events: none;
+    }
+
+    .deco-circle-1 {
+        width: 300px;
+        height: 300px;
+        top: -80px;
+        right: -60px;
+        animation: pulse-ring 6s ease-in-out infinite;
+    }
+
+    .deco-circle-2 {
+        width: 200px;
+        height: 200px;
+        bottom: 60px;
+        left: -40px;
+        animation: pulse-ring 8s ease-in-out infinite reverse;
+    }
+
+    .deco-circle-3 {
+        width: 150px;
+        height: 150px;
+        top: 40%;
+        right: 10%;
+        border-color: rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.02);
+        animation: pulse-ring 10s ease-in-out infinite;
+    }
+
+    .branding-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        color: white;
+        animation: fadeInUp 1s ease-out;
+    }
+
+    .branding-logo img {
+        width: 180px;
+        filter: brightness(0) invert(1);
+        margin-bottom: 16px;
+        animation: breathe 4s ease-in-out infinite;
+    }
+
+    .branding-tagline {
+        font-size: 18px;
+        font-weight: 300;
+        letter-spacing: 1px;
+        opacity: 0.85;
+        margin-top: 8px;
+    }
+
+    /* ===== RIGHT PANEL - FORM ===== */
+    .login-form-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        position: relative;
+    }
+
+    .login-form-container {
+        width: 100%;
+        max-width: 380px;
+        padding: 40px;
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .login-heading {
+        font-size: 30px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+    }
+
+    .login-heading-underline {
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #0052D4, #00A5A8);
+        border-radius: 2px;
+        margin-bottom: 8px;
+    }
+
+    .login-subheading {
+        font-size: 14px;
+        color: #8c8c8c;
+        margin-bottom: 32px;
+    }
+
+    /* Input group styling */
+    .input-group-custom {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #b0b0b0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        transition: color 0.3s;
+    }
+
+    .input-group-custom input {
+        width: 100%;
+        height: 50px;
+        padding: 0 46px;
+        font-size: 15px;
+        font-family: 'Inter', sans-serif;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 12px;
+        background: #f8f9fb;
+        color: #333;
+        outline: none;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .input-group-custom input::placeholder {
+        color: #b0b0b0;
+    }
+
+    .input-group-custom input:focus {
+        border-color: #4364F7;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(67, 100, 247, 0.12);
+    }
+
+    .input-group-custom input:focus ~ .input-icon,
+    .input-group-custom input:focus + .input-icon {
+        color: #4364F7;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #b0b0b0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        transition: color 0.3s;
+        background: none;
+        border: none;
+    }
+
+    .toggle-password:hover {
+        color: #4364F7;
+    }
+
+    /* Button */
+    .btn-login {
+        width: 100%;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0052D4 0%, #4364F7 50%, #00A5A8 100%);
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
+        margin-top: 8px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-login::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(0, 82, 212, 0.4);
+    }
+
+    .btn-login:hover::before {
+        left: 100%;
+    }
+
+    .btn-login:active {
+        transform: translateY(0px) scale(0.98);
+    }
+    
+    .btn-login:disabled {
+        background: #cccccc;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-login:disabled::before {
+        display: none;
+    }
+
+    /* Footer */
+    .login-footer {
+        text-align: center;
+        margin-top: 36px;
+        font-size: 12px;
+        color: #c0c0c0;
+    }
+
+    .form-link {
+        color: #4364F7;
+        font-size: 14px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+    
+    .form-link:hover {
+        color: #0052D4;
+        text-decoration: underline;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @@keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -20px) rotate(1deg); }
+        66% { transform: translate(-20px, 15px) rotate(-1deg); }
+    }
+
+    @@keyframes particleFloat {
+        0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+        25% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+        50% { transform: translateY(-35px) translateX(-5px); opacity: 0.4; }
+        75% { transform: translateY(-15px) translateX(15px); opacity: 0.7; }
+    }
+
+    @@keyframes pulse-ring {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @@keyframes breathe {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @@media (max-width: 768px) {
+        .login-page {
+            flex-direction: column;
         }
 
-    .text-center a {
-        color: #1677ff;
-        text-decoration: none;
-    }
+        .login-branding {
+            flex: none;
+            height: 200px;
+            min-height: 200px;
+        }
 
+        .branding-logo img {
+            width: 120px;
+        }
+
+        .branding-tagline {
+            font-size: 14px;
+        }
+
+        .login-form-panel {
+            flex: 1;
+        }
+
+        .login-form-container {
+            padding: 30px 24px;
+        }
+    }
 </style>
+
 <div class="login-page">
-    <div class="login-box">
-        <div class="login-logo">
-            <img src="https://hrmsaquavietnam.com:6969/images/Aqua-Smart%20Home%20-%20blue.png" alt="AQUA smart home" />
+    @* ===== LEFT PANEL - BRANDING ===== *@
+    <div class="login-branding">
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
         </div>
 
-        @if (currentScreenState == LoginScreenState.Login)
-        {
-            <h4>Account Login</h4>
+        <div class="deco-circle deco-circle-1"></div>
+        <div class="deco-circle deco-circle-2"></div>
+        <div class="deco-circle deco-circle-3"></div>
 
-            <input class="form-control" placeholder="WorkDay"
-                   @bind="username" @onkeyup="HandleKeyUp" disabled="@loading" />
-
-            <div style="position: relative;">
-                <input class="form-control" placeholder="Password"
-                       type="@(showPassword ? "text" : "password")"
-                       @bind="password" @onkeyup="HandleKeyUp" disabled="@loading" />
-                <span @onclick="TogglePassword"
-                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
-                    @(showPassword ? "🙉" : "🙈")
-                </span>
+        <div class="branding-content">
+            <div class="branding-logo">
+                <img src="https://hrmsaquavietnam.com:6969/images/Aqua-Smart%20Home%20-%20blue.png" alt="AQUA Smart Home" />
             </div>
+            <div class="branding-tagline">Smart Solutions for Modern Living</div>
+        </div>
+    </div>
 
-            <button class="btn btn-primary" @onclick="DoLogin" disabled="@loading">
-                Login
-            </button>
+    @* ===== RIGHT PANEL - LOGIN FORM ===== *@
+    <div class="login-form-panel">
+        <div class="login-form-container">
+            @if (currentScreenState == LoginScreenState.Login)
+            {
+                <div class="login-heading">Welcome Back</div>
+                <div class="login-heading-underline"></div>
+                <div class="login-subheading">Đăng nhập vào tài khoản của bạn</div>
 
-            <div style="text-align: right; margin-top: 15px;">
-                <a href="javascript:void(0)" @onclick="GoToForgotPassword" style="color: #1677ff; font-size: 14px;">Forgot Password?</a>
-            </div>
-        }
-        else if (currentScreenState == LoginScreenState.ForgotPassword)
-        {
-            <h4>Forgot Password</h4>
-            <div style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #555;">
-                Enter your WorkDay ID and registered Email to receive a 6-digit OTP code.
-            </div>
+                @* WorkDay Input *@
+                <div class="input-group-custom">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <input id="login-workday" placeholder="WorkDay ID"
+                           @bind="username" @onkeyup="HandleKeyUp" disabled="@loading" />
+                </div>
 
-            <input class="form-control" placeholder="WorkDay ID"
-                   @bind="forgotWorkDayId" @onkeyup="HandleKeyUp" disabled="@loading" />
+                @* Password Input *@
+                <div class="input-group-custom" style="margin-bottom: 5px">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </span>
+                    <input id="login-password" placeholder="Password"
+                           type="@(showPassword ? "text" : "password")"
+                           @bind="password" @onkeyup="HandleKeyUp" disabled="@loading" />
+                    <button class="toggle-password" @onclick="TogglePassword" type="button">
+                        @if (showPassword)
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        }
+                    </button>
+                </div>
+                <div style="text-align: right">
+                    <a href="javascript:void(0)" class="form-link" @onclick="GoToForgotPassword">Forgot Password?</a>
+                </div>
+                @* Sign In Button *@
+                <button id="btn-login" class="btn-login" @onclick="DoLogin" disabled="@loading">Sign In</button>
 
-            <input class="form-control" placeholder="Email"
-                   @bind="forgotEmail" @onkeyup="HandleKeyUp" disabled="@loading" />
+                
+            }
+            else if (currentScreenState == LoginScreenState.ForgotPassword)
+            {
+                <div class="login-heading">Forgot Password</div>
+                <div class="login-heading-underline"></div>
+                <div class="login-subheading">Enter your WorkDay ID and Email to receive OTP.</div>
 
-            <button class="btn btn-primary" @onclick="SendOtp" disabled="@loading" style="margin-top: 10px;">
-                Send OTP
-            </button>
+                <div class="input-group-custom">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <input placeholder="WorkDay ID" @bind="forgotWorkDayId" @onkeyup="HandleKeyUp" disabled="@loading" />
+                </div>
 
-            <div style="margin-top: 15px; text-align: center;">
-                <a href="javascript:void(0)" @onclick="GoToLogin" style="color: #1677ff; font-size: 14px;">Back to Login</a>
-            </div>
-        }
-        else if (currentScreenState == LoginScreenState.VerifyOtp)
-        {
-            <h4>Verify OTP</h4>
-            <div style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #555;">
-                A verification code has been sent to your email. Please enter it below.
-            </div>
+                <div class="input-group-custom">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                    </span>
+                    <input placeholder="Email" @bind="forgotEmail" @onkeyup="HandleKeyUp" disabled="@loading" />
+                </div>
 
-            <input class="form-control" placeholder="6-digit OTP"
-                   @bind="otpCode" @onkeyup="HandleKeyUp" disabled="@loading" maxlength="6" />
+                <button class="btn-login" @onclick="SendOtp" disabled="@loading">Send OTP</button>
 
-            <button class="btn btn-primary" @onclick="VerifyOtp" disabled="@loading" style="margin-top: 10px;">
-                Verify
-            </button>
+                <div style="text-align: center; margin-top: 16px;">
+                    <a href="javascript:void(0)" class="form-link" @onclick="GoToLogin">Back to Login</a>
+                </div>
+            }
+            else if (currentScreenState == LoginScreenState.VerifyOtp)
+            {
+                <div class="login-heading">Verify OTP</div>
+                <div class="login-heading-underline"></div>
+                <div class="login-subheading">Check your email for the 6-digit code.</div>
 
-            <div style="margin-top: 15px; text-align: center;">
-                <a href="javascript:void(0)" @onclick="GoToForgotPassword" style="color: #1677ff; font-size: 14px;">Back</a>
-            </div>
-        }
-        else if (currentScreenState == LoginScreenState.ResetPassword)
-        {
-            <h4>Reset Password</h4>
-            <div style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #555;">
-                Enter your new password below.
-            </div>
+                <div class="input-group-custom">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                    </span>
+                    <input placeholder="6-digit OTP" @bind="otpCode" @onkeyup="HandleKeyUp" disabled="@loading" maxlength="6" />
+                </div>
 
-            <div style="position: relative;">
-                <input class="form-control" placeholder="New Password"
-                       type="@(showNewPassword ? "text" : "password")"
-                       @bind="newPassword" @onkeyup="HandleKeyUp" disabled="@loading" />
-                <span @onclick="ToggleNewPassword"
-                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
-                    @(showNewPassword ? "🙉" : "🙈")
-                </span>
-            </div>
+                <button class="btn-login" @onclick="VerifyOtp" disabled="@loading">Verify</button>
 
-            <div style="position: relative;">
-                <input class="form-control" placeholder="Confirm Password"
-                       type="@(showConfirmPassword ? "text" : "password")"
-                       @bind="confirmPassword" @onkeyup="HandleKeyUp" disabled="@loading" />
-                <span @onclick="ToggleConfirmPassword"
-                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;font-size:20px">
-                    @(showConfirmPassword ? "🙉" : "🙈")
-                </span>
-            </div>
+                <div style="text-align: center; margin-top: 16px;">
+                    <a href="javascript:void(0)" class="form-link" @onclick="GoToForgotPassword">Back</a>
+                </div>
+            }
+            else if (currentScreenState == LoginScreenState.ResetPassword)
+            {
+                <div class="login-heading">Reset Password</div>
+                <div class="login-heading-underline"></div>
+                <div class="login-subheading">Create a new password.</div>
 
-            <button class="btn btn-primary" @onclick="ResetPassword" disabled="@loading" style="margin-top: 10px;">
-                Save
-            </button>
-        }
+                <div class="input-group-custom">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </span>
+                    <input placeholder="New Password" type="@(showNewPassword ? "text" : "password")"
+                           @bind="newPassword" @onkeyup="HandleKeyUp" disabled="@loading" />
+                    <button class="toggle-password" @onclick="ToggleNewPassword" type="button">
+                        @if (showNewPassword)
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        }
+                    </button>
+                </div>
+
+                <div class="input-group-custom">
+                    <span class="input-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </span>
+                    <input placeholder="Confirm Password" type="@(showConfirmPassword ? "text" : "password")"
+                           @bind="confirmPassword" @onkeyup="HandleKeyUp" disabled="@loading" />
+                    <button class="toggle-password" @onclick="ToggleConfirmPassword" type="button">
+                        @if (showConfirmPassword)
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        }
+                    </button>
+                </div>
+
+                <button class="btn-login" @onclick="ResetPassword" disabled="@loading">Save</button>
+            }
+
+            <div class="login-footer">© @DateTime.Now.Year AQUA Vietnam. All rights reserved.</div>
+        </div>
     </div>
 </div>
