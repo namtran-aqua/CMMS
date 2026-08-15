@@ -2,6 +2,8 @@ using CMMS.Server.Services.PermissionService;
 using CMMS.Shared.Dtos.AuthModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CMMS.Shared.Authorization;
+using CMMS.Server.Infrastructure.Authorization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,7 +11,7 @@ namespace CMMS.Server.Controllers.Authentications
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "AdminOnly")]
+    [RequirePermission(Permissions.MasterDataRolePermissionView)]
     public class RolePermissionController : ControllerBase
     {
         private readonly IPermissionService _permissionService;
@@ -34,6 +36,7 @@ namespace CMMS.Server.Controllers.Authentications
         }
 
         [HttpPost("update")]
+        [RequirePermission(Permissions.MasterDataRolePermissionEdit)]
         public async Task<IActionResult> UpdateRolePermissions([FromBody] UpdateRolePermissionsRequest request)
         {
             await _permissionService.UpdateRolePermissionsAsync(request);

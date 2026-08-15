@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.Common;
 using Microsoft.AspNetCore.Authorization;
+using CMMS.Shared.Authorization;
+using CMMS.Server.Infrastructure.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "AdminOnly")]
+[RequirePermission(Permissions.MasterDataDepartmentView)]
 public class DepartmentController : ControllerBase
 {
     private readonly IDepartmentService _service;
@@ -43,18 +45,21 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Permissions.MasterDataDepartmentAdd)]
     public async Task<ApiResponse> CreateDepartment([FromBody] DepartmentDto department)
     {
         return await _service.CreateDepartmentAsync(department);
     }
 
     [HttpPut]
+    [RequirePermission(Permissions.MasterDataDepartmentEdit)]
     public async Task<ApiResponse> UpdateDepartment([FromBody] DepartmentDto department)
     {
         return await _service.UpdateDepartmentAsync(department);
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Permissions.MasterDataDepartmentDelete)]
     public async Task<ApiResponse> DeleteDepartment(int id)
     {
         return await _service.DeleteDepartmentAsync(id);

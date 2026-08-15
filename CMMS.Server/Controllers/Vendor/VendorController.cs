@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.Common;
 using Microsoft.AspNetCore.Authorization;
+using CMMS.Shared.Authorization;
+using CMMS.Server.Infrastructure.Authorization;
 
 namespace CMMS.Server.Controllers.Vendor
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [RequirePermission(Permissions.MasterDataVendorView)]
     public class VendorController : ControllerBase
     {
         private readonly IVendorService _service;
@@ -35,21 +37,21 @@ namespace CMMS.Server.Controllers.Vendor
     }
 
     [HttpPost]
-    [Authorize(Policy = "AdminOnly")]
+    [RequirePermission(Permissions.MasterDataVendorAdd)]
     public async Task<ApiResponse> CreateVendor([FromBody] VendorDto vendor)
     {
         return await _service.CreateVendorAsync(vendor);
     }
 
     [HttpPut]
-    [Authorize(Policy = "AdminOnly")]
+    [RequirePermission(Permissions.MasterDataVendorEdit)]
     public async Task<ApiResponse> UpdateVendor([FromBody] VendorDto vendor)
     {
         return await _service.UpdateVendorAsync(vendor);
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Policy = "AdminOnly")]
+    [RequirePermission(Permissions.MasterDataVendorDelete)]
     public async Task<ApiResponse> DeleteVendor(int id)
     {
         return await _service.DeleteVendorAsync(id);

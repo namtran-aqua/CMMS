@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using CMMS.Shared.Dtos.Equipment;
 using CMMS.Shared.Dtos.Common;
 using Microsoft.AspNetCore.Authorization;
+using CMMS.Shared.Authorization;
+using CMMS.Server.Infrastructure.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "AdminOnly")]
+[RequirePermission(Permissions.MasterDataFactoryView)]
 public class FactoryController : ControllerBase
 {
     private readonly IFactoryService _service;
@@ -36,18 +38,21 @@ public class FactoryController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Permissions.MasterDataFactoryAdd)]
     public async Task<ApiResponse> CreateFactory([FromBody] FactoryDto factory)
     {
         return await _service.CreateFactoryAsync(factory);
     }
 
     [HttpPut]
+    [RequirePermission(Permissions.MasterDataFactoryEdit)]
     public async Task<ApiResponse> UpdateFactory([FromBody] FactoryDto factory)
     {
         return await _service.UpdateFactoryAsync(factory);
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Permissions.MasterDataFactoryDelete)]
     public async Task<ApiResponse> DeleteFactory(int id)
     {
         return await _service.DeleteFactoryAsync(id);

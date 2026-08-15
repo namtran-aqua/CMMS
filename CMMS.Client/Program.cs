@@ -30,9 +30,5 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().Cre
 
 builder.Services.AddSingleton<FactoryStateService>();
 builder.Services.AddAntDesign();
-builder.Services.AddAuthorizationCore(options =>
-{
-    options.AddPolicy("AdminOnly", policy =>
-        policy.RequireClaim("RoleID", SystemRoles.Admin.ToString()));
-});
+builder.Services.AddAuthorizationCore();
 await builder.Build().RunAsync();
