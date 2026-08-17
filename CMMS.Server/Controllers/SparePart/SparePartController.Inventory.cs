@@ -9,7 +9,12 @@ namespace CMMS.Server.Controllers.SparePart
     public partial class SparePartController : ControllerBase
     {
         [HttpGet("get-all")]
-        public async Task<List<SparePartDto>> GetAll([FromQuery] int? factoryId = null) => await _service.GetAllAsync(factoryId);
+        public async Task<List<SparePartDto>> GetAll([FromQuery] int? factoryId = null)
+        {
+            var currentUser = await GetCurrentUserAsync();
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
+            return await _service.GetAllAsync(factoryId);
+        }
 
         [HttpGet("get-paged")]
         public async Task<ActionResult<SparePartPagedResultDto>> GetPaged(
@@ -22,9 +27,13 @@ namespace CMMS.Server.Controllers.SparePart
             [FromQuery] int? factoryId = null,
             [FromQuery] string? partCode = null,
             [FromQuery] string? partName = null,
-            [FromQuery] int? supplierId = null)
+            [FromQuery] int? supplierId = null,
+            [FromQuery] bool? requireInventory = null)
         {
-            return Ok(await _service.GetPagedAsync(page, pageSize, searchText, categoryId, stockStatus, sortBy, factoryId, partCode, partName, supplierId));
+            var currentUser = await GetCurrentUserAsync();
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
+
+            return Ok(await _service.GetPagedAsync(page, pageSize, searchText, categoryId, stockStatus, sortBy, factoryId, partCode, partName, supplierId, requireInventory));
         }
 
         [HttpDelete("delete/{spid}")]

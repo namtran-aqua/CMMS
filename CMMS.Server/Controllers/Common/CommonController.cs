@@ -22,7 +22,7 @@ namespace CMMS.Server.Controllers.Common
             var extension = Path.GetExtension(file.FileName);
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
             var fileName = $"{originalName}_{timestamp}{extension}";
-            var uploadDir = Path.Combine("wwwroot", "uploads", "support-data");
+            var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "support-data");
             if (!Directory.Exists(uploadDir))
             {
                 Directory.CreateDirectory(uploadDir);

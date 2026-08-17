@@ -10,7 +10,6 @@ namespace CMMS.Server.Controllers.Vendor
 {
     [ApiController]
     [Route("api/[controller]")]
-    [RequirePermission(Permissions.MasterDataVendorView)]
     public class VendorController : ControllerBase
     {
         private readonly IVendorService _service;

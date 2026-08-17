@@ -21,6 +21,8 @@ namespace CMMS.Server.Controllers.SparePart
             [FromQuery] DateTime? fromDate = null,
             [FromQuery] DateTime? toDate = null)
         {
+            var currentUser = await GetCurrentUserAsync();
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
             return Ok(await _service.GetTransactionHistoryPagedAsync(page, pageSize, searchText, typeFilter, factoryId, fromDate, toDate));
         }
 
@@ -46,11 +48,12 @@ namespace CMMS.Server.Controllers.SparePart
         }
 
         [HttpGet("import-template")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         public IActionResult DownloadTemplate()
         {
-            var csv = "PartCode,PartName,Unit,Price,MinStock,CategoryName,SupplierName,LocName,DeptCode,IsCoded,Note\n" +
-                      "Mã001,Tên001,Cái,150000,5,Cảm biến,Nhà cung cấp Omron,Khu vực A,Maint-Dept,1,Ghi chú mẫu\n" +
-                      "Mã002,Tên002,Mét,450000,2,Băng tải,Nhà cung cấp Habasit,Khu vực B,Prod-Dept,0,Ghi chú mẫu 2";
+            var csv = "PartCode,PartName,Specification,Unit,Price,MinStock,IsCoded,Note\n" +
+                      "Mã001,Tên001,Spec001,Cái,150000,5,1,Ghi chú mẫu\n" +
+                      "Mã002,Tên002,Spec002,Mét,450000,2,0,Ghi chú mẫu 2";
             
             var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
             return File(bytes, "text/csv; charset=utf-8", "SparePart_Import_Template.csv");
@@ -101,6 +104,8 @@ namespace CMMS.Server.Controllers.SparePart
             [FromQuery] int? factoryId = null,
             [FromQuery] Guid? createdBy = null)
         {
+            var currentUser = await GetCurrentUserAsync();
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
             return Ok(await _service.GetImportOrdersPagedAsync(page, pageSize, importCode, po, vendorId, fromDate, toDate, factoryId, createdBy));
         }
 
@@ -153,6 +158,8 @@ namespace CMMS.Server.Controllers.SparePart
             [FromQuery] int? factoryId = null,
             [FromQuery] Guid? createdBy = null)
         {
+            var currentUser = await GetCurrentUserAsync();
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
             return Ok(await _service.GetExportOrdersPagedAsync(page, pageSize, exportCode, movementTypeId, fromDate, toDate, factoryId, createdBy));
         }
 
@@ -181,6 +188,8 @@ namespace CMMS.Server.Controllers.SparePart
             [FromQuery] int? factoryId = null,
             [FromQuery] bool? isCoded = null)
         {
+            var currentUser = await GetCurrentUserAsync();
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
             return Ok(await _service.GetSparePartItemsPagedAsync(page, pageSize, serialCode, partCode, partName, status, factoryId, isCoded));
         }
 

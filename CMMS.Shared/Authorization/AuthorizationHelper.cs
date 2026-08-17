@@ -10,14 +10,20 @@ namespace CMMS.Shared.Authorization
         {
             if (user == null) return false;
 
-            // Must belong to the same factory
+            // Admin (RoleID = 3) and IT (RoleID = 4) bypass all factory and PIC checks
+            if (user.RoleID == 3 || user.RoleID == 4 || (user.Roles != null && (user.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase) || user.Roles.Contains("IT", StringComparer.OrdinalIgnoreCase))))
+            {
+                return true;
+            }
+
+            // Other roles must belong to the same factory
             if (user.FACID != equipmentFacId)
             {
                 return false;
             }
 
-            // Manager (RoleID = 1) or Admin (RoleID = 3) can operate on all equipment in their factory
-            if (user.RoleID == 1 || user.RoleID == 3 || (user.Roles != null && (user.Roles.Contains("Manager", StringComparer.OrdinalIgnoreCase) || user.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase))))
+            // Manager (RoleID = 1) can operate on all equipment in their factory
+            if (user.RoleID == 1 || (user.Roles != null && user.Roles.Contains("Manager", StringComparer.OrdinalIgnoreCase)))
             {
                 return true;
             }
@@ -31,13 +37,33 @@ namespace CMMS.Shared.Authorization
             // Default safety check: treat as standard User (PIC check)
             return !string.IsNullOrEmpty(equipmentPicId) && string.Equals(equipmentPicId, user.WorkDayId, StringComparison.OrdinalIgnoreCase);
         }
+
         public static bool CanManageSparePart(UserDto? user, int? partFacId)
         {
             if (user == null) return false;
 
-            // Must belong to the same factory — that's the only check needed
+            // Admin and IT bypass factory check
+            if (user.RoleID == 3 || user.RoleID == 4 || (user.Roles != null && (user.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase) || user.Roles.Contains("IT", StringComparer.OrdinalIgnoreCase))))
+            {
+                return true;
+            }
+
+            // Must belong to the same factory — that's the only check needed for other roles
             return user.FACID == partFacId;
         }
-    }
 
+        public static int? GetAllowedFactoryId(UserDto? user, int? requestedFactoryId)
+        {
+            if (user == null) return requestedFactoryId;
+
+            // Admin and IT can query any factory
+            if (user.RoleID == 3 || user.RoleID == 4 || (user.Roles != null && (user.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase) || user.Roles.Contains("IT", StringComparer.OrdinalIgnoreCase))))
+            {
+                return requestedFactoryId;
+            }
+
+            // Manager and User are restricted to their own factory
+            return user.FACID;
+        }
+    }
 }
