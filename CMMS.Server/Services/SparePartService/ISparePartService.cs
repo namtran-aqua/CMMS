@@ -10,7 +10,7 @@ namespace CMMS.Server.Services.SparePartService
     public interface ISparePartService
     {
         Task<List<SparePartDto>> GetAllAsync(int? factoryId = null);
-        Task<SparePartPagedResultDto> GetPagedAsync(int page, int pageSize, string? searchText, int? categoryId, string? stockStatus, string? sortBy, int? factoryId, string? partCode = null, string? partName = null, int? supplierId = null);
+        Task<SparePartPagedResultDto> GetPagedAsync(int page, int pageSize, string? searchText, int? categoryId, string? stockStatus, string? sortBy, int? factoryId, string? partCode = null, string? partName = null, int? supplierId = null, bool? requireInventory = null);
         Task<List<SparePartCategoryDto>> GetCategoriesAsync();
         Task<List<SparePartSupplierDto>> GetSuppliersAsync();
         Task<SparePartDto> CreateAsync(SparePartDto dto, UserDto currentUser);

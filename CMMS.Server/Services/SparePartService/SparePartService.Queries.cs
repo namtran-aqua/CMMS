@@ -46,15 +46,18 @@ namespace CMMS.Server.Services.SparePartService
             int? factoryId,
             string? partCode = null,
             string? partName = null,
-            int? supplierId = null)
+            int? supplierId = null,
+            bool? requireInventory = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             
             var conditions = new List<string>();
             var parameters = new DynamicParameters();
 
-            //// Chỉ hiển thị các spare part có qty > 0
-            conditions.Add("p.Inventory > 0");
+            if (requireInventory == true)
+            {
+                conditions.Add("p.Inventory > 0");
+            }
 
             if (factoryId.HasValue)
             {
@@ -316,6 +319,7 @@ namespace CMMS.Server.Services.SparePartService
                 
                 int colCode = headers.FindIndex(h => h.Equals("PartCode", StringComparison.OrdinalIgnoreCase));
                 int colName = headers.FindIndex(h => h.Equals("PartName", StringComparison.OrdinalIgnoreCase));
+                int colSpecification = headers.FindIndex(h => h.Equals("Specification", StringComparison.OrdinalIgnoreCase));
                 int colUnit = headers.FindIndex(h => h.Equals("Unit", StringComparison.OrdinalIgnoreCase));
                 int colPrice = headers.FindIndex(h => h.Equals("Price", StringComparison.OrdinalIgnoreCase));
                 int colMinStock = headers.FindIndex(h => h.Equals("MinStock", StringComparison.OrdinalIgnoreCase));
@@ -414,6 +418,7 @@ namespace CMMS.Server.Services.SparePartService
                     {
                         var code = fields[colCode].Trim();
                         var name = fields[colName].Trim();
+                        var partModel = colSpecification != -1 ? fields[colSpecification].Trim() : "";
                         var unit = colUnit != -1 ? fields[colUnit].Trim() : "";
                         
                         decimal? price = null;
@@ -452,12 +457,7 @@ namespace CMMS.Server.Services.SparePartService
                             locId = locations.First(l => l.LocName.Equals(locName, StringComparison.OrdinalIgnoreCase)).LocID;
                         }
 
-                        int? deptId = null;
-                        if (colDept != -1 && !string.IsNullOrWhiteSpace(fields[colDept]))
-                        {
-                            var deptCode = fields[colDept].Trim();
-                            deptId = departments.First(d => d.DeptCode.Equals(deptCode, StringComparison.OrdinalIgnoreCase)).DeptID;
-                        }
+                        int? deptId = currentUser?.DeptID;
 
                         int? facId = currentUser?.FACID;
 
@@ -472,7 +472,7 @@ namespace CMMS.Server.Services.SparePartService
                                     MinStock = @MinStock, CategoryID = COALESCE(@CategoryID, CategoryID),
                                     SupplierID = COALESCE(@SupplierID, SupplierID), LocID = COALESCE(@LocID, LocID), 
                                     DeptID = COALESCE(@DeptID, DeptID), FACID = COALESCE(@FACID, FACID), Note = @Note, UpdateDate = GETDATE(),
-                                    IsCoded = @IsCoded
+                                    IsCoded = @IsCoded, PartModel = @PartModel
                                 WHERE SPID = @SPID";
                             await connection.ExecuteAsync(updateSql, new {
                                 PartName = name,
@@ -486,6 +486,7 @@ namespace CMMS.Server.Services.SparePartService
                                 FACID = facId,
                                 Note = note,
                                 IsCoded = isCoded,
+                                PartModel = partModel,
                                 SPID = existingPartId.Value
                             });
                             result.SuccessCount++;
@@ -493,8 +494,8 @@ namespace CMMS.Server.Services.SparePartService
                         else
                         {
                             var insertSql = @"
-                                INSERT INTO dbo.Tbl_SparePart (PartCode, PartName, Unit, Price, MinStock, CategoryID, SupplierID, LocID, DeptID, FACID, Note, CreateDate, UpdateDate, CreateBy, IsCoded)
-                                VALUES (@PartCode, @PartName, @Unit, @Price, @MinStock, @CategoryID, @SupplierID, @LocID, @DeptID, @FACID, @Note, GETDATE(), GETDATE(), @CreateBy, @IsCoded)";
+                                INSERT INTO dbo.Tbl_SparePart (PartCode, PartName, Unit, Price, MinStock, CategoryID, SupplierID, LocID, DeptID, FACID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, PartModel)
+                                VALUES (@PartCode, @PartName, @Unit, @Price, @MinStock, @CategoryID, @SupplierID, @LocID, @DeptID, @FACID, @Note, GETDATE(), GETDATE(), @CreateBy, @IsCoded, @PartModel)";
                             await connection.ExecuteAsync(insertSql, new {
                                 PartCode = code,
                                 PartName = name,
@@ -508,7 +509,8 @@ namespace CMMS.Server.Services.SparePartService
                                 FACID = facId,
                                 Note = note,
                                 CreateBy = currentUser?.Id,
-                                IsCoded = isCoded
+                                IsCoded = isCoded,
+                                PartModel = partModel
                             });
                             result.SuccessCount++;
                         }

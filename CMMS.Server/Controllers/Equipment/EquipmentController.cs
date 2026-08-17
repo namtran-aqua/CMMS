@@ -26,6 +26,12 @@ public class EquipmentController : ControllerBase
     [HttpGet("get-all")]
     public async Task<List<EquipmentDto>> GetAll([FromQuery] int? factoryId = null)
     {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (Guid.TryParse(userIdClaim, out var userId))
+        {
+            var currentUser = await _userService.GetCurrentUserAsync(userId);
+            factoryId = CMMS.Shared.Authorization.AuthorizationHelper.GetAllowedFactoryId(currentUser, factoryId);
+        }
         return await _service.GetAllAsync(factoryId);
     }
 
@@ -57,9 +63,9 @@ public class EquipmentController : ControllerBase
     [HttpGet("import-template")]
     public IActionResult DownloadTemplate()
     {
-        var csv = "EquipmentCode,EquipmentName,EquipmentModel,EquipmentSerial,EquipmentDescription,EquipmentNote,LocCode,DeptCode,BuyDate,BuyPrice,BuyCurrency,MaintenanceCircleTime,ContactNo,SAPCode,PIC\n" +
-                  "EQ-001,Máy phay CNC Haas VF-2,VF-2,1029384,Máy phay đứng tốc độ cao,Hoạt động tốt,LOC-A,Maint-Dept,2025-01-15,1200000000,VND,180,0901234567,1001,Nguyễn Văn A\n" +
-                  "EQ-002,Máy nén khí Atlas Copco,GA37,GA992837,Máy nén khí trục vít,Hoạt động 24/7,LOC-B,Prod-Dept,2024-06-20,350000000,VND,90,0907654321,1002,Trần Văn B";
+        var csv = "EquipmentCode,EquipmentName,EquipmentModel,EquipmentSerial,EquipmentDescription,EquipmentNote,BuyDate,BuyPrice,BuyCurrency,MaintenanceCircleTime,ContactNo,SAPCode\n" +
+                  "EQ-001,Máy phay CNC Haas VF-2,VF-2,1029384,Máy phay đứng tốc độ cao,Hoạt động tốt,2025-01-15,1200000000,VND,180,0901234567,1001\n" +
+                  "EQ-002,Máy nén khí Atlas Copco,GA37,GA992837,Máy nén khí trục vít,Hoạt động 24/7,2024-06-20,350000000,VND,90,0907654321,1002";
         
         var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
         return File(bytes, "text/csv; charset=utf-8", "Equipment_Import_Template.csv");

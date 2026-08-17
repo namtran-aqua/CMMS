@@ -5,6 +5,8 @@
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject IMessageService Message
+@inject NavigationManager Navigation
+
 
 @{
     RenderFragment footer = @<Template>
@@ -109,6 +111,7 @@
 @code {
     [Inject] private IJSRuntime JS { get; set; }
 
+
     [Parameter] public string Title { get; set; } = "Import Data";
     [Parameter] public string TemplateUrl { get; set; } = "";
     [Parameter] public string UploadUrl { get; set; } = "";
@@ -143,6 +146,7 @@
     private async Task DownloadTemplate()
     {
         if (string.IsNullOrEmpty(TemplateUrl)) return;
+Navigation.NavigateTo(TemplateUrl, forceLoad: true);
         await JS.InvokeVoidAsync("open", Http.BaseAddress + TemplateUrl, "_blank");
     }
 

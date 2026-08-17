@@ -75,7 +75,7 @@ namespace CMMS.Client.Modals.SpareParts
         {
             if (fileinfo.File.State == UploadState.Success)
             {
-                var url = fileinfo.File.Response?.ToString();
+                var url = fileinfo.File.Response?.ToString()?.Trim('"');
                 if (!string.IsNullOrEmpty(url))
                 {
                     PartDto.ImageUrl = url;

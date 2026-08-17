@@ -146,12 +146,26 @@ namespace CMMS.Client.Components.Equipments
         private async Task LoadDepartmentsData()
         {
             if (Departments != null && Departments.Any()) return;
-            Departments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/department/departments") ?? new();
+            try
+            {
+                Departments = await Http.GetFromJsonAsync<List<DepartmentDto>>("api/department/departments") ?? new();
+            }
+            catch
+            {
+                Departments = new();
+            }
         }
         private async Task LoadLocationsData()
         {
             if (Locations != null && Locations.Any()) return;
-            Locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/Location/locations") ?? new();
+            try
+            {
+                Locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/Location/locations") ?? new();
+            }
+            catch
+            {
+                Locations = new();
+            }
         }
         //private async Task LoadStatusUsingData()
         //{
@@ -160,12 +174,26 @@ namespace CMMS.Client.Components.Equipments
         private async Task LoadVendorData()
         {
             if (Vendors != null && Vendors.Any()) return;
-            Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
+            try
+            {
+                Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
+            }
+            catch
+            {
+                Vendors = new();
+            }
         }
         private async Task LoadUsersData()
         {
             if (Users != null && Users.Any()) return;
-            Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
+            try
+            {
+                Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
+            }
+            catch
+            {
+                Users = new();
+            }
         }
 
     }

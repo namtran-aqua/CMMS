@@ -266,7 +266,7 @@
                     <Icon Type="paper-clip" Theme="IconThemeType.Outline" Style="font-size:12px;" />
                     Attachments
                 </div>
-                <Upload Action="@($"{Navigation.BaseUri}api/Common/upload-file-suport")"
+                <Upload Action="@($"{Http.BaseAddress}api/Common/upload-file-suport")"
                         Name="file"
                         Accept=".jpg,.jpeg,.png,.xlsx,.docx,.pdf,.slx"
                         BeforeUpload="BeforeUpload1"

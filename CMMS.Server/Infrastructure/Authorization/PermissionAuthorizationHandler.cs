@@ -29,13 +29,6 @@ namespace CMMS.Server.Infrastructure.Authorization
                 return;
             }
 
-            // Admin always has all permissions
-            if (roleId == SystemRoles.Admin)
-            {
-                context.Succeed(requirement);
-                return;
-            }
-
             using var scope = _serviceScopeFactory.CreateScope();
             var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionService>();
 

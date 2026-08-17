@@ -132,12 +132,26 @@ namespace CMMS.Client.Modals.Maintenances
         private async Task LoadVendorData()
         {
             if (Vendors != null && Vendors.Any()) return;
-            Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
+            try
+            {
+                Vendors = await Http.GetFromJsonAsync<List<VendorDto>>("api/vendor/vendors") ?? new();
+            }
+            catch
+            {
+                Vendors = new();
+            }
         }
         private async Task LoadUsersData()
         {
             if (Users != null && Users.Any()) return;
-            Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
+            try
+            {
+                Users = await Http.GetFromJsonAsync<List<UserDto>>("api/user/users") ?? new();
+            }
+            catch
+            {
+                Users = new();
+            }
         }
         #region Handle File
         private async Task Deleted(AttachmentDto file)
@@ -152,7 +166,7 @@ namespace CMMS.Client.Modals.Maintenances
         {
             if (fileinfo.File.State == UploadState.Success)
             {
-                var url = fileinfo.File.Response?.ToString();
+                var url = fileinfo.File.Response?.ToString()?.Trim('"');
                 if (!string.IsNullOrEmpty(url))
                 {
                     var uri = new Uri(url);
@@ -204,8 +218,16 @@ namespace CMMS.Client.Modals.Maintenances
                 SearchedPartsList = SparePartsList.Take(50).ToList();
                 return;
             }
-            SparePartsList = await Http.GetFromJsonAsync<List<SparePartDto>>("api/SparePart/get-all") ?? new();
-            SearchedPartsList = SparePartsList.Take(50).ToList();
+            try
+            {
+                SparePartsList = await Http.GetFromJsonAsync<List<SparePartDto>>("api/SparePart/get-all") ?? new();
+                SearchedPartsList = SparePartsList.Take(50).ToList();
+            }
+            catch
+            {
+                SparePartsList = new();
+                SearchedPartsList = new();
+            }
         }
 
         private void OnSearchParts(string searchValue)

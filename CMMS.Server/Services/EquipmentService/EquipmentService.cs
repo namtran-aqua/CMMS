@@ -394,25 +394,8 @@ namespace CMMS.Server.Services.EquipmentService
                         int? sapCode = null;
                         if (colSap != -1 && int.TryParse(fields[colSap], out var parsedSap)) sapCode = parsedSap;
 
-                        string? picName = null;
-                        string? picId = null;
-                        if (colPic != -1)
-                        {
-                            var picValue = fields[colPic].Trim();
-                            if (!string.IsNullOrEmpty(picValue))
-                            {
-                                var u = users.FirstOrDefault(x => x.FullName.Equals(picValue, StringComparison.OrdinalIgnoreCase) || x.WorkDayId.Equals(picValue, StringComparison.OrdinalIgnoreCase));
-                                if (u != null)
-                                {
-                                    picName = u.FullName;
-                                    picId = u.WorkDayId;
-                                }
-                                else
-                                {
-                                    picName = picValue;
-                                }
-                            }
-                        }
+                        string? picName = currentUser?.FullName;
+                        string? picId = currentUser?.WorkDayId;
 
                         int? locId = null;
                         if (colLoc != -1)
@@ -425,16 +408,7 @@ namespace CMMS.Server.Services.EquipmentService
                             }
                         }
 
-                        int? deptId = null;
-                        if (colDept != -1)
-                        {
-                            var deptCodeVal = fields[colDept].Trim();
-                            if (!string.IsNullOrEmpty(deptCodeVal))
-                            {
-                                var dept = departments.FirstOrDefault(d => d.DeptCode != null && d.DeptCode.Equals(deptCodeVal, StringComparison.OrdinalIgnoreCase));
-                                if (dept != null) deptId = dept.DeptID;
-                            }
-                        }
+                        int? deptId = currentUser?.DeptID;
 
                         var existingEq = await connection.QueryFirstOrDefaultAsync<int?>(
                             "SELECT EQID FROM dbo.Tbl_EquipmentInfo WHERE EquipmentCode = @EquipmentCode",

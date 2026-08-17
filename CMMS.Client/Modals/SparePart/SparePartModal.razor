@@ -139,20 +139,14 @@
 
         
         <Row Gutter="16">
-            <Col Span="12">
-                <FormItem Label="IsCoded" Name="IsCoded">
-                    <Switch @bind-Value="PartDto.IsCoded" CheckedChildren="Coded" UnCheckedChildren="None" />
-                </FormItem>
-            </Col>
-            <Col Span="12">
+            <Col Span="16">
                 <FormItem Label="Spare Part Image">
-                    <div style="display:flex; flex-direction:column; gap:8px;">
-                        <Upload Action="@($"{Navigation.BaseUri}api/Common/upload-file-suport")"
+                    <div style="display:flex; gap:8px;">
+                        <Upload Action="@($"{Http.BaseAddress}api/Common/upload-file-suport")"
                                 Name="file"
                                 Accept=".jpg,.jpeg,.png"
                                 ShowUploadList="false"
-                                OnSingleCompleted="OnImageUploadCompleted"
-                                Style="width: 100%;">
+                                OnSingleCompleted="OnImageUploadCompleted">
                             <Button Icon="upload" Style="border-radius: 8px; height: 38px; width: 100%;">Upload Image</Button>
                         </Upload>
                         @if (!string.IsNullOrEmpty(PartDto.ImageUrl))
@@ -165,6 +159,12 @@
                     </div>
                 </FormItem>
             </Col>
+            <Col Span="8">
+                <FormItem Label="IsCoded" Name="IsCoded">
+                    <Switch @bind-Value="PartDto.IsCoded" CheckedChildren="Coded" UnCheckedChildren="None" />
+                </FormItem>
+            </Col>
+            
         </Row>
 
         

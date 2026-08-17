@@ -140,6 +140,9 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 var url = "api/SparePart/movement-types";
                 if (facId.HasValue) url += $"?factoryId={facId.Value}";
                 MovementTypes = await Http.GetFromJsonAsync<List<MovementTypeDto>>(url) ?? new();
+                
+                var allowedTypes = new[] { "Maintenance", "Production", "Scrap", "Supplier Return" };
+                MovementTypes = MovementTypes.Where(m => m.MovementTypeName != null && allowedTypes.Contains(m.MovementTypeName, StringComparer.OrdinalIgnoreCase)).ToList();
             }
             catch (Exception ex)
             {
@@ -244,7 +247,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             try
             {
                 var facId = FactoryState.SelectedFacId;
-                var url = $"api/SparePart/get-paged?page=1&pageSize=30&searchText={Uri.EscapeDataString(searchText)}";
+                var url = $"api/SparePart/get-paged?page=1&pageSize=30&requireInventory=true&searchText={Uri.EscapeDataString(searchText)}";
                 if (facId.HasValue) url += $"&factoryId={facId.Value}";
                 
                 var res = await Http.GetFromJsonAsync<SparePartPagedResultDto>(url);
