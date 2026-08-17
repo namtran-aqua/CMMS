@@ -8,7 +8,6 @@ using CMMS.Server.Infrastructure.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[RequirePermission(Permissions.MasterDataFactoryView)]
 public class FactoryController : ControllerBase
 {
     private readonly IFactoryService _service;

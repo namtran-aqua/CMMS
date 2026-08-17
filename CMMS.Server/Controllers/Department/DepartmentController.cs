@@ -8,7 +8,6 @@ using CMMS.Server.Infrastructure.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[RequirePermission(Permissions.MasterDataDepartmentView)]
 public class DepartmentController : ControllerBase
 {
     private readonly IDepartmentService _service;
