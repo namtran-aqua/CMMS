@@ -34,7 +34,7 @@ namespace CMMS.Server.Controllers.Common
                 await file.CopyToAsync(stream);
             }
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
             var url = $"{baseUrl}/uploads/support-data/{fileName}";
             return Ok(url);
         }

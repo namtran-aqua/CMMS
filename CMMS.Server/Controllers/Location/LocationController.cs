@@ -8,7 +8,6 @@ using CMMS.Server.Infrastructure.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[RequirePermission(Permissions.MasterDataLocationView)]
 public class LocationController : ControllerBase
 {
     private readonly ILocationService _service;
