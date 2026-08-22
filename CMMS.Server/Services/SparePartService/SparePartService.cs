@@ -19,12 +19,14 @@ namespace CMMS.Server.Services.SparePartService
         private readonly IConfiguration _config;
         private readonly ISqlConnectionFactory _connectionFactory;
         private readonly IDataPermissionService _dataPermissionService;
+        private readonly CMMS.Server.Services.Barcode.IBarcodeIdService _barcodeIdService;
 
-        public SparePartService(IConfiguration config, ISqlConnectionFactory connectionFactory, IDataPermissionService dataPermissionService)
+        public SparePartService(IConfiguration config, ISqlConnectionFactory connectionFactory, IDataPermissionService dataPermissionService, CMMS.Server.Services.Barcode.IBarcodeIdService barcodeIdService)
         {
             _config = config;
             _connectionFactory = connectionFactory;
             _dataPermissionService = dataPermissionService;
+            _barcodeIdService = barcodeIdService;
         }
 
         public async Task<List<SparePartDto>> GetAllAsync(int? factoryId = null)
@@ -63,13 +65,15 @@ namespace CMMS.Server.Services.SparePartService
 
         public async Task<SparePartDto> CreateAsync(SparePartDto dto, UserDto currentUser)
         {
+            string sparePartBarcode = await _barcodeIdService.GenerateSparePartBarcodeIdAsync();
+
             var connStr = _config.GetConnectionString("DefaultConnection");
             const string sqlCheckCode = "SELECT COUNT(1) FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode";
             const string sqlInsert = @"
                 INSERT INTO dbo.Tbl_SparePart
-                    (PartCode, PartName, CategoryID, Unit, Price, Inventory, MinStock, LocID, DeptID, SupplierID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, ImageUrl, PartModel, FACID)
+                    (PartCode, PartName, CategoryID, Unit, Price, Inventory, MinStock, LocID, DeptID, SupplierID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, ImageUrl, PartModel, FACID, SparePartBarcode)
                 VALUES
-                    (@PartCode, @PartName, @CategoryID, @Unit, @Price, @Inventory, @MinStock, @LocID, @DeptID, @SupplierID, @Note, @CreateDate, @UpdateDate, @CreateBy, @IsCoded, @ImageUrl, @PartModel, @FACID);
+                    (@PartCode, @PartName, @CategoryID, @Unit, @Price, @Inventory, @MinStock, @LocID, @DeptID, @SupplierID, @Note, @CreateDate, @UpdateDate, @CreateBy, @IsCoded, @ImageUrl, @PartModel, @FACID, @SparePartBarcode);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
             await using var con = new SqlConnection(connStr);
@@ -99,6 +103,7 @@ namespace CMMS.Server.Services.SparePartService
                 cmd.Parameters.Add("@Inventory", SqlDbType.Int).Value = dto.Inventory ?? 0;
                 cmd.Parameters.Add("@MinStock", SqlDbType.Int).Value = dto.MinStock ?? 0;
                 cmd.Parameters.Add("@LocID", SqlDbType.Int).Value = (object?)dto.LocID ?? DBNull.Value;
+                cmd.Parameters.Add("@SparePartBarcode", SqlDbType.NVarChar, 50).Value = (object?)sparePartBarcode ?? DBNull.Value;
                 cmd.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
                 cmd.Parameters.Add("@SupplierID", SqlDbType.Int).Value = (object?)dto.SupplierID ?? DBNull.Value;
                 cmd.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = (object?)dto.Note ?? DBNull.Value;

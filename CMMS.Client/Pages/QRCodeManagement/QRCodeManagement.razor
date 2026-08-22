@@ -1,0 +1,53 @@
+@page "/qr-code-management"
+@using CMMS.Shared.Dtos.Barcode
+@using AntDesign
+@inject HttpClient Http
+@inject IMessageService MessageService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>QR Code Management</PageTitle>
+
+<Card Title="QR Code Management" Style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+        <Select TItem="string" TItemValue="string" @bind-Value="SelectedType" Style="width: 150px;" OnSelectedItemChanged="LoadData">
+            <SelectOptions>
+                <SelectOption Value="@("All")" Label="All Types" />
+                <SelectOption Value="@("Equipment")" Label="Equipment" />
+                <SelectOption Value="@("SparePart")" Label="Spare Part" />
+            </SelectOptions>
+        </Select>
+
+        <Select TItem="string" TItemValue="string" @bind-Value="SelectedStatus" Style="width: 150px;" OnSelectedItemChanged="LoadData">
+            <SelectOptions>
+                <SelectOption Value="@("All")" Label="All Status" />
+                <SelectOption Value="@("NotGenerated")" Label="Not Generated" />
+                <SelectOption Value="@("Generated")" Label="Generated" />
+            </SelectOptions>
+        </Select>
+
+        <Search @bind-Value="SearchKeyword" Placeholder="Search code, name, serial..." OnSearch="LoadData" Style="width: 300px;" />
+
+        <div style="flex: 1; text-align: right;">
+            <Button Type="@ButtonType.Primary" OnClick="GenerateBarcodes" Loading="IsGenerating" Disabled="!HasSelectedNotGenerated">Generate Barcode ID</Button>
+            <Button Type="@ButtonType.Default" OnClick="ExportPdf" Loading="IsExporting" Disabled="!HasSelectedGenerated" Style="margin-left: 8px;">Export PDF</Button>
+        </div>
+    </div>
+
+    <Table @ref="table" TItem="QRCodeItemDto" DataSource="@Items" Loading="IsLoading" @bind-SelectedRows="SelectedItems" RowKey="x => x.Id.ToString() + x.EntityType">
+        <Selection />
+        <PropertyColumn Property="c => c.BarcodeId" Title="Barcode ID">
+            @if (string.IsNullOrEmpty(context.BarcodeId))
+            {
+                <Tag Color="@("orange")">Not Generated</Tag>
+            }
+            else
+            {
+                <Tag Color="@("green")">@context.BarcodeId</Tag>
+            }
+        </PropertyColumn>
+        <PropertyColumn Property="c => c.EntityType" Title="Type" />
+        <PropertyColumn Property="c => c.Code" Title="Code" />
+        <PropertyColumn Property="c => c.Name" Title="Name" />
+        <PropertyColumn Property="c => c.Serial" Title="Serial" />
+    </Table>
+</Card>

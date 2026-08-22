@@ -13,6 +13,7 @@ using CMMS.Server.Services.SparePartService;
 using CMMS.Server.Services.EmailService;
 using CMMS.Server.Services.FactoryService;
 using CMMS.Server.Services.Auth;
+using CMMS.Server.Services.Barcode;
 
 namespace CMMS.Server
 {
@@ -40,6 +41,9 @@ namespace CMMS.Server
             
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IDataPermissionService, DataPermissionService>();
+            
+            services.AddScoped<IBarcodeIdService, BarcodeIdService>();
+            services.AddScoped<IQRCodeService, QRCodeService>();
             
             // Spare Part Dashboard Services
             services.AddScoped<CMMS.Server.Services.SparePartDashboardService.ISparePartDashboardService, CMMS.Server.Services.SparePartDashboardService.SparePartDashboardService>();
