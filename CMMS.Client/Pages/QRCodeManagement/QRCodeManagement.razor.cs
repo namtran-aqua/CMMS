@@ -1,6 +1,7 @@
 using AntDesign;
 using CMMS.Shared.Dtos.Barcode;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
@@ -14,23 +15,88 @@ namespace CMMS.Client.Pages.QRCodeManagement
     public partial class QRCodeManagement : ComponentBase
     {
         private List<QRCodeItemDto> Items = new();
-        private IEnumerable<QRCodeItemDto> SelectedItems = new List<QRCodeItemDto>();
-        private ITable table;
+        private HashSet<QRCodeItemDto> SelectedItems = new();
+        
+        private int pageIndex = 1;
+        private int pageSize = 10;
 
         private string SelectedType = "All";
-        private string SelectedStatus = "NotGenerated";
+        private string SelectedStatus = "All";
         private string SearchKeyword = "";
 
         private bool IsLoading = false;
         private bool IsGenerating = false;
         private bool IsExporting = false;
+        private bool isSearchPanelCollapsed = false;
 
-        private bool HasSelectedNotGenerated => SelectedItems != null && SelectedItems.Any(x => string.IsNullOrEmpty(x.BarcodeId));
-        private bool HasSelectedGenerated => SelectedItems != null && SelectedItems.Any(x => !string.IsNullOrEmpty(x.BarcodeId));
+        private bool IsAllSelected => Items.Any() && SelectedItems.Count == Items.Count;
+
+        private void ToggleAll(ChangeEventArgs e)
+        {
+            bool isChecked = (bool)(e.Value ?? false);
+            if (isChecked)
+            {
+                SelectedItems = new HashSet<QRCodeItemDto>(Items);
+            }
+            else
+            {
+                SelectedItems.Clear();
+            }
+        }
+
+        private void ToggleRow(ChangeEventArgs e, QRCodeItemDto item)
+        {
+            bool isChecked = (bool)(e.Value ?? false);
+            if (isChecked)
+            {
+                SelectedItems.Add(item);
+            }
+            else
+            {
+                SelectedItems.Remove(item);
+            }
+        }
+
+        private void ToggleRowSelection(QRCodeItemDto item)
+        {
+            if (SelectedItems.Contains(item))
+            {
+                SelectedItems.Remove(item);
+            }
+            else
+            {
+                SelectedItems.Add(item);
+            }
+        }
+
+        private void OnPageChange(PaginationEventArgs args)
+        {
+            pageIndex = args.Page;
+            pageSize = args.PageSize;
+        }
+
+        private bool HasSelectedNotGenerated => SelectedItems.Any(x => string.IsNullOrEmpty(x.BarcodeId));
+        private bool HasSelectedGenerated => SelectedItems.Any(x => !string.IsNullOrEmpty(x.BarcodeId));
 
         protected override async Task OnInitializedAsync()
         {
             await LoadData();
+        }
+
+        private async Task ResetFilter()
+        {
+            SelectedType = "All";
+            SelectedStatus = "All";
+            SearchKeyword = "";
+            await LoadData();
+        }
+
+        private async Task HandleKeyUp(KeyboardEventArgs e)
+        {
+            if (e.Key == "Enter")
+            {
+                await LoadData();
+            }
         }
 
         private async Task LoadData()
@@ -40,7 +106,7 @@ namespace CMMS.Client.Pages.QRCodeManagement
             {
                 var url = $"api/qr/items?type={SelectedType}&status={SelectedStatus}&search={Uri.EscapeDataString(SearchKeyword)}";
                 Items = await Http.GetFromJsonAsync<List<QRCodeItemDto>>(url) ?? new List<QRCodeItemDto>();
-                SelectedItems = new List<QRCodeItemDto>();
+                SelectedItems.Clear();
             }
             catch (Exception ex)
             {
