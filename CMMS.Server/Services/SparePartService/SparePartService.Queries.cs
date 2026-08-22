@@ -22,7 +22,7 @@ namespace CMMS.Server.Services.SparePartService
                 SELECT 
                     t.TransID, t.SPID, p.PartCode, p.PartName,
                     t.Type, t.Quantity, t.Date, t.EQID, t.Note, t.MTID, t.CreateBy, t.MovementTypeID, m.MovementTypeName AS MovementType, t.RefCode, t.CreateDate, u.WorkDayId AS CreateUser,
-                    COALESCE(p.FACID, l.FACID, d.FACID) AS FACID
+                    COALESCE(t.FACID, p.FACID, l.FACID, d.FACID) AS FACID, COALESCE(t.DeptID, p.DeptID) AS DeptID
                 FROM dbo.Tbl_Transactions t
                 LEFT JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
                 LEFT JOIN dbo.Tbl_FactoryLocation l ON l.LocID = p.LocID
@@ -30,7 +30,7 @@ namespace CMMS.Server.Services.SparePartService
                 LEFT JOIN dbo.Tbl_User u ON t.CreateBy = u.Id
                 LEFT JOIN dbo.Tbl_MaintenanceRecord mr ON t.MTID = mr.MTID
                 LEFT JOIN dbo.Tbl_MovementType m ON t.MovementTypeID = m.MovementTypeID
-                WHERE (@FactoryId IS NULL OR COALESCE(p.FACID, l.FACID, d.FACID) = @FactoryId)
+                WHERE (@FactoryId IS NULL OR COALESCE(t.FACID, p.FACID, l.FACID, d.FACID) = @FactoryId)
                 ORDER BY t.TransID DESC";
 
             return (await connection.QueryAsync<SparePartTransactionDto>(sql, new { FactoryId = factoryId })).ToList();
@@ -61,7 +61,7 @@ namespace CMMS.Server.Services.SparePartService
 
             if (factoryId.HasValue)
             {
-                conditions.Add("(p.FACID = @FactoryId OR l.FACID = @FactoryId OR d.FACID = @FactoryId)");
+                conditions.Add("COALESCE(t.FACID, p.FACID, l.FACID, d.FACID) = @FactoryId");
                 parameters.Add("FactoryId", factoryId.Value);
             }
 
@@ -159,7 +159,8 @@ namespace CMMS.Server.Services.SparePartService
                     p.SPID, p.PartCode, p.PartName, p.CategoryID, c.CategoryName,
                     p.Unit, p.Price, p.Inventory, p.MinStock, p.LocID, l.LocName AS Location,
                     p.SupplierID, s.SupplierName, p.CreateDate, p.UpdateDate,
-                    p.IsCoded, p.ImageUrl, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID
+                    p.IsCoded, p.ImageUrl, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID,
+                    p.DeptID, d.DeptCode, d.DeptName
                 FROM dbo.Tbl_SparePart p
                 LEFT JOIN dbo.Tbl_SparePartCategories c ON c.CategoryID = p.CategoryID
                 LEFT JOIN dbo.Tbl_SparePartSuppliers s ON s.SupplierID = p.SupplierID
@@ -252,7 +253,7 @@ namespace CMMS.Server.Services.SparePartService
                 SELECT 
                     t.TransID, t.SPID, p.PartCode, p.PartName,
                     t.Type, t.Quantity, t.Date, t.EQID, t.Note, t.MTID, t.CreateBy, t.CreateDate, u.WorkDayId AS CreateUser,
-                    COALESCE(p.FACID, l.FACID, d.FACID) AS FACID, t.MovementTypeID, m.MovementTypeName AS MovementType, t.RefCode
+                    COALESCE(t.FACID, p.FACID, l.FACID, d.FACID) AS FACID, t.MovementTypeID, m.MovementTypeName AS MovementType, t.RefCode, COALESCE(t.DeptID, p.DeptID) AS DeptID
                 FROM dbo.Tbl_Transactions t
                 LEFT JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
                 LEFT JOIN dbo.Tbl_FactoryLocation l ON l.LocID = p.LocID
@@ -595,7 +596,7 @@ namespace CMMS.Server.Services.SparePartService
 
             var sql = $@"
                 SELECT i.ItemID, i.SPID, i.ImportID, i.ImportDetailID, i.HasCode, i.SerialCode, i.Quantity, i.RemainingQuantity, i.ImportDate, i.Status, i.CreateAt,
-                       i.FACID, i.DeptID,
+                       i.FACID, COALESCE(i.DeptID, p.DeptID) AS DeptID,
                        p.PartCode, p.PartName,
                        DATEDIFF(day, i.ImportDate, GETDATE()) AS DaysInStock
                 FROM dbo.Tbl_SparePartItem i
@@ -615,7 +616,7 @@ namespace CMMS.Server.Services.SparePartService
                 SELECT 
                     t.TransID, t.SPID, p.PartCode, p.PartName,
                     t.Type, t.Quantity, t.Date, t.EQID, t.Note, t.MTID, t.CreateBy, t.CreateDate, u.WorkDayId AS CreateUser,
-                    t.RefCode, t.MovementTypeID, m.MovementTypeName AS MovementType, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID
+                    t.RefCode, t.MovementTypeID, m.MovementTypeName AS MovementType, COALESCE(t.FACID, p.FACID, l.FACID, d.FACID) AS FACID, COALESCE(t.DeptID, p.DeptID) AS DeptID
                 FROM dbo.Tbl_Transactions t
                 LEFT JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
                 LEFT JOIN dbo.Tbl_FactoryLocation l ON l.LocID = p.LocID

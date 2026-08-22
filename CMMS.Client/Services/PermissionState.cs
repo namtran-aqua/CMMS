@@ -10,6 +10,8 @@ namespace CMMS.Client.Services
         private readonly HttpClient _httpClient;
         private HashSet<string> _permissions = new HashSet<string>();
 
+        public event Action? OnPermissionsChanged;
+
         public PermissionState(HttpClient httpClient)
         {
             _httpClient = httpClient;
@@ -29,11 +31,16 @@ namespace CMMS.Client.Services
             {
                 _permissions = new HashSet<string>();
             }
+            finally
+            {
+                OnPermissionsChanged?.Invoke();
+            }
         }
 
         public void ClearPermissions()
         {
             _permissions.Clear();
+            OnPermissionsChanged?.Invoke();
         }
 
         public bool HasPermission(string permission)

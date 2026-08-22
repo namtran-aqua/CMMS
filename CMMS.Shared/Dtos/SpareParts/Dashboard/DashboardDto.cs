@@ -17,6 +17,7 @@ namespace CMMS.Shared.Dtos.SpareParts.Dashboard
     public class DashboardFilterDto
     {
         public int? FactoryId { get; set; }
+        public int? DepartmentId { get; set; }
         public int? SectionId { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

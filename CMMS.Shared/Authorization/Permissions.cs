@@ -54,6 +54,7 @@ namespace CMMS.Shared.Authorization
         public const string MasterDataCatalogDetail = "MASTERDATA.CATALOG.DETAIL";
         public const string MasterDataCatalogEdit = "MASTERDATA.CATALOG.EDIT";
         public const string MasterDataCatalogDelete = "MASTERDATA.CATALOG.DELETE";
+        public const string MasterDataCatalogInitialStockImport = "MASTERDATA.CATALOG.INITIALSTOCKIMPORT";
 
         // Category
         public const string MasterDataCategoryView = "MASTERDATA.CATEGORY.VIEW";

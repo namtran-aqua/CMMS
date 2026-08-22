@@ -28,19 +28,19 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 SELECT 
                     ISNULL(SUM(CAST(Inventory AS decimal(18,2))), 0) AS TotalInventoryQuantity,
                     ISNULL(SUM(CAST(Inventory AS decimal(18,2)) * CAST(Price AS decimal(18,2))), 0) AS TotalInventoryValue,
-                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'IN' AND t.Date >= @CurrentMonthStart AND (@FactoryId IS NULL OR tp.FACID = @FactoryId)), 0) AS ImportThisMonth,
-                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'IN' AND t.Date >= @PrevMonthStart AND t.Date < @CurrentMonthStart AND (@FactoryId IS NULL OR tp.FACID = @FactoryId)), 0) AS ImportPrevMonth,
-                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'OUT' AND t.Date >= @CurrentMonthStart AND (@FactoryId IS NULL OR tp.FACID = @FactoryId)), 0) AS ExportThisMonth,
-                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'OUT' AND t.Date >= @PrevMonthStart AND t.Date < @CurrentMonthStart AND (@FactoryId IS NULL OR tp.FACID = @FactoryId)), 0) AS ExportPrevMonth
+                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'IN' AND t.Date >= @CurrentMonthStart AND (@FactoryId IS NULL OR COALESCE(t.FACID, tp.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, tp.DeptID) = @DepartmentId)), 0) AS ImportThisMonth,
+                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'IN' AND t.Date >= @PrevMonthStart AND t.Date < @CurrentMonthStart AND (@FactoryId IS NULL OR COALESCE(t.FACID, tp.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, tp.DeptID) = @DepartmentId)), 0) AS ImportPrevMonth,
+                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'OUT' AND t.Date >= @CurrentMonthStart AND (@FactoryId IS NULL OR COALESCE(t.FACID, tp.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, tp.DeptID) = @DepartmentId)), 0) AS ExportThisMonth,
+                    ISNULL((SELECT SUM(Quantity) FROM dbo.Tbl_Transactions t JOIN dbo.Tbl_SparePart tp ON t.SPID = tp.SPID WHERE t.Type = 'OUT' AND t.Date >= @PrevMonthStart AND t.Date < @CurrentMonthStart AND (@FactoryId IS NULL OR COALESCE(t.FACID, tp.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, tp.DeptID) = @DepartmentId)), 0) AS ExportPrevMonth
                 FROM dbo.Tbl_SparePart p
-                WHERE (@FactoryId IS NULL OR p.FACID = @FactoryId);
+                WHERE (@FactoryId IS NULL OR p.FACID = @FactoryId) AND (@DepartmentId IS NULL OR p.DeptID = @DepartmentId);
 
                 -- 2. Coded Ratio
                 SELECT 
                     ISNULL(SUM(CASE WHEN IsCoded = 1 THEN 1 ELSE 0 END), 0) AS CodedCount,
                     ISNULL(SUM(CASE WHEN IsCoded = 0 THEN 1 ELSE 0 END), 0) AS NonCodedCount
                 FROM dbo.Tbl_SparePart
-                WHERE (@FactoryId IS NULL OR FACID = @FactoryId);
+                WHERE (@FactoryId IS NULL OR FACID = @FactoryId) AND (@DepartmentId IS NULL OR DeptID = @DepartmentId);
 
                 -- 3. Stock Status
                 SELECT 
@@ -48,7 +48,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
                     ISNULL(SUM(CASE WHEN ISNULL(Inventory, 0) > 0 AND ISNULL(Inventory, 0) <= ISNULL(MinStock, 0) THEN 1 ELSE 0 END), 0) AS LowStock,
                     ISNULL(SUM(CASE WHEN ISNULL(Inventory, 0) <= 0 THEN 1 ELSE 0 END), 0) AS OutOfStock
                 FROM dbo.Tbl_SparePart
-                WHERE (@FactoryId IS NULL OR FACID = @FactoryId);
+                WHERE (@FactoryId IS NULL OR FACID = @FactoryId) AND (@DepartmentId IS NULL OR DeptID = @DepartmentId);
 
                 -- 4. InOutTrends
                 DECLARE @SixMonthsAgo DATETIME = DATEADD(month, -5, @CurrentMonthStart);
@@ -60,7 +60,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 FROM dbo.Tbl_Transactions t
                 JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
                 WHERE t.Date >= @SixMonthsAgo
-                  AND (@FactoryId IS NULL OR p.FACID = @FactoryId)
+                  AND (@FactoryId IS NULL OR COALESCE(t.FACID, p.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, p.DeptID) = @DepartmentId)
                 GROUP BY YEAR(t.Date), MONTH(t.Date)
                 ORDER BY Year, Month;
 
@@ -73,7 +73,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 FROM dbo.Tbl_Transactions t
                 JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
                 WHERE t.Type = 'IN' AND t.Date >= @CurrentMonthStart
-                  AND (@FactoryId IS NULL OR p.FACID = @FactoryId)
+                  AND (@FactoryId IS NULL OR COALESCE(t.FACID, p.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, p.DeptID) = @DepartmentId)
                 GROUP BY p.SPID, p.PartCode, p.PartName, p.Unit
                 ORDER BY Quantity DESC;
 
@@ -86,7 +86,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 FROM dbo.Tbl_Transactions t
                 JOIN dbo.Tbl_SparePart p ON p.SPID = t.SPID
                 WHERE t.Type = 'OUT' AND t.Date >= @CurrentMonthStart
-                  AND (@FactoryId IS NULL OR p.FACID = @FactoryId)
+                  AND (@FactoryId IS NULL OR COALESCE(t.FACID, p.FACID) = @FactoryId) AND (@DepartmentId IS NULL OR COALESCE(t.DeptID, p.DeptID) = @DepartmentId)
                 GROUP BY p.SPID, p.PartCode, p.PartName, p.Unit
                 ORDER BY Quantity DESC;
 
@@ -97,7 +97,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 FROM dbo.Tbl_SparePart p
                 LEFT JOIN dbo.Tbl_FactoryLocation l ON l.LocID = p.LocID
                 WHERE ISNULL(p.Inventory, 0) > 0 AND ISNULL(p.Inventory, 0) <= ISNULL(p.MinStock, 0)
-                  AND (@FactoryId IS NULL OR p.FACID = @FactoryId)
+                  AND (@FactoryId IS NULL OR p.FACID = @FactoryId) AND (@DepartmentId IS NULL OR p.DeptID = @DepartmentId)
                 GROUP BY ISNULL(l.LocName, 'Unknown')
                 ORDER BY Count DESC;
 
@@ -113,7 +113,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 FROM dbo.Tbl_SparePartItem i
                 JOIN dbo.Tbl_SparePart p ON p.SPID = i.SPID
                 WHERE i.RemainingQuantity > 0 
-                  AND (@FactoryId IS NULL OR i.FACID = @FactoryId)
+                  AND (@FactoryId IS NULL OR i.FACID = @FactoryId) AND (@DepartmentId IS NULL OR p.DeptID = @DepartmentId)
                 GROUP BY 
                     CASE 
                         WHEN DATEDIFF(day, ImportDate, GETDATE()) <= 30 THEN '0-30'
@@ -132,12 +132,12 @@ namespace CMMS.Server.Services.SparePartDashboardService
                 FROM dbo.Tbl_SparePartItem i
                 JOIN dbo.Tbl_SparePart p ON p.SPID = i.SPID
                 WHERE i.RemainingQuantity > 0 
-                  AND (@FactoryId IS NULL OR i.FACID = @FactoryId)
+                  AND (@FactoryId IS NULL OR i.FACID = @FactoryId) AND (@DepartmentId IS NULL OR p.DeptID = @DepartmentId)
                 GROUP BY p.SPID, p.PartCode, p.PartName
                 ORDER BY AgeDays DESC;
             ";
 
-            using var multi = await connection.QueryMultipleAsync(sql, new { FactoryId = filter.FactoryId });
+            using var multi = await connection.QueryMultipleAsync(sql, new { FactoryId = filter.FactoryId, DepartmentId = filter.DepartmentId });
 
             var dashboard = new DashboardDto();
 

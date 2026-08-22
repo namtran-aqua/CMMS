@@ -37,7 +37,8 @@ namespace CMMS.Server.Services.SparePartService
                     p.SPID, p.PartCode, p.PartName, p.CategoryID, c.CategoryName,
                     p.Unit, p.Price, p.Inventory, p.MinStock, p.LocID, l.LocName AS Location,
                     p.SupplierID, s.SupplierName, p.CreateDate, p.UpdateDate,
-                    p.IsCoded, p.ImageUrl, p.PartModel, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID
+                    p.IsCoded, p.ImageUrl, p.PartModel, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID,
+                    p.DeptID, d.DeptCode, d.DeptName
                 FROM dbo.Tbl_SparePart p
                 LEFT JOIN dbo.Tbl_SparePartCategories c ON c.CategoryID = p.CategoryID
                 LEFT JOIN dbo.Tbl_SparePartSuppliers s ON s.SupplierID = p.SupplierID

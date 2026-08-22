@@ -119,6 +119,7 @@ namespace CMMS.Client.Pages.MasterData.Catalog
 
         private SparePartModal? _partModal;
         private ImportModal? _importModal;
+        private ImportModal? _initialStockImportModal;
 
         private bool IsAuthenticated { get; set; } = false;
         private UserDto CurrentUser { get; set; } = new();
@@ -234,6 +235,12 @@ namespace CMMS.Client.Pages.MasterData.Catalog
         {
             if (_importModal != null)
                 _importModal.Show();
+        }
+
+        private void ShowInitialStockImportModal()
+        {
+            if (_initialStockImportModal != null)
+                _initialStockImportModal.Show();
         }
 
         private async Task DeletePart(SparePartDto part)

@@ -232,8 +232,8 @@ namespace CMMS.Server.Services.SparePartService
                         // Insert transaction log
                         var adjInId = await GetMovementTypeIdByNameInternalAsync(con, MovementTypeConstants.ManualAdjustIn, tran);
                         const string sqlTx = @"
-                            INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, RefCode, Note, CreateBy, CreateDate, MovementType, MovementTypeID)
-                            VALUES (@SPID, 'IN', @Quantity, @Date, @RefCode, @Note, @CreateBy, GETDATE(), 'balance', @MovementTypeID)";
+                            INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, RefCode, Note, CreateBy, CreateDate, MovementType, MovementTypeID, FACID, DeptID)
+                            VALUES (@SPID, 'IN', @Quantity, @Date, @RefCode, @Note, @CreateBy, GETDATE(), 'balance', @MovementTypeID, @FACID, @DeptID)";
                         
                         await using (var cmdTx = new SqlCommand(sqlTx, con, (SqlTransaction)tran))
                         {
@@ -244,6 +244,8 @@ namespace CMMS.Server.Services.SparePartService
                             cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = $"Điều chỉnh tăng (Serial: {line.SerialCode ?? "N/A"})";
                             cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                             cmdTx.Parameters.Add("@MovementTypeID", SqlDbType.Int).Value = (object?)adjInId ?? DBNull.Value;
+                            cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
+                            cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
                             await cmdTx.ExecuteNonQueryAsync();
                         }
                     }
@@ -274,8 +276,8 @@ namespace CMMS.Server.Services.SparePartService
                             // Insert transaction log
                             var adjOutId = await GetMovementTypeIdByNameInternalAsync(con, MovementTypeConstants.ManualAdjustOut, tran);
                             const string sqlTx = @"
-                                INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, RefCode, Note, CreateBy, CreateDate, MovementType, MovementTypeID)
-                                VALUES (@SPID, 'OUT', 1, @Date, @RefCode, @Note, @CreateBy, GETDATE(), 'balance', @MovementTypeID)";
+                                INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, RefCode, Note, CreateBy, CreateDate, MovementType, MovementTypeID, FACID, DeptID)
+                                VALUES (@SPID, 'OUT', 1, @Date, @RefCode, @Note, @CreateBy, GETDATE(), 'balance', @MovementTypeID, @FACID, @DeptID)";
                             
                             await using (var cmdTx = new SqlCommand(sqlTx, con, (SqlTransaction)tran))
                             {
@@ -285,6 +287,8 @@ namespace CMMS.Server.Services.SparePartService
                                 cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = $"Điều chỉnh giảm (Serial: {line.SerialCode})";
                                 cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                                 cmdTx.Parameters.Add("@MovementTypeID", SqlDbType.Int).Value = (object?)adjOutId ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
                                 await cmdTx.ExecuteNonQueryAsync();
                             }
                         }
@@ -314,8 +318,8 @@ namespace CMMS.Server.Services.SparePartService
                             // Insert transaction log for the total OUT deduction
                             var adjOutId = await GetMovementTypeIdByNameInternalAsync(con, MovementTypeConstants.ManualAdjustOut, tran);
                             const string sqlTx = @"
-                                INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, RefCode, Note, CreateBy, CreateDate, MovementType, MovementTypeID)
-                                VALUES (@SPID, 'OUT', @Quantity, @Date, @RefCode, @Note, @CreateBy, GETDATE(), 'balance', @MovementTypeID)";
+                                INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, RefCode, Note, CreateBy, CreateDate, MovementType, MovementTypeID, FACID, DeptID)
+                                VALUES (@SPID, 'OUT', @Quantity, @Date, @RefCode, @Note, @CreateBy, GETDATE(), 'balance', @MovementTypeID, @FACID, @DeptID)";
                             
                             await using (var cmdTx = new SqlCommand(sqlTx, con, (SqlTransaction)tran))
                             {
@@ -326,6 +330,8 @@ namespace CMMS.Server.Services.SparePartService
                                 cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = "Điều chỉnh giảm tồn kho";
                                 cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                                 cmdTx.Parameters.Add("@MovementTypeID", SqlDbType.Int).Value = (object?)adjOutId ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
                                 await cmdTx.ExecuteNonQueryAsync();
                             }
 

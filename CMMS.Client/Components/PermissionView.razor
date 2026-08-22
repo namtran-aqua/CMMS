@@ -1,6 +1,7 @@
 @using CMMS.Client.Services
 @using CMMS.Shared.Constants
 @using Microsoft.AspNetCore.Components.Authorization
+@implements IDisposable
 @inject PermissionState PermissionState
 @inject AuthenticationStateProvider AuthStateProvider
 
@@ -23,7 +24,31 @@ else if (ShowFallback)
 
     protected override async Task OnInitializedAsync()
     {
+        PermissionState.OnPermissionsChanged += HandlePermissionsChanged;
+        AuthStateProvider.AuthenticationStateChanged += HandleAuthStateChanged;
         await CheckPermissionAsync();
+    }
+
+    private void HandlePermissionsChanged()
+    {
+        _ = CheckPermissionAndRefreshAsync();
+    }
+
+    private void HandleAuthStateChanged(Task<AuthenticationState> task)
+    {
+        _ = CheckPermissionAndRefreshAsync();
+    }
+
+    private async Task CheckPermissionAndRefreshAsync()
+    {
+        await CheckPermissionAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PermissionState.OnPermissionsChanged -= HandlePermissionsChanged;
+        AuthStateProvider.AuthenticationStateChanged -= HandleAuthStateChanged;
     }
 
     protected override async Task OnParametersSetAsync()

@@ -46,8 +46,10 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             try
             {
                 var facId = FactoryState.SelectedFacId;
+                var deptId = FactoryState.SelectedDeptId;
                 var url = "api/SparePartDashboard/advanced-dashboard";
                 if (facId.HasValue) url += $"?factoryId={facId.Value}";
+                if (deptId.HasValue) url += (facId.HasValue ? "&" : "?") + $"departmentId={deptId.Value}";
 
                 DashboardData = await Http.GetFromJsonAsync<DashboardDto>(url) ?? new();
                 
@@ -119,8 +121,10 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
         public async Task ExportToExcel()
         {
             var facId = FactoryState.SelectedFacId;
+            var deptId = FactoryState.SelectedDeptId;
             var url = "api/SparePartDashboard/export-excel";
             if (facId.HasValue) url += $"?factoryId={facId.Value}";
+            if (deptId.HasValue) url += (facId.HasValue ? "&" : "?") + $"departmentId={deptId.Value}";
 
             // We can navigate to the URL to trigger the file download
             await JS.InvokeVoidAsync("window.open", url, "_blank");
