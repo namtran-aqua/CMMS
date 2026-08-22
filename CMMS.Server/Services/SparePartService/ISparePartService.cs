@@ -27,6 +27,7 @@ namespace CMMS.Server.Services.SparePartService
         Task<bool> UpdateSupplier(SparePartSupplierDto dto, UserDto currentUser);
         Task<bool> DeleteSupplier(int supplierid, UserDto currentUser);
         Task<ImportResultDto> ImportSparePartsAsync(Stream fileStream, string fileName, UserDto currentUser);
+        Task<ImportResultDto> ImportInitialStockAsync(Stream fileStream, string fileName, UserDto currentUser);
 
         // Structured Imports and Exports
         Task<ImportOrderDto> CreateImportOrderAsync(ImportOrderDto dto, UserDto currentUser);

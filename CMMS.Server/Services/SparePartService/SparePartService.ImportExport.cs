@@ -96,8 +96,8 @@ namespace CMMS.Server.Services.SparePartService
                     var importMovementTypeId = await GetMovementTypeIdByNameInternalAsync(connection, MovementTypeConstants.Import, transaction);
 
                     const string sqlLogTx = @"
-                        INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode)
-                        VALUES (@SPID, 'IN', @Qty, @Date, @Note, @CreateBy, @CreateDate, 'IMPORT', @MovementTypeID, @RefCode)";
+                        INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode, FACID, DeptID)
+                        VALUES (@SPID, 'IN', @Qty, @Date, @Note, @CreateBy, @CreateDate, 'IMPORT', @MovementTypeID, @RefCode, @FACID, @DeptID)";
                     await connection.ExecuteAsync(sqlLogTx, new {
                         SPID = detail.SPID,
                         Qty = detail.Quantity,
@@ -106,7 +106,9 @@ namespace CMMS.Server.Services.SparePartService
                         CreateBy = currentUser?.Id,
                         CreateDate = DateTime.Now,
                         MovementTypeID = importMovementTypeId,
-                        RefCode = dto.ImportCode
+                        RefCode = dto.ImportCode,
+                        FACID = dto.FACID,
+                        DeptID = dto.DeptID
                     }, transaction);
                 }
 
@@ -154,7 +156,7 @@ namespace CMMS.Server.Services.SparePartService
             try
             {
                 var import = await connection.QueryFirstOrDefaultAsync<ImportOrderDto>(
-                    "SELECT ImportID, ImportCode, Status FROM dbo.Tbl_ImportOrder WHERE ImportID = @ImportID",
+                    "SELECT ImportID, ImportCode, Status, FACID, DeptID FROM dbo.Tbl_ImportOrder WHERE ImportID = @ImportID",
                     new { ImportID = importId },
                     transaction: transaction);
                 if (import == null) throw new KeyNotFoundException("Không tìm thấy lệnh nhập kho.");
@@ -187,8 +189,8 @@ namespace CMMS.Server.Services.SparePartService
                     var reversalMovementTypeId = await GetMovementTypeIdByNameInternalAsync(connection, MovementTypeConstants.Reversal, transaction);
 
                     const string sqlLogTx = @"
-                        INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode)
-                        VALUES (@SPID, 'OUT', @Qty, @Date, @Note, @CreateBy, @CreateDate, 'REVERSAL', @MovementTypeID, @RefCode)";
+                        INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode, FACID, DeptID)
+                        VALUES (@SPID, 'OUT', @Qty, @Date, @Note, @CreateBy, @CreateDate, 'REVERSAL', @MovementTypeID, @RefCode, @FACID, @DeptID)";
                     await connection.ExecuteAsync(sqlLogTx, new {
                         SPID = detail.SPID,
                         Qty = detail.Quantity,
@@ -197,7 +199,9 @@ namespace CMMS.Server.Services.SparePartService
                         CreateBy = currentUser?.Id,
                         CreateDate = DateTime.Now,
                         MovementTypeID = reversalMovementTypeId,
-                        RefCode = import.ImportCode
+                        RefCode = import.ImportCode,
+                        FACID = import.FACID,
+                        DeptID = import.DeptID
                     }, transaction);
                 }
 
@@ -485,8 +489,8 @@ namespace CMMS.Server.Services.SparePartService
                     transaction: transaction);
 
                 const string sqlLogTx = @"
-                    INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode)
-                    VALUES (@SPID, 'OUT', @Qty, @Date, @Note, @CreateBy, @CreateDate, @MovementType, @MovementTypeID, @RefCode)";
+                    INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode, FACID, DeptID)
+                    VALUES (@SPID, 'OUT', @Qty, @Date, @Note, @CreateBy, @CreateDate, @MovementType, @MovementTypeID, @RefCode, @FACID, @DeptID)";
                 await connection.ExecuteAsync(sqlLogTx, new {
                     SPID = detail.SPID,
                     Qty = detail.Quantity,
@@ -496,7 +500,9 @@ namespace CMMS.Server.Services.SparePartService
                     CreateDate = DateTime.Now,
                     MovementType = movementTypeName,
                     MovementTypeID = dto.MovementTypeID,
-                    RefCode = dto.ExportCode
+                    RefCode = dto.ExportCode,
+                    FACID = dto.FACID,
+                    DeptID = dto.DeptID
                 }, transaction);
             }
 
@@ -537,7 +543,7 @@ namespace CMMS.Server.Services.SparePartService
             try
             {
                 var export = await connection.QueryFirstOrDefaultAsync<ExportOrderDto>(
-                    "SELECT ExportID, ExportCode, Status FROM dbo.Tbl_ExportOrder WHERE ExportID = @ExportID",
+                    "SELECT ExportID, ExportCode, Status, FACID, DeptID FROM dbo.Tbl_ExportOrder WHERE ExportID = @ExportID",
                     new { ExportID = exportId },
                     transaction: transaction);
                 if (export == null) throw new KeyNotFoundException("Không tìm thấy lệnh xuất kho.");
@@ -574,8 +580,8 @@ namespace CMMS.Server.Services.SparePartService
                     var reversalMovementTypeId = await GetMovementTypeIdByNameInternalAsync(connection, MovementTypeConstants.Reversal, transaction);
 
                     const string sqlLogTx = @"
-                        INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode)
-                        VALUES (@SPID, 'IN', @Qty, @Date, @Note, @CreateBy, @CreateDate, 'REVERSAL', @MovementTypeID, @RefCode)";
+                        INSERT INTO dbo.Tbl_Transactions (SPID, Type, Quantity, Date, Note, CreateBy, CreateDate, MovementType, MovementTypeID, RefCode, FACID, DeptID)
+                        VALUES (@SPID, 'IN', @Qty, @Date, @Note, @CreateBy, @CreateDate, 'REVERSAL', @MovementTypeID, @RefCode, @FACID, @DeptID)";
                     await connection.ExecuteAsync(sqlLogTx, new {
                         SPID = detail.SPID,
                         Qty = detail.Quantity,
@@ -584,7 +590,9 @@ namespace CMMS.Server.Services.SparePartService
                         CreateBy = currentUser?.Id,
                         CreateDate = DateTime.Now,
                         MovementTypeID = reversalMovementTypeId,
-                        RefCode = export.ExportCode
+                        RefCode = export.ExportCode,
+                        FACID = export.FACID,
+                        DeptID = export.DeptID
                     }, transaction);
                 }
 
@@ -847,7 +855,7 @@ namespace CMMS.Server.Services.SparePartService
 
             var sql = $@"
                 SELECT i.ItemID, i.SPID, i.ImportID, i.ImportDetailID, i.HasCode, i.SerialCode, i.Quantity, i.RemainingQuantity, i.ImportDate, i.Status, i.CreateAt,
-                       i.FACID, i.DeptID,
+                       i.FACID, COALESCE(i.DeptID, p.DeptID) AS DeptID,
                        p.PartCode, p.PartName,
                        s.DaysInStock
                 FROM dbo.Tbl_SparePartItem i
@@ -857,6 +865,118 @@ namespace CMMS.Server.Services.SparePartService
                 ORDER BY i.ImportDate ASC, i.ItemID ASC";
 
             return (await connection.QueryAsync<SparePartItemDto>(sql, parameters)).ToList();
+        }
+
+        public async Task<ImportResultDto> ImportInitialStockAsync(Stream fileStream, string fileName, UserDto currentUser)
+        {
+            var result = new ImportResultDto();
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            
+            try
+            {
+                using var reader = new StreamReader(fileStream);
+                var content = await reader.ReadToEndAsync();
+                var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                if (lines.Length <= 1)
+                {
+                    result.Success = false;
+                    result.Message = "File import không có dữ liệu hoặc sai định dạng.";
+                    return result;
+                }
+
+                var headerLine = lines[0];
+                var headers = ParseCsvLine(headerLine);
+                
+                int colCode = headers.FindIndex(h => h.Equals("PartCode", StringComparison.OrdinalIgnoreCase));
+                int colQty = headers.FindIndex(h => h.Equals("Quantity", StringComparison.OrdinalIgnoreCase));
+
+                if (colCode == -1 || colQty == -1)
+                {
+                    result.Success = false;
+                    result.Message = "File thiếu cột PartCode hoặc Quantity.";
+                    return result;
+                }
+
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+                    var fields = ParseCsvLine(line);
+                    if (fields.Count == 0 || fields.All(string.IsNullOrWhiteSpace)) continue;
+                    while (fields.Count < headers.Count) fields.Add("");
+
+                    var code = fields[colCode].Trim();
+                    var qtyStr = fields[colQty].Trim();
+                    
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(code)) throw new Exception("PartCode trống.");
+                        if (!int.TryParse(qtyStr, out int qty) || qty <= 0) throw new Exception("Quantity không hợp lệ.");
+
+                        var part = await connection.QueryFirstOrDefaultAsync<SparePartDto>(
+                            "SELECT SPID, IsCoded, FACID FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode",
+                            new { PartCode = code }, transaction);
+                        
+                        if (part == null) throw new Exception($"Không tìm thấy phụ tùng có PartCode '{code}'.");
+                        if (part.IsCoded) throw new Exception($"Phụ tùng '{code}' là Coded Part (có theo dõi Serial). Tính năng này chỉ hỗ trợ Non-coded part.");
+
+                        var permission = _dataPermissionService.GetPermission();
+                        if (!permission.IsGlobal && part.FACID != permission.FacId)
+                        {
+                            throw new Exception($"Không có quyền cập nhật tồn kho cho phụ tùng '{code}' (thuộc nhà máy khác).");
+                        }
+
+                        const string sqlItem = @"
+                            INSERT INTO dbo.Tbl_SparePartItem 
+                            (SPID, ImportID, ImportDetailID, HasCode, SerialCode, Quantity, RemainingQuantity, Status, ImportDate, CreateAt, CreateBy, FACID)
+                            VALUES 
+                            (@SPID, NULL, NULL, 0, NULL, @Quantity, @Quantity, 'Available', GETDATE(), GETDATE(), @CreateBy, @FACID)";
+                        await connection.ExecuteAsync(sqlItem, new
+                        {
+                            SPID = part.SPID,
+                            Quantity = qty,
+                            CreateBy = currentUser?.Id,
+                            FACID = part.FACID
+                        }, transaction);
+
+                        const string sqlUpdateInventory = @"
+                            UPDATE dbo.Tbl_SparePart
+                            SET Inventory = ISNULL((SELECT SUM(RemainingQuantity) FROM dbo.Tbl_SparePartItem WHERE SPID = @SPID AND Status = 'Available'), 0), 
+                                UpdateDate = GETDATE()
+                            WHERE SPID = @SPID";
+                        await connection.ExecuteAsync(sqlUpdateInventory, new { SPID = part.SPID }, transaction);
+
+                        result.SuccessCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.FailureCount++;
+                        result.Errors.Add($"Dòng {i + 1} ({code}): {ex.Message}");
+                    }
+                }
+                
+                if (result.FailureCount == 0)
+                {
+                    transaction.Commit();
+                    result.Success = true;
+                    result.Message = "Import dữ liệu tồn kho ban đầu thành công.";
+                }
+                else
+                {
+                    transaction.Rollback();
+                    result.Success = false;
+                    result.Message = "Có lỗi xảy ra, toàn bộ dữ liệu đã được rollback.";
+                }
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                result.Success = false;
+                result.Message = "Lỗi hệ thống: " + ex.Message;
+            }
+            
+            return result;
         }
     }
 }

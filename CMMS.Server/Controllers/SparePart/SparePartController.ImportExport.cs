@@ -6,6 +6,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using CMMS.Shared.Authorization;
+using CMMS.Server.Infrastructure.Authorization;
 
 namespace CMMS.Server.Controllers.SparePart
 {
@@ -57,6 +59,37 @@ namespace CMMS.Server.Controllers.SparePart
             
             var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
             return File(bytes, "text/csv; charset=utf-8", "SparePart_Import_Template.csv");
+        }
+
+        [HttpPost("import-initial-stock")]
+        [RequirePermission(Permissions.MasterDataCatalogInitialStockImport)]
+        public async Task<IActionResult> ImportInitialStock(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File không hợp lệ hoặc rỗng.");
+
+            try
+            {
+                var currentUser = await GetCurrentUserAsync();
+                if (currentUser == null) return Unauthorized("Không tìm thấy thông tin người dùng.");
+
+                using var stream = file.OpenReadStream();
+                var result = await _service.ImportInitialStockAsync(stream, file.FileName, currentUser);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi import: {ex.Message}");
+            }
+        }
+
+        [HttpGet("import-initial-stock-template")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+        public IActionResult DownloadInitialStockTemplate()
+        {
+            var csv = "PartCode,Quantity\nPART001,10\nPART002,50";
+            var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
+            return File(bytes, "text/csv; charset=utf-8", "InitialStock_Import_Template.csv");
         }
 
         [HttpGet("history")]

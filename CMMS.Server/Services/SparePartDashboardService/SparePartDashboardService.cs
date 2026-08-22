@@ -26,7 +26,7 @@ namespace CMMS.Server.Services.SparePartDashboardService
         public async Task<DashboardDto> GetDashboardAsync(DashboardFilterDto filter)
         {
             // Build comprehensive cache key
-            string cacheKey = $"dashboard:{filter.FactoryId}:{filter.SectionId}:{filter.StartDate?.ToString("yyyyMMdd")}:{filter.EndDate?.ToString("yyyyMMdd")}:{filter.MovementType}";
+            string cacheKey = $"dashboard:{filter.FactoryId}:{filter.SectionId}:{filter.DepartmentId}:{filter.StartDate?.ToString("yyyyMMdd")}:{filter.EndDate?.ToString("yyyyMMdd")}:{filter.MovementType}";
 
             if (!_cache.TryGetValue(cacheKey, out DashboardDto dashboardData))
             {

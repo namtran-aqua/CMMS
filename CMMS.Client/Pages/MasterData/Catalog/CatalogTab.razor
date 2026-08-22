@@ -15,6 +15,11 @@
     @if (IsAuthenticated)
         {
             <div style="display:flex; gap:8px;">
+                <PermissionView Code="@Permissions.MasterDataCatalogInitialStockImport">
+                    <Button Type="@ButtonType.Default" OnClick="ShowInitialStockImportModal" Class="btn-custom">
+                        <Icon Type="database" /> Import Initial Stock
+                    </Button>
+                </PermissionView>
                 <Button Type="@ButtonType.Default" OnClick="ShowImportModal" Class="btn-custom">
                     <Icon Type="import" /> Import Excel
                 </Button>
@@ -347,3 +352,4 @@
 
 <SparePartModal @ref="_partModal" OnSave="LoadCatalogParts" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
 <ImportModal @ref="_importModal" Title="Import Spare Parts" UploadUrl="api/SparePart/import" TemplateUrl="api/SparePart/import-template" OnSave="LoadCatalogParts" />
+<ImportModal @ref="_initialStockImportModal" Title="Import Initial Stock" UploadUrl="api/SparePart/import-initial-stock" TemplateUrl="api/SparePart/import-initial-stock-template" OnSave="LoadCatalogParts" />
