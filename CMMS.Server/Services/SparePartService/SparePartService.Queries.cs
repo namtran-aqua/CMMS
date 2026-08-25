@@ -61,7 +61,7 @@ namespace CMMS.Server.Services.SparePartService
 
             if (factoryId.HasValue)
             {
-                conditions.Add("COALESCE(t.FACID, p.FACID, l.FACID, d.FACID) = @FactoryId");
+                conditions.Add("COALESCE(p.FACID, l.FACID, d.FACID) = @FactoryId");
                 parameters.Add("FactoryId", factoryId.Value);
             }
 
