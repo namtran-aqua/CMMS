@@ -29,6 +29,50 @@ namespace CMMS.Client.Pages.QRCodeManagement
         private bool IsExporting = false;
         private bool isSearchPanelCollapsed = false;
 
+        private bool isQrModalVisible = false;
+        private QRCodeItemDto? currentItemForQr = null;
+
+        private void ShowQrModal(QRCodeItemDto item)
+        {
+            currentItemForQr = item;
+            isQrModalVisible = true;
+        }
+
+        private void CloseQrModal()
+        {
+            isQrModalVisible = false;
+            currentItemForQr = null;
+        }
+
+        private async Task PrintSingleBarcode()
+        {
+            if (currentItemForQr == null) return;
+            try
+            {
+                var request = new ExportPdfRequestDto
+                {
+                    Items = new List<QRCodeItemDto> { currentItemForQr }
+                };
+
+                var response = await Http.PostAsJsonAsync("api/qr/export-pdf", request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                    var base64 = Convert.ToBase64String(fileBytes);
+                    await JSRuntime.InvokeVoidAsync("downloadFile", "qr_labels.pdf", "application/pdf", base64);
+                    MessageService.Success("Downloaded PDF for barcode.");
+                }
+                else
+                {
+                    MessageService.Error("Failed to export PDF.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageService.Error($"Error: {ex.Message}");
+            }
+        }
+
         private bool IsAllSelected => Items.Any() && SelectedItems.Count == Items.Count;
 
         private void ToggleAll(ChangeEventArgs e)

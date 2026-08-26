@@ -10,7 +10,7 @@
 <Card Title="QR Code Management" Style="margin-bottom: 24px;">
     <!-- Actions Panel -->
     <div style="margin-bottom: 16px; text-align: right;">
-        <Button Type="@ButtonType.Primary" OnClick="GenerateBarcodes" Loading="IsGenerating" Disabled="!HasSelectedNotGenerated" Style="height:38px; border-radius: 8px; padding: 0 20px;">Generate Barcode ID</Button>
+        <!-- <Button Type="@ButtonType.Primary" OnClick="GenerateBarcodes" Loading="IsGenerating" Disabled="!HasSelectedNotGenerated" Style="height:38px; border-radius: 8px; padding: 0 20px;">Generate Barcode ID</Button> -->
         <Button Type="@ButtonType.Primary" OnClick="ExportPdf" Loading="IsExporting" Disabled="!HasSelectedGenerated" Style="@(HasSelectedGenerated ? "margin-left: 8px; height:38px; border-radius: 8px; padding: 0 20px; background-color: #10b981; border-color: #10b981; color: white; font-weight: 500;" : "margin-left: 8px; height:38px; border-radius: 8px; padding: 0 20px;")">
             Export PDF
         </Button>
@@ -61,13 +61,14 @@
                         <th>Type</th>
                         <th>Code</th>
                         <th>Name</th>
+                        <th style="text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (IsLoading)
                     {
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:30px;">
+                            <td colspan="6" style="text-align:center; padding:30px;">
                                 <Spin />
                             </td>
                         </tr>
@@ -93,13 +94,21 @@
                                 <td>@context.EntityType</td>
                                 <td>@context.Code</td>
                                 <td>@context.Name</td>
+                                <td style="text-align: center;" @onclick:stopPropagation="true">
+                                    @if (!string.IsNullOrEmpty(context.BarcodeId))
+                                    {
+                                        <Button Type="@ButtonType.Default" OnClick="() => ShowQrModal(context)" Style="border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 16px;">
+                                            Show QR Code
+                                        </Button>
+                                    }
+                                </td>
                             </tr>
                         }
                     }
                     else
                     {
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No data found.</td>
+                            <td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">No data found.</td>
                         </tr>
                     }
                 </tbody>
@@ -122,3 +131,31 @@
         }
     </div>
 </Card>
+
+<Modal Title="@("QR Code Details")" Visible="@isQrModalVisible" OnCancel="CloseQrModal" Footer="null" Centered="true">
+    @if (currentItemForQr != null)
+    {
+        <div style="text-align: center; padding: 20px;">
+            <div style="margin-bottom: 16px;">
+                <h5 style="margin-bottom: 4px; font-weight: 600;">@currentItemForQr.Name</h5>
+                <p style="color: #64748b; margin-bottom: 0;">Code: @currentItemForQr.Code</p>
+                @if (!string.IsNullOrEmpty(currentItemForQr.Serial))
+                {
+                    <p style="color: #64748b; margin-bottom: 0;">Serial: @currentItemForQr.Serial</p>
+                }
+            </div>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; display: inline-block; margin-bottom: 24px; border: 1px solid #e2e8f0;">
+                <img src="@($"/api/qr/image/{currentItemForQr.BarcodeId}")" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain;" />
+                <p style="margin-top: 12px; font-weight: 600; color: #334155; font-family: monospace; letter-spacing: 1px;">@currentItemForQr.BarcodeId</p>
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 12px;">
+                <Button Type="@ButtonType.Default" OnClick="CloseQrModal" Style="border-radius: 6px; padding: 0 20px;">Close</Button>
+                <Button Type="@ButtonType.Primary" OnClick="PrintSingleBarcode" Style="border-radius: 6px; padding: 0 20px;">
+                    Print Barcode
+                </Button>
+            </div>
+        </div>
+    }
+</Modal>

@@ -138,5 +138,15 @@ namespace CMMS.Server.Controllers.QRCode
             var pdfBytes = _qrCodeService.GeneratePdfLabels(labels);
             return File(pdfBytes, "application/pdf", "qr_labels.pdf");
         }
+
+        [HttpGet("image/{barcodeId}")]
+        public IActionResult GetQrCodeImage(string barcodeId)
+        {
+            if (string.IsNullOrEmpty(barcodeId))
+                return BadRequest("Barcode ID is required");
+
+            var imageBytes = _qrCodeService.GenerateQrCode(barcodeId);
+            return File(imageBytes, "image/png");
+        }
     }
 }
