@@ -17,12 +17,14 @@ namespace CMMS.Server.Services.EquipmentService
         private readonly IConfiguration _config;
         private readonly ISqlConnectionFactory _connectionFactory;
         private readonly IDataPermissionService _dataPermissionService;
+        private readonly CMMS.Server.Services.Barcode.IBarcodeIdService _barcodeIdService;
 
-        public EquipmentService(IConfiguration config, ISqlConnectionFactory connectionFactory, IDataPermissionService dataPermissionService)
+        public EquipmentService(IConfiguration config, ISqlConnectionFactory connectionFactory, IDataPermissionService dataPermissionService, CMMS.Server.Services.Barcode.IBarcodeIdService barcodeIdService)
         {
             _config = config;
             _connectionFactory = connectionFactory;
             _dataPermissionService = dataPermissionService;
+            _barcodeIdService = barcodeIdService;
         }
 
         public async Task<List<EquipmentDto>> GetAllAsync(int? factoryId = null)
@@ -51,6 +53,11 @@ namespace CMMS.Server.Services.EquipmentService
         }
         public async Task<bool> CreatedAsync(EquipmentDto equipment)
         {
+            if (string.IsNullOrEmpty(equipment.EquipmentBarcode))
+            {
+                equipment.EquipmentBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync();
+            }
+
             var connStr = _config.GetConnectionString("DefaultConnection");
 
             const string sql = @"
@@ -445,15 +452,17 @@ namespace CMMS.Server.Services.EquipmentService
                         }
                         else
                         {
+                            var newBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync();
                             var insertSql = @"
                                 INSERT INTO dbo.Tbl_EquipmentInfo 
-                                    (EquipmentName, EquipmentCode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, LocID, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PIC, PICID, LastMaintenanceDate, StsUseID, IsActive)
+                                    (EquipmentName, EquipmentCode, EquipmentBarcode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, LocID, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PIC, PICID, LastMaintenanceDate, StsUseID, IsActive)
                                 VALUES 
-                                    (@EquipmentName, @EquipmentCode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @LocID, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PIC, @PICID, @LastMaintenanceDate, 1, 1)";
+                                    (@EquipmentName, @EquipmentCode, @EquipmentBarcode, @EquipmentModel, @EquipmentSerial, @EquipmentDescription, @EquipmentNote, @DeptId, @LocID, @BuyDate, @BuyPrice, @BuyCurrency, @MaintenanceCircleTime, @ContactNo, @SAPCode, @PIC, @PICID, @LastMaintenanceDate, 1, 1)";
                             
                             await connection.ExecuteAsync(insertSql, new {
                                 EquipmentName = name,
                                 EquipmentCode = code,
+                                EquipmentBarcode = newBarcode,
                                 EquipmentModel = model,
                                 EquipmentSerial = serial,
                                 EquipmentDescription = desc,

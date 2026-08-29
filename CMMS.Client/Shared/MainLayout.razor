@@ -198,6 +198,13 @@
                         </PermissionView>
                     </ChildContent>
                 </SubMenu>
+                
+                <MenuItem Key="qr-management">
+                    <NavLink href="@GetLink("/qr-code-management")" class="menu-link">
+                        <i class="fa-solid fa-qrcode menu-icon"></i>
+                        <span>QR Code Management</span>
+                    </NavLink>
+                </MenuItem>
                 <PermissionView Code="@Permissions.EquipmentView">
                     <MenuItem>
                         <NavLink href="@GetLink("/equipment")" class="menu-link">
