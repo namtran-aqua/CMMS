@@ -59,7 +59,7 @@ namespace CMMS.Client.Pages.QRCodeManagement
                 {
                     var fileBytes = await response.Content.ReadAsByteArrayAsync();
                     var base64 = Convert.ToBase64String(fileBytes);
-                    await JSRuntime.InvokeVoidAsync("downloadFile", "qr_labels.pdf", "application/pdf", base64);
+                    await JSRuntime.InvokeVoidAsync("CMMSJsFunctions.saveAsFile", "qr_labels.pdf", base64);
                     MessageService.Success("Downloaded PDF for barcode.");
                 }
                 else
