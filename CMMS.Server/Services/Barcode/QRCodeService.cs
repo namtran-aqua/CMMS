@@ -22,42 +22,41 @@ namespace CMMS.Server.Services.Barcode
             return qrCode.GetGraphic(20);
         }
 
-        public byte[] GeneratePdfLabels(List<LabelInfo> labels)
+                        public byte[] GeneratePdfLabels(List<LabelInfo> labels)
         {
             var document = Document.Create(container =>
             {
-                container.Page(page =>
+                foreach (var label in labels)
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(10, Unit.Millimetre);
-                    page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
-
-                    page.Content().Grid(grid =>
+                    container.Page(page =>
                     {
-                        grid.Columns(3); // 3 labels per row
-                        grid.Spacing(5, Unit.Millimetre);
+                        page.Size(100, 100, Unit.Millimetre);
+                        page.Margin(5, Unit.Millimetre);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontFamily("Arial"));
 
-                        foreach (var label in labels)
+                        page.Content().AlignCenter().AlignMiddle().Column(column =>
                         {
                             var qrImage = GenerateQrCode(label.BarcodeId);
 
-                            grid.Item().Border(1).BorderColor(Colors.Black).Padding(5).Column(column =>
+                            column.Item().AlignCenter().Width(65, Unit.Millimetre).Height(65, Unit.Millimetre).Image(qrImage).FitArea();
+                            
+                            column.Item().AlignCenter().PaddingTop(3, Unit.Millimetre).Text(label.BarcodeId).Bold().FontSize(22);
+                            column.Item().AlignCenter().Text(label.EntityName).FontSize(18);
+                            
+                            if (!string.IsNullOrEmpty(label.AdditionalInfo))
                             {
-                                column.Item().AlignCenter().Width(80).Height(80).Image(qrImage);
-                                column.Item().AlignCenter().Text(label.BarcodeId).Bold().FontSize(12);
-                                column.Item().AlignCenter().Text(label.EntityName).FontSize(10);
-                                if (!string.IsNullOrEmpty(label.AdditionalInfo))
-                                {
-                                    column.Item().AlignCenter().Text(label.AdditionalInfo).FontSize(9).FontColor(Colors.Grey.Darken2);
-                                }
-                            });
-                        }
+                                column.Item().AlignCenter().Text(label.AdditionalInfo).FontSize(14).FontColor(Colors.Grey.Darken2);
+                            }
+                        });
                     });
-                });
+                }
             });
 
             return document.GeneratePdf();
         }
     }
 }
+
+
+

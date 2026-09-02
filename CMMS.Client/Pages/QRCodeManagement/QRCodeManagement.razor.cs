@@ -59,7 +59,8 @@ namespace CMMS.Client.Pages.QRCodeManagement
                 {
                     var fileBytes = await response.Content.ReadAsByteArrayAsync();
                     var base64 = Convert.ToBase64String(fileBytes);
-                    await JSRuntime.InvokeVoidAsync("CMMSJsFunctions.saveAsFile", "qr_labels.pdf", base64);
+                    var fName = currentItemForQr.BarcodeId + ".pdf";
+                    await JSRuntime.InvokeVoidAsync("CMMSJsFunctions.saveAsFile", fName, base64);
                     MessageService.Success("Downloaded PDF for barcode.");
                 }
                 else
@@ -206,7 +207,8 @@ namespace CMMS.Client.Pages.QRCodeManagement
                 {
                     var fileStream = await response.Content.ReadAsStreamAsync();
                     using var streamRef = new DotNetStreamReference(stream: fileStream);
-                    await JSRuntime.InvokeVoidAsync("downloadFileFromStream", "qr_labels.pdf", streamRef);
+                    string fName = itemsToExport.Count == 1 ? $"{itemsToExport[0].BarcodeId}.pdf" : $"{itemsToExport[0].BarcodeId}_and_{itemsToExport.Count - 1}_others.pdf";
+                    await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fName, streamRef);
                     MessageService.Success("PDF exported successfully.");
                 }
                 else
@@ -226,3 +228,5 @@ namespace CMMS.Client.Pages.QRCodeManagement
         }
     }
 }
+
+

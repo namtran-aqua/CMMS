@@ -10,7 +10,9 @@
 <Card Title="QR Code Management" Style="margin-bottom: 24px;">
     <!-- Actions Panel -->
     <div style="margin-bottom: 16px; text-align: right;">
-        <!-- <Button Type="@ButtonType.Primary" OnClick="GenerateBarcodes" Loading="IsGenerating" Disabled="!HasSelectedNotGenerated" Style="height:38px; border-radius: 8px; padding: 0 20px;">Generate Barcode ID</Button> -->
+        <PermissionView Code="QRCODE.GENERATE">
+            <Button Type="@ButtonType.Primary" OnClick="GenerateBarcodes" Loading="IsGenerating" Disabled="!HasSelectedNotGenerated" Style="height:38px; border-radius: 8px; padding: 0 20px;">Generate Barcode ID</Button>
+        </PermissionView>
         <Button Type="@ButtonType.Primary" OnClick="ExportPdf" Loading="IsExporting" Disabled="!HasSelectedGenerated" Style="@(HasSelectedGenerated ? "margin-left: 8px; height:38px; border-radius: 8px; padding: 0 20px; background-color: #10b981; border-color: #10b981; color: white; font-weight: 500;" : "margin-left: 8px; height:38px; border-radius: 8px; padding: 0 20px;")">
             Export PDF
         </Button>
@@ -159,3 +161,5 @@
         </div>
     }
 </Modal>
+
+
