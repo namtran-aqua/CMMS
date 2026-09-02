@@ -148,7 +148,7 @@
             </div>
             
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; display: inline-block; margin-bottom: 24px; border: 1px solid #e2e8f0;">
-                <img src="@($"/api/qr/image/{currentItemForQr.BarcodeId}")" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain;" />
+                <img src="@($"{Http.BaseAddress?.ToString().TrimEnd('/')}/api/qr/image/{currentItemForQr.BarcodeId}")" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain;" />
                 <p style="margin-top: 12px; font-weight: 600; color: #334155; font-family: monospace; letter-spacing: 1px;">@currentItemForQr.BarcodeId</p>
             </div>
             
@@ -161,5 +161,6 @@
         </div>
     }
 </Modal>
+
 
 
