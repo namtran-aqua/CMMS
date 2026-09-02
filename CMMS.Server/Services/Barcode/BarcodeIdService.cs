@@ -24,6 +24,18 @@ namespace CMMS.Server.Services.Barcode
 
             try
             {
+                var sqlCreateTable = @"
+                    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Tbl_BarcodeSequence' AND xtype='U')
+                    BEGIN
+                        CREATE TABLE dbo.Tbl_BarcodeSequence (
+                            Department NVARCHAR(50) NOT NULL,
+                            ItemType NVARCHAR(50) NOT NULL,
+                            LastNumber INT NOT NULL DEFAULT 0,
+                            CONSTRAINT PK_BarcodeSequence PRIMARY KEY (Department, ItemType)
+                        );
+                    END";
+                await connection.ExecuteAsync(sqlCreateTable, null, transaction);
+
                 var sqlCheck = "SELECT LastNumber FROM Tbl_BarcodeSequence WITH (UPDLOCK, SERIALIZABLE) WHERE Department = @Department AND ItemType = @ItemType";
                 var lastNumber = await connection.QuerySingleOrDefaultAsync<int?>(sqlCheck, new { Department = departmentCode, ItemType = itemType }, transaction);
 
@@ -62,3 +74,4 @@ namespace CMMS.Server.Services.Barcode
         }
     }
 }
+

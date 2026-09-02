@@ -135,8 +135,9 @@ namespace CMMS.Server.Controllers.QRCode
             if (!labels.Any())
                 return BadRequest("Selected items do not have Barcode IDs.");
 
+            string fileName = labels.Count == 1 ? $"{labels[0].BarcodeId}.pdf" : $"{labels[0].BarcodeId}_and_{labels.Count - 1}_others.pdf";
             var pdfBytes = _qrCodeService.GeneratePdfLabels(labels);
-            return File(pdfBytes, "application/pdf", "qr_labels.pdf");
+            return File(pdfBytes, "application/pdf", fileName);
         }
 
         [HttpGet("image/{barcodeId}")]
@@ -150,3 +151,4 @@ namespace CMMS.Server.Controllers.QRCode
         }
     }
 }
+
