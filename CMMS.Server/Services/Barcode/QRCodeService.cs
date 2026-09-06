@@ -22,7 +22,7 @@ namespace CMMS.Server.Services.Barcode
             return qrCode.GetGraphic(20);
         }
 
-                        public byte[] GeneratePdfLabels(List<LabelInfo> labels)
+        public byte[] GeneratePdfLabels(List<LabelInfo> labels)
         {
             var document = Document.Create(container =>
             {

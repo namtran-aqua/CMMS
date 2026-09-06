@@ -13,6 +13,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public int ImportDetailID { get; set; }
         public bool HasCode { get; set; }
         public string? SerialCode { get; set; }
+        public string? SparePartBarcode { get; set; }
         public int Quantity { get; set; }
         public int RemainingQuantity { get; set; }
         public DateTime ImportDate { get; set; }
@@ -25,3 +26,4 @@ namespace CMMS.Shared.Dtos.SpareParts
         public decimal? Price { get; set; }
     }
 }
+

@@ -30,7 +30,9 @@ namespace CMMS.Server.Services.SparePartService
             string? serialCode, 
             int qty, 
             DateTime importDate, 
-            Guid? createBy)
+            Guid? createBy,
+            CMMS.Server.Services.Barcode.IBarcodeIdService? barcodeIdService = null,
+            string deptCode = "MNT")
         {
             // 1. Get FACID and DeptID from Spare Part
             const string sqlPart = "SELECT FACID, DeptID FROM dbo.Tbl_SparePart WHERE SPID = @SPID";
@@ -38,10 +40,17 @@ namespace CMMS.Server.Services.SparePartService
             int? facId = partInfo?.FACID;
             int? deptId = partInfo?.DeptID;
 
-            // 2. Insert SparePartItem
+            // 2. Generate Barcode for Coded Items (serialCode present) only
+            string? itemBarcode = null;
+            if (!string.IsNullOrWhiteSpace(serialCode) && barcodeIdService != null)
+            {
+                itemBarcode = await barcodeIdService.GenerateSparePartBarcodeIdAsync(deptCode);
+            }
+
+            // 3. Insert SparePartItem
             const string sqlInsert = @"
-                INSERT INTO dbo.Tbl_SparePartItem (SPID, ImportID, ImportDetailID, HasCode, SerialCode, Quantity, RemainingQuantity, ImportDate, Status, CreateBy, CreateAt, FACID, DeptID)
-                VALUES (@SPID, @ImportID, @ImportDetailID, @HasCode, @SerialCode, @Quantity, @RemainingQuantity, @ImportDate, 'Available', @CreateBy, @CreateAt, @FACID, @DeptID);
+                INSERT INTO dbo.Tbl_SparePartItem (SPID, ImportID, ImportDetailID, HasCode, SerialCode, Quantity, RemainingQuantity, ImportDate, Status, CreateBy, CreateAt, FACID, DeptID, SparePartBarcode)
+                VALUES (@SPID, @ImportID, @ImportDetailID, @HasCode, @SerialCode, @Quantity, @RemainingQuantity, @ImportDate, 'Available', @CreateBy, @CreateAt, @FACID, @DeptID, @SparePartBarcode);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);";
             
             return await con.ExecuteScalarAsync<int>(sqlInsert, new {
@@ -56,7 +65,8 @@ namespace CMMS.Server.Services.SparePartService
                 CreateBy = createBy,
                 CreateAt = DateTime.Now,
                 FACID = facId,
-                DeptID = deptId
+                DeptID = deptId,
+                SparePartBarcode = itemBarcode
             }, tran);
         }
 
@@ -111,10 +121,11 @@ namespace CMMS.Server.Services.SparePartService
 
             if (remainingToDeduct > 0)
             {
-                throw new InvalidOperationException($"Không đủ tồn kho khả dụng để thực hiện xuất. Còn thiếu {remainingToDeduct}.");
+                throw new InvalidOperationException($"Khong du ton kho kha dung de thuc hien xuat. Can thieu {remainingToDeduct}.");
             }
 
             return deductions;
         }
     }
 }
+

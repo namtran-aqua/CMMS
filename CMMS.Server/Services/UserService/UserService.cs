@@ -41,15 +41,16 @@ namespace CMMS.Server.Services.UserService
                     u.FACID,
                     f.FACName,
                     u.DeptID,
-                    d.DeptName,
-                    u.LocID,
+                      d.DeptCode,
+                      d.DeptName,
+                      u.LocID,
                     u.RoleID,
                     r.RoleName,
                     u.IsActive,
                     u.IsDeleted
                 FROM dbo.Tbl_User u
                 LEFT JOIN dbo.Tbl_Factory f ON f.FACID = u.FACID
-                LEFT JOIN dbo.Tbl_FactoryDepartment d ON d.DeptID = u.DeptID
+                LEFT JOIN dbo.vw_FactoryDepartment d ON d.DeptID = u.DeptID
                 LEFT JOIN dbo.Tbl_Roles r ON r.RoleID = u.RoleID";
 
             var result = await con.QueryAsync<UserDto>(sql);
@@ -560,15 +561,16 @@ namespace CMMS.Server.Services.UserService
                         u.FACID,
                         f.FACName,
                         u.DeptID,
-                        d.DeptName,
-                        u.LocID,
+                          d.DeptCode,
+                      d.DeptName,
+                          u.LocID,
                         u.RoleID,
                         r.RoleName,
                         u.IsActive,
                         u.IsDeleted
                     FROM dbo.Tbl_User u
                     LEFT JOIN dbo.Tbl_Factory f ON f.FACID = u.FACID
-                    LEFT JOIN dbo.Tbl_FactoryDepartment d ON d.DeptID = u.DeptID
+                    LEFT JOIN dbo.vw_FactoryDepartment d ON d.DeptID = u.DeptID
                     LEFT JOIN dbo.Tbl_Roles r ON r.RoleID = u.RoleID
                     WHERE u.Id = @Id";
 
@@ -751,3 +753,6 @@ namespace CMMS.Server.Services.UserService
         }
     }
 }
+
+
+

@@ -51,13 +51,13 @@ namespace CMMS.Server.Services.EquipmentService
             });
             return result.ToList();
         }
-        public async Task<bool> CreatedAsync(EquipmentDto equipment)
+        public async Task<bool> CreatedAsync(EquipmentDto equipment, CMMS.Shared.Dtos.User.UserDto? currentUser = null)
         {
             if (string.IsNullOrEmpty(equipment.EquipmentBarcode))
             {
-                equipment.EquipmentBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync();
+                string deptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : "MNT";
+                equipment.EquipmentBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync(deptCode);
             }
-
             var connStr = _config.GetConnectionString("DefaultConnection");
 
             const string sql = @"

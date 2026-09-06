@@ -65,7 +65,13 @@ namespace CMMS.Server.Services.SparePartService
 
         public async Task<SparePartDto> CreateAsync(SparePartDto dto, UserDto currentUser)
         {
-            string sparePartBarcode = await _barcodeIdService.GenerateSparePartBarcodeIdAsync();
+            // Lay DeptCode tu User dang dang nhap (theo plan: Backend tu lay, Frontend khong quyet dinh)
+            string deptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : "MNT";
+
+            // Non-Coded: tao Barcode ngay. Coded: de NULL, doi Inbound tao tung Item
+            string? sparePartBarcode = dto.IsCoded
+                ? null
+                : await _barcodeIdService.GenerateSparePartBarcodeIdAsync(deptCode);
 
             var connStr = _config.GetConnectionString("DefaultConnection");
             const string sqlCheckCode = "SELECT COUNT(1) FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode";
@@ -217,3 +223,4 @@ namespace CMMS.Server.Services.SparePartService
         }
     }
 }
+

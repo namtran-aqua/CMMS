@@ -595,7 +595,7 @@ namespace CMMS.Server.Services.SparePartService
             parameters.Add("PageSize", pageSize);
 
             var sql = $@"
-                SELECT i.ItemID, i.SPID, i.ImportID, i.ImportDetailID, i.HasCode, i.SerialCode, i.Quantity, i.RemainingQuantity, i.ImportDate, i.Status, i.CreateAt,
+                SELECT i.ItemID, i.SPID, i.ImportID, i.ImportDetailID, i.HasCode, i.SerialCode, i.Quantity, i.RemainingQuantity, i.ImportDate, i.Status, i.CreateAt, i.SparePartBarcode,
                        i.FACID, COALESCE(i.DeptID, p.DeptID) AS DeptID,
                        p.PartCode, p.PartName,
                        DATEDIFF(day, i.ImportDate, GETDATE()) AS DaysInStock
@@ -630,3 +630,4 @@ namespace CMMS.Server.Services.SparePartService
         }
     }
 }
+

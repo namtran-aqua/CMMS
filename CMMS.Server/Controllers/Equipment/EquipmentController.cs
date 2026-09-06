@@ -76,9 +76,11 @@ public class EquipmentController : ControllerBase
     {
         if (equipment == null)
             return BadRequest("Invalid data");
-        var success = await _service.CreatedAsync(equipment);
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var currentUser = Guid.TryParse(userIdClaim, out var userId) ? await _userService.GetCurrentUserAsync(userId) : null;
+        var success = await _service.CreatedAsync(equipment, currentUser);
         if (success)
-            return Ok(new {message = " Tạo mới thành công"});
+            return Ok(new {message = "Tao moi thanh cong"});
         return StatusCode (500, "Tạo mới thất bại");
     }
      [HttpPut("update")]
