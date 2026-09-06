@@ -18,6 +18,7 @@ namespace CMMS.Shared.Dtos.User
         public int? FACID { get; set; }
         public string? FACName { get; set; }
         public int? DeptID { get; set; }
+        public string? DeptCode { get; set; }
         public string? DeptName { get; set; }
         public int? LocID { get; set; }
         public int? RoleID { get; set; }
@@ -40,3 +41,5 @@ namespace CMMS.Shared.Dtos.User
         public List<string> Roles { get; set; } = new();
     }
 }
+
+

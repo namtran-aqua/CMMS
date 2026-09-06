@@ -8,10 +8,11 @@ namespace CMMS.Server.Services.EquipmentService
     public interface IEquipmentService
     {
         Task<List<EquipmentDto>> GetAllAsync(int? factoryId = null);
-        Task<bool> CreatedAsync(EquipmentDto equipment);
+        Task<bool> CreatedAsync(EquipmentDto equipment, CMMS.Shared.Dtos.User.UserDto? currentUser = null);
         Task<bool> UpdateAsync(EquipmentDto equipment, UserDto currentUser);
         Task<bool> DeleteAsync(int equipmentCode, UserDto currentUser);
         //Task<ApiResponse> RequestScrapAsync(int equipmentCode);
         Task<ImportResultDto> ImportEquipmentsAsync(Stream fileStream, string fileName, UserDto currentUser);
     }
 }
+
