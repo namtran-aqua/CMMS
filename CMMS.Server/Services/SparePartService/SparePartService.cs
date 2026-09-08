@@ -68,6 +68,15 @@ namespace CMMS.Server.Services.SparePartService
             // Lay DeptCode tu User dang dang nhap (theo plan: Backend tu lay, Frontend khong quyet dinh)
             string deptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : "MNT";
 
+            if (dto.DeptID == null && currentUser?.DeptID != null)
+            {
+                dto.DeptID = currentUser.DeptID;
+            }
+            if (dto.FACID == null && currentUser?.FACID != null)
+            {
+                dto.FACID = currentUser.FACID;
+            }
+
             // Non-Coded: tao Barcode ngay. Coded: de NULL, doi Inbound tao tung Item
             string? sparePartBarcode = dto.IsCoded
                 ? null
@@ -223,4 +232,6 @@ namespace CMMS.Server.Services.SparePartService
         }
     }
 }
+
+
 
