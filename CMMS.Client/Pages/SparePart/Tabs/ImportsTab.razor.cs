@@ -230,8 +230,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             newImportOrder = new ImportOrderDto
             {
                 ImportDate = DateTime.Now,
-                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID,
-                DeptID = FactoryState.SelectedDeptId
+                FACID = CurrentUser.FACID,
+                DeptID = CurrentUser.DeptID
             };
             tempImportDetail = new ImportOrderDetailDto { Quantity = 1 };
             selectedImportPartId = 0;
@@ -283,6 +283,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 tempImportDetail.Price = part.Price ?? 0m;
                 tempImportDetail.Inventory = part.Inventory;
                 tempImportDetail.Unit = part.Unit;
+                tempImportDetail.MaxStock = part.MaxStock;
                 if (part.IsCoded)
                 {
                     tempImportDetail.Quantity = 1;
@@ -315,6 +316,19 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 return;
             }
 
+            if (tempImportDetail.MaxStock.HasValue)
+            {
+                int currentStock = tempImportDetail.Inventory ?? 0;
+                int addedInOrder = newImportOrder.Details.Where(d => d.SPID == tempImportDetail.SPID).Sum(d => d.HasCode ? 1 : d.Quantity);
+                int requestQty = tempImportDetail.HasCode ? 1 : tempImportDetail.Quantity;
+
+                if (currentStock + addedInOrder + requestQty > tempImportDetail.MaxStock.Value)
+                {
+                    Message.Error($"Không thể nhập thêm. Số lượng vượt quá Max Stock ({tempImportDetail.MaxStock.Value}). Tồn kho hiện tại: {currentStock}, Đã thêm trong lệnh: {addedInOrder}.");
+                    return;
+                }
+            }
+
             newImportOrder.Details.Add(new ImportOrderDetailDto
             {
                 SPID = tempImportDetail.SPID,
@@ -323,7 +337,9 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 HasCode = tempImportDetail.HasCode,
                 SerialCode = tempImportDetail.SerialCode,
                 Quantity = tempImportDetail.HasCode ? 1 : tempImportDetail.Quantity,
-                Price = tempImportDetail.Price
+                Price = tempImportDetail.Price,
+                MaxStock = tempImportDetail.MaxStock,
+                Inventory = tempImportDetail.Inventory
             });
 
             tempImportDetail = new ImportOrderDetailDto { Quantity = 1 };

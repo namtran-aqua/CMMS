@@ -45,11 +45,15 @@
             <div style="flex:1;">
                 <div style="font-size:11px;color:#8c8c8c;">Current stock</div>
                 <div style="font-size:18px;font-weight:700;">@Part.Inventory @Part.Unit</div>
+                @if (Part.MaxStock.HasValue)
+                {
+                    <div style="font-size:11px;color:#8c8c8c;">Max: @Part.MaxStock.Value @Part.Unit</div>
+                }
             </div>
             <div style="width:1px; background:#e8e8e8;"></div>
             <div style="flex:1;">
                 <div style="font-size:11px;color:#8c8c8c;">New stock (preview)</div>
-                <div style="font-size:18px;font-weight:700;color:@(IsOverdraw ? "#ff4d4f" : "#389e0d");">@NewStock @Part.Unit</div>
+                <div style="font-size:18px;font-weight:700;color:@(IsOverdraw || IsOverLimit ? "#ff4d4f" : "#389e0d");">@NewStock @Part.Unit</div>
             </div>
         </div>
 
@@ -57,6 +61,12 @@
         {
             <div style="color:#ff4d4f; font-size:13px; margin-bottom:12px;">
                 <Icon Type="warning" Theme="IconThemeType.Outline" /> Not enough stock. Only @Part.Inventory @Part.Unit available.
+            </div>
+        }
+        @if (IsOverLimit)
+        {
+            <div style="color:#ff4d4f; font-size:13px; margin-bottom:12px;">
+                <Icon Type="warning" Theme="IconThemeType.Outline" /> Over max stock. Max is @Part.MaxStock.Value @Part.Unit.
             </div>
         }
 

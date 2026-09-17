@@ -37,5 +37,6 @@ namespace CMMS.Shared.Dtos.SpareParts
         public decimal? Price { get; set; }
         public int? Inventory { get; set; }
         public string? Unit { get; set; }
+        public int? MaxStock { get; set; }
     }
 }

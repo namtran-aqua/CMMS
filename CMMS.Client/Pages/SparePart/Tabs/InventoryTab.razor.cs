@@ -113,6 +113,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                     "NameAsc"  => result.OrderBy(x => x.PartName ?? ""),
                     "NameDesc" => result.OrderByDescending(x => x.PartName ?? ""),
                     "CodeAsc"  => result.OrderBy(x => x.PartCode ?? ""),
+                    "CodeDesc" => result.OrderByDescending(x => x.PartCode ?? ""),
                     "StockAsc" => result.OrderBy(x => x.Inventory ?? 0),
                     "StockDesc"=> result.OrderByDescending(x => x.Inventory ?? 0),
                     _          => result.OrderBy(x => x.PartName ?? "")
@@ -183,6 +184,16 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
 
         private async Task LoadParts()
         {
+            await LoadPartsInternal(false);
+        }
+
+        private async Task OnSparePartSaved(bool isUpdate)
+        {
+            await LoadPartsInternal(isUpdate);
+        }
+
+        private async Task LoadPartsInternal(bool isUpdate)
+        {
             try
             {
                 var facId = FactoryState.SelectedFacId;
@@ -190,7 +201,7 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
                 if (facId.HasValue) url += $"?factoryId={facId.Value}";
 
                 _allParts = await Http.GetFromJsonAsync<List<SparePartDto>>(url) ?? new();
-                partsPage = 1;
+                if (!isUpdate) partsPage = 1;
             }
             catch (Exception ex)
             {

@@ -132,8 +132,8 @@ namespace CMMS.Server.Services.SparePartService
                 {
                     cmdHeader.Parameters.Add("@AdjustCode", SqlDbType.NVarChar, 50).Value = adjustCode;
                     cmdHeader.Parameters.Add("@AdjustDate", SqlDbType.DateTime).Value = dto.AdjustDate;
-                    cmdHeader.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
-                    cmdHeader.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
+                    cmdHeader.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)currentUser?.FACID ?? DBNull.Value;
+                    cmdHeader.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)currentUser?.DeptID ?? DBNull.Value;
                     cmdHeader.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = (object?)dto.Note ?? DBNull.Value;
                     cmdHeader.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                     adjustId = (int)await cmdHeader.ExecuteScalarAsync();
@@ -168,10 +168,11 @@ namespace CMMS.Server.Services.SparePartService
                         throw new ArgumentException($"Số lượng cho phụ tùng SPID {line.SPID} phải lớn hơn 0.");
 
                     // Verify spare part exists and check its coded status
-                    const string sqlCheckPart = "SELECT IsCoded, PartName, PartCode, Price FROM dbo.Tbl_SparePart WHERE SPID = @SPID";
+                    const string sqlCheckPart = "SELECT IsCoded, PartName, PartCode, Price, MaxStock FROM dbo.Tbl_SparePart WHERE SPID = @SPID";
                     bool isCoded = false;
                     string partName = "";
                     string partCode = "";
+                    int? maxStock = null;
                     await using (var cmdCheck = new SqlCommand(sqlCheckPart, con, (SqlTransaction)tran))
                     {
                         cmdCheck.Parameters.Add("@SPID", SqlDbType.Int).Value = line.SPID;
@@ -181,6 +182,7 @@ namespace CMMS.Server.Services.SparePartService
                         isCoded = Convert.ToBoolean(reader["IsCoded"]);
                         partName = reader["PartName"].ToString() ?? "";
                         partCode = reader["PartCode"].ToString() ?? "";
+                        if (reader["MaxStock"] != DBNull.Value) maxStock = Convert.ToInt32(reader["MaxStock"]);
                     }
 
                     if (isCoded)
@@ -205,6 +207,15 @@ namespace CMMS.Server.Services.SparePartService
 
                     if (line.Type == "IN")
                     {
+                        if (maxStock.HasValue)
+                        {
+                            var totalQtyThisAdjust = dto.Lines.Where(x => x.SPID == line.SPID && x.Type == "IN").Sum(x => x.Quantity);
+                            if (beforeQty + totalQtyThisAdjust > maxStock.Value)
+                            {
+                                throw new InvalidOperationException($"Không thể điều chỉnh tăng phụ tùng '{partName}'. Số lượng vượt quá Max Stock ({maxStock.Value}). Tồn kho hiện tại: {beforeQty}, tổng số lượng tăng trong lệnh: {totalQtyThisAdjust}.");
+                            }
+                        }
+
                         if (isCoded)
                         {
                             // Verify SerialCode does not already exist as Available
@@ -244,8 +255,8 @@ namespace CMMS.Server.Services.SparePartService
                             cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = $"Điều chỉnh tăng (Serial: {line.SerialCode ?? "N/A"})";
                             cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                             cmdTx.Parameters.Add("@MovementTypeID", SqlDbType.Int).Value = (object?)adjInId ?? DBNull.Value;
-                            cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
-                            cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
+                            cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)currentUser?.FACID ?? DBNull.Value;
+                            cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)currentUser?.DeptID ?? DBNull.Value;
                             await cmdTx.ExecuteNonQueryAsync();
                         }
                     }
@@ -287,8 +298,8 @@ namespace CMMS.Server.Services.SparePartService
                                 cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = $"Điều chỉnh giảm (Serial: {line.SerialCode})";
                                 cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                                 cmdTx.Parameters.Add("@MovementTypeID", SqlDbType.Int).Value = (object?)adjOutId ?? DBNull.Value;
-                                cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
-                                cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)currentUser?.FACID ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)currentUser?.DeptID ?? DBNull.Value;
                                 await cmdTx.ExecuteNonQueryAsync();
                             }
                         }
@@ -330,8 +341,8 @@ namespace CMMS.Server.Services.SparePartService
                                 cmdTx.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = "Điều chỉnh giảm tồn kho";
                                 cmdTx.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                                 cmdTx.Parameters.Add("@MovementTypeID", SqlDbType.Int).Value = (object?)adjOutId ?? DBNull.Value;
-                                cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)dto.FACID ?? DBNull.Value;
-                                cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@FACID", SqlDbType.Int).Value = (object?)currentUser?.FACID ?? DBNull.Value;
+                                cmdTx.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)currentUser?.DeptID ?? DBNull.Value;
                                 await cmdTx.ExecuteNonQueryAsync();
                             }
 

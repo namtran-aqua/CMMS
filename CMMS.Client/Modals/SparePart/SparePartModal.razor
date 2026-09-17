@@ -68,9 +68,14 @@
                     <Input @bind-Value="PartDto.PartModel" Placeholder="Enter technical specification..." />
                 </FormItem>
             </Col>
-            <Col Span="12">
+            <Col Span="6">
                 <FormItem Label="Min Stock" Name="MinStock">
                     <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.MinStock" Style="width:100%; height: 38px;" Min="0" />
+                </FormItem>
+            </Col>
+            <Col Span="6">
+                <FormItem Label="Max Stock" Name="MaxStock">
+                    <AntDesign.InputNumber TValue="int?" @bind-Value="PartDto.MaxStock" Style="width:100%; height: 38px;" Min="0" />
                 </FormItem>
             </Col>
             
@@ -101,7 +106,9 @@
         <Row Gutter="16">
             <Col Span="12">
                 <FormItem Label="Price" Name="Price">
-                    <AntDesign.InputNumber TValue="decimal?" @bind-Value="PartDto.Price" Style="width:100%; height:38px" Min="0" />
+                    <AntDesign.InputNumber TValue="decimal?" @bind-Value="PartDto.Price" Style="width:100%; height:38px" Min="0"
+                                           Formatter='@(v => v?.ToString("N0"))'
+                                           Parser='@(s => s?.Replace(",", ""))' />
                 </FormItem>
             </Col>
             <Col Span="12">

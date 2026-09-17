@@ -265,7 +265,7 @@
                     Chọn Phụ Tùng
                     @if (tempImportDetail.SPID > 0)
                     {
-                        <span style="color:#10b981; font-weight:normal; margin-left:4px;">(Tồn: @(tempImportDetail.Inventory ?? 0) @tempImportDetail.Unit)</span>
+                        <span style="color:#10b981; font-weight:normal; margin-left:4px;">(Tồn: @(tempImportDetail.Inventory ?? 0) @tempImportDetail.Unit @(tempImportDetail.MaxStock.HasValue ? $", Max: {tempImportDetail.MaxStock.Value}" : ""))</span>
                     }
                 </label>
                 <Select TValue="int"
@@ -298,7 +298,9 @@
 
             <div class="col-md-3">
                 <label style="font-size:12px; font-weight:600; color:#64748b;">Giá Nhập (VND)</label>
-                <AntDesign.InputNumber TValue="decimal?" @bind-Value="tempImportDetail.Price" Min="0" Style="width:100%; height:38px" />
+                <AntDesign.InputNumber TValue="decimal?" @bind-Value="tempImportDetail.Price" Min="0" Style="width:100%; height:38px"
+                                       Formatter='@(v => v?.ToString("N0"))'
+                                       Parser='@(s => s?.Replace(",", ""))' />
             </div>
 
             <div class="col-md-2">

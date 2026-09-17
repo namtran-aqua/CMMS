@@ -102,6 +102,7 @@ namespace CMMS.Client.Pages.MasterData.Catalog
                     "NameAsc"  => result.OrderBy(x => x.PartName ?? ""),
                     "NameDesc" => result.OrderByDescending(x => x.PartName ?? ""),
                     "CodeAsc"  => result.OrderBy(x => x.PartCode ?? ""),
+                    "CodeDesc" => result.OrderByDescending(x => x.PartCode ?? ""),
                     "PriceAsc" => result.OrderBy(x => x.Price),
                     "PriceDesc"=> result.OrderByDescending(x => x.Price),
                     _          => result.OrderBy(x => x.PartName ?? "")
@@ -172,6 +173,16 @@ namespace CMMS.Client.Pages.MasterData.Catalog
 
         private async Task LoadCatalogParts()
         {
+            await LoadCatalogPartsInternal(false);
+        }
+
+        private async Task OnSparePartSaved(bool isUpdate)
+        {
+            await LoadCatalogPartsInternal(isUpdate);
+        }
+
+        private async Task LoadCatalogPartsInternal(bool isUpdate)
+        {
             try
             {
                 var facId = FactoryState.SelectedFacId;
@@ -179,7 +190,7 @@ namespace CMMS.Client.Pages.MasterData.Catalog
                 if (facId.HasValue) url += $"?factoryId={facId.Value}";
 
                 _allCatalogParts = await Http.GetFromJsonAsync<List<SparePartDto>>(url) ?? new();
-                catalogPage = 1;
+                if (!isUpdate) catalogPage = 1;
             }
             catch (Exception ex)
             {

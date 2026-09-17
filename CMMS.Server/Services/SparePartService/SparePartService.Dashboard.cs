@@ -118,7 +118,7 @@ namespace CMMS.Server.Services.SparePartService
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
                 SELECT 
-                    p.PartCode, p.PartName, c.CategoryName, p.Unit, p.Price, p.Inventory, p.MinStock,
+                    p.PartCode, p.PartName, c.CategoryName, p.Unit, p.Price, p.Inventory, p.MinStock, p.MaxStock,
                     l.LocName AS Location, s.SupplierName, p.Note
                 FROM dbo.Tbl_SparePart p
                 LEFT JOIN dbo.Tbl_SparePartCategories c ON c.CategoryID = p.CategoryID
@@ -137,7 +137,7 @@ namespace CMMS.Server.Services.SparePartService
             var items = (await connection.QueryAsync<dynamic>(sql, parameters)).ToList();
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("Part Code,Part Name,Category,Unit,Price,Inventory,Min Stock,Location,Supplier,Note");
+            sb.AppendLine("Part Code,Part Name,Category,Unit,Price,Inventory,Min Stock,Max Stock,Location,Supplier,Note");
 
             foreach (var item in items)
             {
@@ -152,7 +152,7 @@ namespace CMMS.Server.Services.SparePartService
                     return s;
                 }
 
-                sb.AppendLine($"{escape(item.PartCode)},{escape(item.PartName)},{escape(item.CategoryName)},{escape(item.Unit)},{item.Price},{item.Inventory},{item.MinStock},{escape(item.Location)},{escape(item.SupplierName)},{escape(item.Note)}");
+                sb.AppendLine($"{escape(item.PartCode)},{escape(item.PartName)},{escape(item.CategoryName)},{escape(item.Unit)},{item.Price},{item.Inventory},{item.MinStock},{item.MaxStock},{escape(item.Location)},{escape(item.SupplierName)},{escape(item.Note)}");
             }
 
             var csvBytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());

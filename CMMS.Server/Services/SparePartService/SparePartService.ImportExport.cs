@@ -29,6 +29,8 @@ namespace CMMS.Server.Services.SparePartService
                 dto.Status = "Completed";
                 dto.CreateBy = currentUser?.Id;
                 dto.CreateAt = DateTime.Now;
+                dto.FACID = currentUser?.FACID;
+                dto.DeptID = currentUser?.DeptID;
 
                 const string sqlHeader = @"
                     INSERT INTO dbo.Tbl_ImportOrder (ImportCode, PONumber, VendorID, ImportDate, FACID, DeptID, Status, CreateBy, CreateAt)
@@ -42,7 +44,7 @@ namespace CMMS.Server.Services.SparePartService
                     detail.ImportID = dto.ImportID;
 
                     var sparePart = await connection.QueryFirstOrDefaultAsync<SparePartDto>(
-                        "SELECT IsCoded, Inventory, PartCode, PartName FROM dbo.Tbl_SparePart WHERE SPID = @SPID",
+                        "SELECT IsCoded, Inventory, PartCode, PartName, MaxStock FROM dbo.Tbl_SparePart WHERE SPID = @SPID",
                         new { SPID = detail.SPID },
                         transaction: transaction);
                     if (sparePart == null) throw new KeyNotFoundException($"Không tìm thấy phụ tùng SPID = {detail.SPID}.");
@@ -68,6 +70,18 @@ namespace CMMS.Server.Services.SparePartService
                         if (detail.Quantity <= 0)
                             throw new ArgumentException($"Số lượng nhập cho phụ tùng '{sparePart.PartName}' phải lớn hơn 0.");
                         detail.SerialCode = null;
+                    }
+
+                    if (sparePart.MaxStock.HasValue)
+                    {
+                        var maxStock = sparePart.MaxStock.Value;
+                        var currentStock = sparePart.Inventory ?? 0;
+                        var totalQtyThisOrder = dto.Details.Where(x => x.SPID == detail.SPID).Sum(x => x.HasCode ? 1 : x.Quantity);
+                        
+                        if (currentStock + totalQtyThisOrder > maxStock)
+                        {
+                            throw new InvalidOperationException($"Không thể nhập phụ tùng '{sparePart.PartName}'. Số lượng vượt quá Max Stock ({maxStock}). Tồn kho hiện tại: {currentStock}, yêu cầu nhập: {totalQtyThisOrder}.");
+                        }
                     }
 
                     const string sqlDetail = @"
@@ -381,6 +395,8 @@ namespace CMMS.Server.Services.SparePartService
             dto.Status = "Completed";
             dto.CreateBy = currentUser?.Id;
             dto.CreateAt = DateTime.Now;
+            dto.FACID = currentUser?.FACID;
+            dto.DeptID = currentUser?.DeptID;
 
             const string sqlHeader = @"
                 INSERT INTO dbo.Tbl_ExportOrder (ExportCode, MovementTypeID, ExportDate, FACID, DeptID, Status, CreateBy, CreateAt)

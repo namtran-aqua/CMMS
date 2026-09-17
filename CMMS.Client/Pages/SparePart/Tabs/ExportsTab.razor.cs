@@ -227,8 +227,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             newExportOrder = new ExportOrderDto
             {
                 ExportDate = DateTime.Now,
-                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID,
-                DeptID = FactoryState.SelectedDeptId
+                FACID = CurrentUser.FACID,
+                DeptID = CurrentUser.DeptID
             };
             tempExportDetail = new ExportOrderDetailDto { Quantity = 1 };
             availableCodedItemsForSelectedPart.Clear();
