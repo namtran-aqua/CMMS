@@ -203,7 +203,7 @@ namespace CMMS.Server.Services.SparePartService
 
             var sql = $@"
                 SELECT p.PeriodID, p.Year, p.Month, p.SPID, p.OpeningQty, p.OpeningValue, p.ImportQty, p.ExportQty, ISNULL(p.AdjustIn, 0) AS AdjustIn, ISNULL(p.AdjustOut, 0) AS AdjustOut, p.ClosingQty, p.ClosingValue, p.CreateAt AS ClosingDate,
-                       sp.PartCode, sp.PartName, sp.MinStock, u.WorkDayId AS CreateUser
+                       sp.PartCode, sp.PartName, sp.MinStock, sp.MaxStock, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_SparePartMonthlyPeriod p
                 JOIN dbo.Tbl_SparePart sp ON sp.SPID = p.SPID
                 LEFT JOIN dbo.Tbl_User u ON u.Id = p.CreateBy
@@ -220,7 +220,7 @@ namespace CMMS.Server.Services.SparePartService
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
                 SELECT p.PeriodID, p.Year, p.Month, p.SPID, p.OpeningQty, p.OpeningValue, p.ImportQty, p.ExportQty, ISNULL(p.AdjustIn, 0) AS AdjustIn, ISNULL(p.AdjustOut, 0) AS AdjustOut, p.ClosingQty, p.ClosingValue, p.CreateAt AS ClosingDate,
-                       sp.PartCode, sp.PartName, sp.MinStock, u.WorkDayId AS CreateUser
+                       sp.PartCode, sp.PartName, sp.MinStock, sp.MaxStock, u.WorkDayId AS CreateUser
                 FROM dbo.Tbl_SparePartMonthlyPeriod p
                 JOIN dbo.Tbl_SparePart sp ON sp.SPID = p.SPID
                 LEFT JOIN dbo.Tbl_User u ON u.Id = p.CreateBy";

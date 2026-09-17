@@ -1,4 +1,4 @@
-﻿using AntDesign;
+using AntDesign;
 using CMMS.Shared.Dtos.SpareParts;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
@@ -19,7 +19,8 @@ namespace CMMS.Client.Modals.SpareParts
 
         private int NewStock => Type == "IN" ? (Part?.Inventory ?? 0) + Qty : (Part?.Inventory ?? 0) - Qty;
         private bool IsOverdraw => Type == "OUT" && Qty > (Part?.Inventory ?? 0);
-        private bool CanSubmit => Part != null && Qty > 0 && !IsOverdraw;
+        private bool IsOverLimit => Type == "IN" && Part?.MaxStock != null && NewStock > Part.MaxStock.Value;
+        private bool CanSubmit => Part != null && Qty > 0 && !IsOverdraw && !IsOverLimit;
 
         public async Task ShowModal(SparePartDto part)
         {

@@ -180,8 +180,8 @@ namespace CMMS.Client.Pages.SpareParts.Tabs
             newAdjustOrder = new CreateAdjustOrderDto
             {
                 AdjustDate = DateTime.Now,
-                FACID = FactoryState.SelectedFacId ?? CurrentUser.FACID,
-                DeptID = FactoryState.SelectedDeptId
+                FACID = CurrentUser.FACID,
+                DeptID = CurrentUser.DeptID
             };
             tempAdjustDetail = new AdjustOrderDetailDto { Quantity = 1, Type = "IN" };
             availableCodedItemsForSelectedPart.Clear();

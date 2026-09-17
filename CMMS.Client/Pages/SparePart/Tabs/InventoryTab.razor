@@ -87,6 +87,7 @@
                     <option value="NameAsc">Name (A-Z)</option>
                     <option value="NameDesc">Name (Z-A)</option>
                     <option value="CodeAsc">Code (A-Z)</option>
+                    <option value="CodeDesc">Code (Z-A)</option>
                     <option value="PriceAsc">Price (Low to High)</option>
                     <option value="PriceDesc">Price (High to Low)</option>
                     <option value="StockAsc">Quantity (Low to High)</option>
@@ -350,6 +351,6 @@
     }
 </Modal>
 
-<SparePartModal @ref="_partModal" OnSave="LoadParts" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
+<SparePartModal @ref="_partModal" OnSave="OnSparePartSaved" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
 <AdjustStockModal @ref="_adjustModal" OnSave="LoadParts" />
 <ImportModal @ref="_importModal" Title="Import Spare Parts" UploadUrl="api/SparePart/import" TemplateUrl="api/SparePart/import-template" OnSave="LoadParts" />

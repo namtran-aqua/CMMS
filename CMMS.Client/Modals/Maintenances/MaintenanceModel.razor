@@ -140,10 +140,12 @@
             </Col>
             <Col Span="12">
                 <FormItem Label="MaintPrice" Name="MaintPrice">
-                <AntDesign.InputNumber TValue="decimal?"
-                    @bind-Value="MaintenanceDto.MaintPrice"
-                           Placeholder="Enter MaintPrice" 
-                            Style="width:100%; height:38px" />
+                    <AntDesign.InputNumber TValue="decimal?" 
+                                           @bind-Value="MaintenanceDto.MaintPrice"
+                                           Placeholder="Enter MaintPrice"
+                                           Formatter='@(v => v?.ToString("N0"))'
+                                           Parser='@(s => s?.Replace(",", ""))'
+                                           Style="width:100%; height:38px" />
                 </FormItem>
             </Col>
         </Row>

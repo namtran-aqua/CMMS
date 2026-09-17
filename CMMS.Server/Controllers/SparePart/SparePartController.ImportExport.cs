@@ -53,9 +53,9 @@ namespace CMMS.Server.Controllers.SparePart
         [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         public IActionResult DownloadTemplate()
         {
-            var csv = "PartCode,PartName,Specification,Unit,Price,MinStock,IsCoded,Note\n" +
-                      "Mã001,Tên001,Spec001,Cái,150000,5,1,Ghi chú mẫu\n" +
-                      "Mã002,Tên002,Spec002,Mét,450000,2,0,Ghi chú mẫu 2";
+            var csv = "PartCode,PartName,Specification,Unit,Price,MinStock,MaxStock,IsCoded,Note\n" +
+                      "Mã001,Tên001,Spec001,Cái,150000,5,10,1,Ghi chú mẫu\n" +
+                      "Mã002,Tên002,Spec002,Mét,450000,2,5,0,Ghi chú mẫu 2";
             
             var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
             return File(bytes, "text/csv; charset=utf-8", "SparePart_Import_Template.csv");

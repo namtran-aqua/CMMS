@@ -16,6 +16,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public decimal? Price { get; set; }
         public int? Inventory { get; set; }
         public int? MinStock { get; set; }
+        public int? MaxStock { get; set; }
         public int? LocID { get; set; }
         public int? CategoryID { get; set; }
         public int? SupplierID { get; set; }

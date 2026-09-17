@@ -157,7 +157,7 @@ namespace CMMS.Server.Services.SparePartService
             var sql = $@"
                 SELECT 
                     p.SPID, p.PartCode, p.PartName, p.CategoryID, c.CategoryName,
-                    p.Unit, p.Price, p.Inventory, p.MinStock, p.LocID, l.LocName AS Location,
+                    p.Unit, p.Price, p.Inventory, p.MinStock, p.MaxStock, p.LocID, l.LocName AS Location,
                     p.SupplierID, s.SupplierName, p.CreateDate, p.UpdateDate,
                     p.IsCoded, p.ImageUrl, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID,
                     p.DeptID, d.DeptCode, d.DeptName
@@ -324,6 +324,7 @@ namespace CMMS.Server.Services.SparePartService
                 int colUnit = headers.FindIndex(h => h.Equals("Unit", StringComparison.OrdinalIgnoreCase));
                 int colPrice = headers.FindIndex(h => h.Equals("Price", StringComparison.OrdinalIgnoreCase));
                 int colMinStock = headers.FindIndex(h => h.Equals("MinStock", StringComparison.OrdinalIgnoreCase));
+                int colMaxStock = headers.FindIndex(h => h.Equals("MaxStock", StringComparison.OrdinalIgnoreCase));
                 int colCategory = headers.FindIndex(h => h.Equals("CategoryName", StringComparison.OrdinalIgnoreCase));
                 int colSupplier = headers.FindIndex(h => h.Equals("SupplierName", StringComparison.OrdinalIgnoreCase));
                 int colLoc = headers.FindIndex(h => h.Equals("LocName", StringComparison.OrdinalIgnoreCase));
@@ -428,6 +429,16 @@ namespace CMMS.Server.Services.SparePartService
                         int minStock = 0;
                         if (colMinStock != -1 && int.TryParse(fields[colMinStock], out var parsedMin)) minStock = parsedMin;
 
+                        int? maxStock = null;
+                        if (colMaxStock != -1 && int.TryParse(fields[colMaxStock], out var parsedMax)) maxStock = parsedMax;
+
+                        if (maxStock.HasValue && maxStock.Value < minStock)
+                        {
+                            result.FailureCount++;
+                            result.Errors.Add($"Dòng {i + 1}: Max Stock ({maxStock.Value}) không được nhỏ hơn Min Stock ({minStock}).");
+                            continue;
+                        }
+
                         bool isCoded = false;
                         if (colIsCoded != -1)
                         {
@@ -470,7 +481,7 @@ namespace CMMS.Server.Services.SparePartService
                             var updateSql = @"
                                 UPDATE dbo.Tbl_SparePart 
                                 SET PartName = @PartName, Unit = @Unit, Price = COALESCE(@Price, Price), 
-                                    MinStock = @MinStock, CategoryID = COALESCE(@CategoryID, CategoryID),
+                                    MinStock = @MinStock, MaxStock = @MaxStock, CategoryID = COALESCE(@CategoryID, CategoryID),
                                     SupplierID = COALESCE(@SupplierID, SupplierID), LocID = COALESCE(@LocID, LocID), 
                                     DeptID = COALESCE(@DeptID, DeptID), FACID = COALESCE(@FACID, FACID), Note = @Note, UpdateDate = GETDATE(),
                                     IsCoded = @IsCoded, PartModel = @PartModel
@@ -480,6 +491,7 @@ namespace CMMS.Server.Services.SparePartService
                                 Unit = unit,
                                 Price = price,
                                 MinStock = minStock,
+                                MaxStock = maxStock,
                                 CategoryID = categoryId,
                                 SupplierID = supplierId,
                                 LocID = locId,
@@ -495,14 +507,15 @@ namespace CMMS.Server.Services.SparePartService
                         else
                         {
                             var insertSql = @"
-                                INSERT INTO dbo.Tbl_SparePart (PartCode, PartName, Unit, Price, MinStock, CategoryID, SupplierID, LocID, DeptID, FACID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, PartModel)
-                                VALUES (@PartCode, @PartName, @Unit, @Price, @MinStock, @CategoryID, @SupplierID, @LocID, @DeptID, @FACID, @Note, GETDATE(), GETDATE(), @CreateBy, @IsCoded, @PartModel)";
+                                INSERT INTO dbo.Tbl_SparePart (PartCode, PartName, Unit, Price, MinStock, MaxStock, CategoryID, SupplierID, LocID, DeptID, FACID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, PartModel)
+                                VALUES (@PartCode, @PartName, @Unit, @Price, @MinStock, @MaxStock, @CategoryID, @SupplierID, @LocID, @DeptID, @FACID, @Note, GETDATE(), GETDATE(), @CreateBy, @IsCoded, @PartModel)";
                             await connection.ExecuteAsync(insertSql, new {
                                 PartCode = code,
                                 PartName = name,
                                 Unit = unit,
                                 Price = price ?? 0m,
                                 MinStock = minStock,
+                                MaxStock = maxStock,
                                 CategoryID = categoryId,
                                 SupplierID = supplierId,
                                 LocID = locId,

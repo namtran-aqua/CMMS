@@ -86,6 +86,7 @@
                     <option value="NameAsc">Name (A-Z)</option>
                     <option value="NameDesc">Name (Z-A)</option>
                     <option value="CodeAsc">Code (A-Z)</option>
+                    <option value="CodeDesc">Code (Z-A)</option>
                     <option value="PriceAsc">Price (Low to High)</option>
                     <option value="PriceDesc">Price (High to Low)</option>
                 </select>
@@ -113,6 +114,7 @@
                 <th>Part Name</th>
                 <th>Specification</th>
                 <th>Min Stock</th>
+                <th>Max Stock</th>
                 <th>Unit</th>
                 <th>Serial Tracking</th>
                 <th>Note</th>
@@ -141,6 +143,7 @@
                         <td>@p.PartName</td>
                         <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@p.PartModel">@p.PartModel</td>
                         <td>@p.MinStock</td>
+                        <td>@p.MaxStock</td>
                         <td>@p.Unit</td>
                         <td>
                             @if (p.IsCoded)
@@ -350,6 +353,6 @@
     }
 </Modal>
 
-<SparePartModal @ref="_partModal" OnSave="LoadCatalogParts" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
+<SparePartModal @ref="_partModal" OnSave="OnSparePartSaved" Categories="Categories" Suppliers="Suppliers" Locations="Locations" />
 <ImportModal @ref="_importModal" Title="Import Spare Parts" UploadUrl="api/SparePart/import" TemplateUrl="api/SparePart/import-template" OnSave="LoadCatalogParts" />
 <ImportModal @ref="_initialStockImportModal" Title="Import Initial Stock" UploadUrl="api/SparePart/import-initial-stock" TemplateUrl="api/SparePart/import-initial-stock-template" OnSave="LoadCatalogParts" />

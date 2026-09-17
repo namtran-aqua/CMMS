@@ -21,6 +21,7 @@ namespace CMMS.Shared.Dtos.SpareParts
         public DateTime ClosingDate { get; set; }
         public string? CreateUser { get; set; }
         public int MinStock { get; set; }
+        public int? MaxStock { get; set; }
         public bool IsWithinLimit => ClosingQty > MinStock;
     }
 }

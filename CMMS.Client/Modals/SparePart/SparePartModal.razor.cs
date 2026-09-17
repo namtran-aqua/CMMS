@@ -17,7 +17,7 @@ namespace CMMS.Client.Modals.SpareParts
         [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] private FactoryStateService FactoryState { get; set; }
-        [Parameter] public EventCallback OnSave { get; set; }
+        [Parameter] public EventCallback<bool> OnSave { get; set; }
         [Parameter] public List<SparePartCategoryDto> Categories { get; set; } = new();
         [Parameter] public List<SparePartSupplierDto> Suppliers { get; set; } = new();
         [Parameter] public List<LocationDto> Locations { get; set; } = new();
@@ -53,6 +53,7 @@ namespace CMMS.Client.Modals.SpareParts
                 Price = part.Price,
                 Inventory = part.Inventory,
                 MinStock = part.MinStock,
+                MaxStock = part.MaxStock,
                 LocID = part.LocID,
                 SupplierID = part.SupplierID,
                 Note = part.Note,
@@ -96,8 +97,9 @@ namespace CMMS.Client.Modals.SpareParts
                     PartDto.FACID = CurrentUser.FACID ?? FactoryState.SelectedFacId;
                 }
 
+                bool isUpdate = PartDto.SPID != 0;
                 HttpResponseMessage response;
-                if (PartDto.SPID == 0)
+                if (!isUpdate)
                     response = await Http.PostAsJsonAsync("api/SparePart/create", PartDto);
                 else
                     response = await Http.PutAsJsonAsync("api/SparePart/update", PartDto);
@@ -106,7 +108,7 @@ namespace CMMS.Client.Modals.SpareParts
                 {
                     Message.Success("Saved successfully");
                     IsModalVisible = false;
-                    await OnSave.InvokeAsync();
+                    await OnSave.InvokeAsync(isUpdate);
                 }
                 else
                 {

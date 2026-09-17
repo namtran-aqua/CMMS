@@ -35,7 +35,7 @@ namespace CMMS.Server.Services.SparePartService
             string sql = @"
                 SELECT 
                     p.SPID, p.PartCode, p.PartName, p.CategoryID, c.CategoryName,
-                    p.Unit, p.Price, p.Inventory, p.MinStock, p.LocID, l.LocName AS Location,
+                    p.Unit, p.Price, p.Inventory, p.MinStock, p.MaxStock, p.LocID, l.LocName AS Location,
                     p.SupplierID, s.SupplierName, p.CreateDate, p.UpdateDate,
                     p.IsCoded, p.ImageUrl, p.PartModel, COALESCE(p.FACID, l.FACID, d.FACID) AS FACID,
                     p.DeptID, d.DeptCode, d.DeptName
@@ -67,9 +67,9 @@ namespace CMMS.Server.Services.SparePartService
             const string sqlCheckCode = "SELECT COUNT(1) FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode";
             const string sqlInsert = @"
                 INSERT INTO dbo.Tbl_SparePart
-                    (PartCode, PartName, CategoryID, Unit, Price, Inventory, MinStock, LocID, DeptID, SupplierID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, ImageUrl, PartModel, FACID)
+                    (PartCode, PartName, CategoryID, Unit, Price, Inventory, MinStock, MaxStock, LocID, DeptID, SupplierID, Note, CreateDate, UpdateDate, CreateBy, IsCoded, ImageUrl, PartModel, FACID)
                 VALUES
-                    (@PartCode, @PartName, @CategoryID, @Unit, @Price, @Inventory, @MinStock, @LocID, @DeptID, @SupplierID, @Note, @CreateDate, @UpdateDate, @CreateBy, @IsCoded, @ImageUrl, @PartModel, @FACID);
+                    (@PartCode, @PartName, @CategoryID, @Unit, @Price, @Inventory, @MinStock, @MaxStock, @LocID, @DeptID, @SupplierID, @Note, @CreateDate, @UpdateDate, @CreateBy, @IsCoded, @ImageUrl, @PartModel, @FACID);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
             await using var con = new SqlConnection(connStr);
@@ -83,13 +83,19 @@ namespace CMMS.Server.Services.SparePartService
                     throw new InvalidOperationException($"Mã phụ tùng '{dto.PartCode}' đã tồn tại.");
             }
 
+            if (currentUser != null)
+            {
+                dto.FACID ??= currentUser.FACID;
+                dto.DeptID ??= currentUser.DeptID;
+            }
+
             int newId;
             await using (var cmd = new SqlCommand(sqlInsert, con))
             {
                 cmd.Parameters.Add("@PartCode", SqlDbType.NVarChar, 30).Value = dto.PartCode;
                 cmd.Parameters.Add("@PartName", SqlDbType.NVarChar, 200).Value = dto.PartName;
                 cmd.Parameters.Add("@CategoryID", SqlDbType.Int).Value = (object?)dto.CategoryID ?? DBNull.Value;
-                cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, 20).Value = dto.Unit;
+                cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, 20).Value = (object?)dto.Unit ?? DBNull.Value;
 
                 var priceParam = cmd.Parameters.Add("@Price", SqlDbType.Decimal);
                 priceParam.Precision = 18;
@@ -98,12 +104,13 @@ namespace CMMS.Server.Services.SparePartService
 
                 cmd.Parameters.Add("@Inventory", SqlDbType.Int).Value = dto.Inventory ?? 0;
                 cmd.Parameters.Add("@MinStock", SqlDbType.Int).Value = dto.MinStock ?? 0;
+                cmd.Parameters.Add("@MaxStock", SqlDbType.Int).Value = (object?)dto.MaxStock ?? DBNull.Value;
                 cmd.Parameters.Add("@LocID", SqlDbType.Int).Value = (object?)dto.LocID ?? DBNull.Value;
                 cmd.Parameters.Add("@DeptID", SqlDbType.Int).Value = (object?)dto.DeptID ?? DBNull.Value;
                 cmd.Parameters.Add("@SupplierID", SqlDbType.Int).Value = (object?)dto.SupplierID ?? DBNull.Value;
                 cmd.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = (object?)dto.Note ?? DBNull.Value;
-                cmd.Parameters.Add("@CreateDate", SqlDbType.Date).Value = DateTime.Today;
-                cmd.Parameters.Add("@UpdateDate", SqlDbType.Date).Value = DateTime.Today;
+                cmd.Parameters.Add("@CreateDate", SqlDbType.DateTime).Value = DateTime.Now;
+                cmd.Parameters.Add("@UpdateDate", SqlDbType.DateTime).Value = DateTime.Now;
                 cmd.Parameters.Add("@CreateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
                 cmd.Parameters.Add("@IsCoded", SqlDbType.Bit).Value = dto.IsCoded;
                 cmd.Parameters.Add("@ImageUrl", SqlDbType.NVarChar, 500).Value = (object?)dto.ImageUrl ?? DBNull.Value;
@@ -125,7 +132,7 @@ namespace CMMS.Server.Services.SparePartService
             const string sqlUpdate = @"
                 UPDATE dbo.Tbl_SparePart
                 SET PartCode = @PartCode, PartName = @PartName, CategoryID = @CategoryID, Unit = @Unit,
-                    Price = @Price, MinStock = @MinStock, LocID = @LocID,
+                    Price = @Price, MinStock = @MinStock, MaxStock = @MaxStock, LocID = @LocID,
                     SupplierID = @SupplierID, Note = @Note, UpdateDate = @UpdateDate, UpdateBy = @UpdateBy,
                     IsCoded = @IsCoded, ImageUrl = @ImageUrl, PartModel = @PartModel, FACID = @FACID
                 WHERE SPID = @SPID";
@@ -147,7 +154,7 @@ namespace CMMS.Server.Services.SparePartService
             cmd.Parameters.Add("@PartCode", SqlDbType.NVarChar, 30).Value = dto.PartCode;
             cmd.Parameters.Add("@PartName", SqlDbType.NVarChar, 200).Value = dto.PartName;
             cmd.Parameters.Add("@CategoryID", SqlDbType.Int).Value = (object?)dto.CategoryID ?? DBNull.Value;
-            cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, 20).Value = dto.Unit;
+            cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, 20).Value = (object?)dto.Unit ?? DBNull.Value;
 
             var priceParam = cmd.Parameters.Add("@Price", SqlDbType.Decimal);
             priceParam.Precision = 18;
@@ -155,10 +162,11 @@ namespace CMMS.Server.Services.SparePartService
             priceParam.Value = (object?)dto.Price ?? 0m;
 
             cmd.Parameters.Add("@MinStock", SqlDbType.Int).Value = dto.MinStock ?? 0;
+            cmd.Parameters.Add("@MaxStock", SqlDbType.Int).Value = (object?)dto.MaxStock ?? DBNull.Value;
             cmd.Parameters.Add("@LocID", SqlDbType.Int).Value = (object?)dto.LocID ?? DBNull.Value;
             cmd.Parameters.Add("@SupplierID", SqlDbType.Int).Value = (object?)dto.SupplierID ?? DBNull.Value;
             cmd.Parameters.Add("@Note", SqlDbType.NVarChar, 255).Value = (object?)dto.Note ?? DBNull.Value;
-            cmd.Parameters.Add("@UpdateDate", SqlDbType.Date).Value = DateTime.Today;
+            cmd.Parameters.Add("@UpdateDate", SqlDbType.DateTime).Value = DateTime.Now;
             cmd.Parameters.Add("@UpdateBy", SqlDbType.UniqueIdentifier).Value = (object?)currentUser?.Id ?? DBNull.Value;
             cmd.Parameters.Add("@IsCoded", SqlDbType.Bit).Value = dto.IsCoded;
             cmd.Parameters.Add("@ImageUrl", SqlDbType.NVarChar, 500).Value = (object?)dto.ImageUrl ?? DBNull.Value;
