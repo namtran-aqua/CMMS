@@ -59,7 +59,9 @@ namespace CMMS.Client.Modals.SpareParts
                 Note = part.Note,
                 IsCoded = part.IsCoded,
                 ImageUrl = part.ImageUrl,
-                FACID = part.FACID
+                FACID = part.FACID,
+                PartModel = part.PartModel,
+                DeptID = part.DeptID
             };
 
             IsModalVisible = true;

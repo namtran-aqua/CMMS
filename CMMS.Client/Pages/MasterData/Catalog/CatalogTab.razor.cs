@@ -39,7 +39,7 @@ namespace CMMS.Client.Pages.MasterData.Catalog
         private string catalogPartNameFilter = "";
         private int catalogSupplierFilter = 0;
         private int catalogCategoryFilter = 0;
-        private string catalogSortBy = "NameAsc";
+        private string catalogSortBy = "CodeAsc";
         private bool isCatalogSearchPanelCollapsed = true;
 
         private List<SparePartDto> FilteredCatalogParts
