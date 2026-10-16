@@ -93,29 +93,57 @@ namespace CMMS.Server.Controllers.QRCode
                 connection.Open();
             }
 
-            string deptCode = "MNT";
+            string? userDeptCode = null;
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(userIdClaim, out var userId))
             {
                 var currentUser = await _userService.GetCurrentUserAsync(userId);
                 if (!string.IsNullOrWhiteSpace(currentUser?.DeptCode))
                 {
-                    deptCode = currentUser.DeptCode;
+                    userDeptCode = currentUser.DeptCode;
                 }
             }
 
             foreach (var item in request.Items)
             {
-                // Verify if it already has a barcode
-                string currentBarcode = null;
+                // Verify if it already has a barcode and resolve Department Code
+                string? currentBarcode = null;
+                string? itemDeptCode = null;
+
                 if (item.EntityType == "Equipment")
-                    currentBarcode = await connection.QuerySingleOrDefaultAsync<string>("SELECT EquipmentBarcode FROM Tbl_EquipmentInfo WHERE EQID = @Id", new { item.Id });
+                {
+                    var eqData = await connection.QuerySingleOrDefaultAsync<dynamic>(@"
+                        SELECT e.EquipmentBarcode, d.DeptCode 
+                        FROM Tbl_EquipmentInfo e
+                        LEFT JOIN vw_FactoryDepartment d ON d.DeptID = e.DeptId
+                        WHERE e.EQID = @Id", new { item.Id });
+                    currentBarcode = (string?)eqData?.EquipmentBarcode;
+                    itemDeptCode = (string?)eqData?.DeptCode;
+                }
                 else if (item.EntityType == "SparePart")
                 {
                     if (string.IsNullOrEmpty(item.Serial))
-                        currentBarcode = await connection.QuerySingleOrDefaultAsync<string>("SELECT SparePartBarcode FROM Tbl_SparePart WHERE SPID = @Id", new { item.Id });
+                    {
+                        var spData = await connection.QuerySingleOrDefaultAsync<dynamic>(@"
+                            SELECT p.SparePartBarcode, d.DeptCode 
+                            FROM Tbl_SparePart p
+                            LEFT JOIN vw_FactoryDepartment d ON d.DeptID = p.DeptID
+                            WHERE p.SPID = @Id", new { item.Id });
+                        currentBarcode = (string?)spData?.SparePartBarcode;
+                        itemDeptCode = (string?)spData?.DeptCode;
+                    }
                     else
-                        currentBarcode = await connection.QuerySingleOrDefaultAsync<string>("SELECT SparePartBarcode FROM Tbl_SparePartItem WHERE ItemID = @Id", new { item.Id });
+                    {
+                        var spItemData = await connection.QuerySingleOrDefaultAsync<dynamic>(@"
+                            SELECT i.SparePartBarcode, ISNULL(dItem.DeptCode, dPart.DeptCode) as DeptCode
+                            FROM Tbl_SparePartItem i
+                            LEFT JOIN Tbl_SparePart p ON p.SPID = i.SPID
+                            LEFT JOIN vw_FactoryDepartment dItem ON dItem.DeptID = i.DeptID
+                            LEFT JOIN vw_FactoryDepartment dPart ON dPart.DeptID = p.DeptID
+                            WHERE i.ItemID = @Id", new { item.Id });
+                        currentBarcode = (string?)spItemData?.SparePartBarcode;
+                        itemDeptCode = (string?)spItemData?.DeptCode;
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(currentBarcode))
@@ -124,22 +152,28 @@ namespace CMMS.Server.Controllers.QRCode
                     continue; // Already has barcode
                 }
 
+                string? finalDeptCode = !string.IsNullOrWhiteSpace(itemDeptCode) ? itemDeptCode : userDeptCode;
+                if (string.IsNullOrWhiteSpace(finalDeptCode))
+                {
+                    skipped++;
+                    continue; // Cannot determine department to generate barcode
+                }
+
                 // Generate new barcode
-                string newBarcode = null;
+                string? newBarcode = null;
                 if (item.EntityType == "Equipment")
                 {
-                    newBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync(deptCode);
+                    newBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync(finalDeptCode);
                     await connection.ExecuteAsync("UPDATE Tbl_EquipmentInfo SET EquipmentBarcode = @Barcode WHERE EQID = @Id", new { Barcode = newBarcode, item.Id });
                 }
                 else if (item.EntityType == "SparePart")
                 {
-                    newBarcode = await _barcodeIdService.GenerateSparePartBarcodeIdAsync(deptCode);
+                    newBarcode = await _barcodeIdService.GenerateSparePartBarcodeIdAsync(finalDeptCode);
                     if (string.IsNullOrEmpty(item.Serial))
                         await connection.ExecuteAsync("UPDATE Tbl_SparePart SET SparePartBarcode = @Barcode WHERE SPID = @Id", new { Barcode = newBarcode, item.Id });
                     else
                         await connection.ExecuteAsync("UPDATE Tbl_SparePartItem SET SparePartBarcode = @Barcode WHERE ItemID = @Id", new { Barcode = newBarcode, item.Id });
                 }
-
                 if (newBarcode != null)
                 {
                     success++;

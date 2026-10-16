@@ -66,7 +66,19 @@ namespace CMMS.Server.Services.SparePartService
         public async Task<SparePartDto> CreateAsync(SparePartDto dto, UserDto currentUser)
         {
             // Lay DeptCode tu User dang dang nhap (theo plan: Backend tu lay, Frontend khong quyet dinh)
-            string deptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : "MNT";
+            string? deptCode = currentUser?.DeptCode;
+            if (string.IsNullOrWhiteSpace(deptCode) && dto.DeptID.HasValue)
+            {
+                using var checkConn = _connectionFactory.CreateConnection();
+                deptCode = await checkConn.QueryFirstOrDefaultAsync<string>(
+                    "SELECT DeptCode FROM dbo.vw_FactoryDepartment WHERE DeptID = @DeptId",
+                    new { DeptId = dto.DeptID.Value });
+            }
+
+            if (!dto.IsCoded && string.IsNullOrWhiteSpace(deptCode))
+            {
+                throw new InvalidOperationException("Không thể tạo mã Barcode cho phụ tùng: Chưa xác định được phòng ban (DeptCode).");
+            }
 
             if (dto.DeptID == null && currentUser?.DeptID != null)
             {

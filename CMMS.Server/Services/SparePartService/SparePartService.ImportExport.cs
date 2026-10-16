@@ -21,7 +21,7 @@ namespace CMMS.Server.Services.SparePartService
             using var transaction = connection.BeginTransaction();
 
             // Get DeptCode from current user for barcode generation
-            string userDeptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : "MNT";
+            string? userDeptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : null;
 
             try
             {

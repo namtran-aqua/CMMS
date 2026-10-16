@@ -26,7 +26,7 @@ namespace CMMS.Server.Services.Barcode
         }
 
         /// <summary>
-        /// G?i m?t l?n lúc startup d? d?m b?o b?ng t?n t?i tru?c khi có request d?u tiên.
+        /// G?i m?t l?n lÃºc startup d? d?m b?o b?ng t?n t?i tru?c khi cÃ³ request d?u tiÃªn.
         /// </summary>
         public async Task EnsureTableExistsAsync()
         {
@@ -49,7 +49,10 @@ namespace CMMS.Server.Services.Barcode
 
         private async Task<string> GenerateBarcodeIdAsync(string departmentCode, string itemType)
         {
-            string prefix = $"VF{departmentCode.ToUpper()}{itemType.ToUpper()}";
+            if (string.IsNullOrWhiteSpace(departmentCode))
+                throw new System.ArgumentException("Department code is required to generate barcode.", nameof(departmentCode));
+
+            string prefix = $"VF{departmentCode.Trim().ToUpper()}{itemType.ToUpper()}";
 
             await using var connection = (SqlConnection)_connectionFactory.CreateConnection();
             await connection.OpenAsync();
@@ -94,10 +97,10 @@ namespace CMMS.Server.Services.Barcode
             }
         }
 
-        public Task<string> GenerateEquipmentBarcodeIdAsync(string departmentCode = "MNT")
+        public Task<string> GenerateEquipmentBarcodeIdAsync(string departmentCode)
             => GenerateBarcodeIdAsync(departmentCode, "EQ");
 
-        public Task<string> GenerateSparePartBarcodeIdAsync(string departmentCode = "MNT")
+        public Task<string> GenerateSparePartBarcodeIdAsync(string departmentCode)
             => GenerateBarcodeIdAsync(departmentCode, "SP");
     }
 }

@@ -32,10 +32,14 @@ namespace CMMS.Server.Services.SparePartService
             DateTime importDate, 
             Guid? createBy,
             CMMS.Server.Services.Barcode.IBarcodeIdService? barcodeIdService = null,
-            string deptCode = "MNT")
+            string? deptCode = null)
         {
             // 1. Get FACID and DeptID from Spare Part
-            const string sqlPart = "SELECT FACID, DeptID FROM dbo.Tbl_SparePart WHERE SPID = @SPID";
+            const string sqlPart = @"
+                SELECT p.FACID, p.DeptID, d.DeptCode 
+                FROM dbo.Tbl_SparePart p
+                LEFT JOIN dbo.vw_FactoryDepartment d ON d.DeptID = p.DeptID
+                WHERE p.SPID = @SPID";
             var partInfo = await con.QueryFirstOrDefaultAsync<dynamic>(sqlPart, new { SPID = spid }, tran);
             int? facId = partInfo?.FACID;
             int? deptId = partInfo?.DeptID;
@@ -44,7 +48,12 @@ namespace CMMS.Server.Services.SparePartService
             string? itemBarcode = null;
             if (!string.IsNullOrWhiteSpace(serialCode) && barcodeIdService != null)
             {
-                itemBarcode = await barcodeIdService.GenerateSparePartBarcodeIdAsync(deptCode);
+                string? resolvedDeptCode = !string.IsNullOrWhiteSpace(deptCode) ? deptCode : (string?)partInfo?.DeptCode;
+                if (string.IsNullOrWhiteSpace(resolvedDeptCode))
+                {
+                    throw new InvalidOperationException($"Không thể tạo mã Barcode cho phụ tùng Item (SPID = {spid}): Chưa xác định được phòng ban (DeptCode).");
+                }
+                itemBarcode = await barcodeIdService.GenerateSparePartBarcodeIdAsync(resolvedDeptCode);
             }
 
             // 3. Insert SparePartItem
