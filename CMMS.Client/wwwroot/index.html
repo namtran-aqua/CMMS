@@ -1,66 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>CMMS</title>
-    <base href="/" />
+    <!-- <base href="/" /> -->
+    <script>
+      var path = window.location.pathname;
+      var baseHref = path.toLowerCase().startsWith("/cmms") ? "/CMMS/" : "/";
+      document.write('<base href="' + baseHref + '" />');
+    </script>
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link rel="icon" href="logo.svg" type="image/x-icon" />
     <link href="CMMS.Client.styles.css" rel="stylesheet" />
-    <link href="_content/AntDesign/css/ant-design-blazor.css" rel="stylesheet" />
-    <link href="_content/AntDesign.ProLayout/css/ant-design-pro-layout-blazor.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-</head>
-<style>
+    <link
+      href="_content/AntDesign/css/ant-design-blazor.css"
+      rel="stylesheet"
+    />
+    <link
+      href="_content/AntDesign.ProLayout/css/ant-design-pro-layout-blazor.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <style>
     html,
     body {
-        overflow-x: hidden;
-        overflow-y: hidden;
+      overflow-x: hidden;
+      overflow-y: hidden;
     }
-</style>
+  </style>
 
-<body>
-    <div style="overflow-x:hidden" id="app">
-        <img src="https://hrmsaquavietnam.com:6969/images/Aqua-Smart%20Home%20-%20blue.png" alt="AQUA Logo"
-            style="width:120px;height:auto;margin-bottom:24px;" />
-        <div class="loading-progress-text"></div>
+  <body>
+    <div style="overflow-x: hidden" id="app">
+      <img
+        src="https://hrmsaquavietnam.com:6969/images/Aqua-Smart%20Home%20-%20blue.png"
+        alt="AQUA Logo"
+        style="width: 120px; height: auto; margin-bottom: 24px"
+      />
+      <div class="loading-progress-text"></div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+      An unhandled error has occurred.
+      <a href="" class="reload">Reload</a>
+      <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/AntDesign/js/ant-design-blazor.js"></script>
     <script src="https://unpkg.com/@antv/g2plot@latest/dist/g2plot.min.js"></script>
     <script src="_content/AntDesign.Charts/ant-design-charts-blazor.js"></script>
     <script>
-        window.CMMSJsFunctions = {
-            saveAsFile: function (filename, bytesBase64) {
-                var link = document.createElement('a');
-                link.download = filename;
-                link.href = "data:application/octet-stream;base64," + bytesBase64;
-                document.body.appendChild(link); // Needed for Firefox
-                link.click();
-                document.body.removeChild(link);
-            }
-        };
-        window.downloadFileFromStream = async (fileName, contentStreamReference) => {
-            const arrayBuffer = await contentStreamReference.arrayBuffer();
-            const blob = new Blob([arrayBuffer]);
-            const url = URL.createObjectURL(blob);
-            const anchorElement = document.createElement('a');
-            anchorElement.href = url;
-            anchorElement.download = fileName ?? '';
-            anchorElement.click();
-            anchorElement.remove();
-            URL.revokeObjectURL(url);
-        }
+      window.CMMSJsFunctions = {
+        saveAsFile: function (filename, bytesBase64) {
+          var link = document.createElement("a");
+          link.download = filename;
+          link.href = "data:application/octet-stream;base64," + bytesBase64;
+          document.body.appendChild(link); // Needed for Firefox
+          link.click();
+          document.body.removeChild(link);
+        },
+      };
+      window.downloadFileFromStream = async (
+        fileName,
+        contentStreamReference,
+      ) => {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const url = URL.createObjectURL(blob);
+        const anchorElement = document.createElement("a");
+        anchorElement.href = url;
+        anchorElement.download = fileName ?? "";
+        anchorElement.click();
+        anchorElement.remove();
+        URL.revokeObjectURL(url);
+      };
     </script>
-</body>
-
+  </body>
 </html>
