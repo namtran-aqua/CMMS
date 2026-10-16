@@ -54,6 +54,13 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+
+// Ensure Tbl_BarcodeSequence table exists before any request
+using (var scope = app.Services.CreateScope())
+{
+    var barcodeService = scope.ServiceProvider.GetRequiredService<CMMS.Server.Services.Barcode.IBarcodeIdService>();
+    await barcodeService.EnsureTableExistsAsync();
+}
 app.UseSwagger();
 
 app.UseSwaggerUI(c =>
@@ -90,4 +97,6 @@ app.MapControllers();
 
 app.MapFallbackToFile("index.html");
 app.Run();
+
+
 

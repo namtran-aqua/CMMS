@@ -20,6 +20,9 @@ namespace CMMS.Server.Services.SparePartService
             connection.Open();
             using var transaction = connection.BeginTransaction();
 
+            // Get DeptCode from current user for barcode generation
+            string? userDeptCode = !string.IsNullOrWhiteSpace(currentUser?.DeptCode) ? currentUser.DeptCode : null;
+
             try
             {
                 var countToday = await connection.ExecuteScalarAsync<int>(
@@ -99,7 +102,9 @@ namespace CMMS.Server.Services.SparePartService
                         detail.SerialCode,
                         detail.Quantity,
                         dto.ImportDate,
-                        currentUser?.Id);
+                        currentUser?.Id,
+                        _barcodeIdService,
+                        userDeptCode);
 
                     const string sqlUpdateInventory = @"
                         UPDATE dbo.Tbl_SparePart

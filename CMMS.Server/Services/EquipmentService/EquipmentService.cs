@@ -1,4 +1,4 @@
-using CMMS.Data.Connection;
+﻿using CMMS.Data.Connection;
 using CMMS.Shared.Authorization;
 using CMMS.Shared.Dtos.Common;
 using CMMS.Shared.Dtos.Equipment;
@@ -51,13 +51,29 @@ namespace CMMS.Server.Services.EquipmentService
             });
             return result.ToList();
         }
-        public async Task<bool> CreatedAsync(EquipmentDto equipment)
+        public async Task<bool> CreatedAsync(EquipmentDto equipment, CMMS.Shared.Dtos.User.UserDto? currentUser = null)
         {
             if (string.IsNullOrEmpty(equipment.EquipmentBarcode))
             {
-                equipment.EquipmentBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync();
-            }
+                string? deptCode = equipment.DeptCode;
+                if (string.IsNullOrWhiteSpace(deptCode) && equipment.DeptID.HasValue)
+                {
+                    using var checkConn = _connectionFactory.CreateConnection();
+                    deptCode = await checkConn.QueryFirstOrDefaultAsync<string>(
+                        "SELECT DeptCode FROM dbo.vw_FactoryDepartment WHERE DeptID = @DeptId",
+                        new { DeptId = equipment.DeptID.Value });
+                }
+                if (string.IsNullOrWhiteSpace(deptCode))
+                {
+                    deptCode = currentUser?.DeptCode;
+                }
 
+                if (string.IsNullOrWhiteSpace(deptCode))
+                {
+                    throw new InvalidOperationException("Không thể tạo mã Barcode cho thiết bị: Chưa xác định được phòng ban (DeptCode).");
+                }
+                equipment.EquipmentBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync(deptCode);
+            }
             var connStr = _config.GetConnectionString("DefaultConnection");
 
             const string sql = @"
@@ -416,6 +432,12 @@ namespace CMMS.Server.Services.EquipmentService
                         }
 
                         int? deptId = currentUser?.DeptID;
+                        if (colDept != -1 && !string.IsNullOrWhiteSpace(fields[colDept]))
+                        {
+                            var deptCodeVal = fields[colDept].Trim();
+                            var deptObj = departments.FirstOrDefault(d => d.DeptCode != null && d.DeptCode.Equals(deptCodeVal, StringComparison.OrdinalIgnoreCase));
+                            if (deptObj != null) deptId = deptObj.DeptID;
+                        }
 
                         var existingEq = await connection.QueryFirstOrDefaultAsync<int?>(
                             "SELECT EQID FROM dbo.Tbl_EquipmentInfo WHERE EquipmentCode = @EquipmentCode",
@@ -452,7 +474,14 @@ namespace CMMS.Server.Services.EquipmentService
                         }
                         else
                         {
-                            var newBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync();
+                            var eqDeptCode = departments.FirstOrDefault(d => d.DeptID == deptId)?.DeptCode ?? currentUser?.DeptCode;
+                            if (string.IsNullOrWhiteSpace(eqDeptCode))
+                            {
+                                result.FailureCount++;
+                                result.Errors.Add($"Dòng {i + 1}: Không xác định được phòng ban để tạo Barcode cho thiết bị '{name}'.");
+                                continue;
+                            }
+                            var newBarcode = await _barcodeIdService.GenerateEquipmentBarcodeIdAsync(eqDeptCode);
                             var insertSql = @"
                                 INSERT INTO dbo.Tbl_EquipmentInfo 
                                     (EquipmentName, EquipmentCode, EquipmentBarcode, EquipmentModel, EquipmentSerial, EquipmentDescription, EquipmentNote, DeptId, LocID, BuyDate, BuyPrice, BuyCurrency, MaintenanceCircleTime, ContactNo, SAPCode, PIC, PICID, LastMaintenanceDate, StsUseID, IsActive)

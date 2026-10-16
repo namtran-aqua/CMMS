@@ -65,7 +65,34 @@ namespace CMMS.Server.Services.SparePartService
 
         public async Task<SparePartDto> CreateAsync(SparePartDto dto, UserDto currentUser)
         {
-            string sparePartBarcode = await _barcodeIdService.GenerateSparePartBarcodeIdAsync();
+            // Lay DeptCode tu User dang dang nhap (theo plan: Backend tu lay, Frontend khong quyet dinh)
+            string? deptCode = currentUser?.DeptCode;
+            if (string.IsNullOrWhiteSpace(deptCode) && dto.DeptID.HasValue)
+            {
+                using var checkConn = _connectionFactory.CreateConnection();
+                deptCode = await checkConn.QueryFirstOrDefaultAsync<string>(
+                    "SELECT DeptCode FROM dbo.vw_FactoryDepartment WHERE DeptID = @DeptId",
+                    new { DeptId = dto.DeptID.Value });
+            }
+
+            if (!dto.IsCoded && string.IsNullOrWhiteSpace(deptCode))
+            {
+                throw new InvalidOperationException("Không thể tạo mã Barcode cho phụ tùng: Chưa xác định được phòng ban (DeptCode).");
+            }
+
+            if (dto.DeptID == null && currentUser?.DeptID != null)
+            {
+                dto.DeptID = currentUser.DeptID;
+            }
+            if (dto.FACID == null && currentUser?.FACID != null)
+            {
+                dto.FACID = currentUser.FACID;
+            }
+
+            // Non-Coded: tao Barcode ngay. Coded: de NULL, doi Inbound tao tung Item
+            string? sparePartBarcode = dto.IsCoded
+                ? null
+                : await _barcodeIdService.GenerateSparePartBarcodeIdAsync(deptCode);
 
             var connStr = _config.GetConnectionString("DefaultConnection");
             const string sqlCheckCode = "SELECT COUNT(1) FROM dbo.Tbl_SparePart WHERE PartCode = @PartCode";
@@ -225,3 +252,6 @@ namespace CMMS.Server.Services.SparePartService
         }
     }
 }
+
+
+
